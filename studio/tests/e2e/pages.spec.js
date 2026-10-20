@@ -47,6 +47,12 @@ async function login(page) {
     "My first campaign",
   );
 }
+async function loadExample(page) {
+  await page.locator("#example-button").click();
+  // Demo assets are created asynchronously; wait before editing its defaults.
+  await expect(page.locator("#logo-list .asset-item")).toHaveCount(1);
+  await expect(page.locator("#title")).toHaveValue("Creative Automation Lab");
+}
 async function mockOpenAI(
   page,
   { key, failVisualOnce, holdCopyUntilImage = false, longPost = false } = {},
@@ -216,7 +222,7 @@ test("Pages Google workflow, private owner controls, direct AI, ZIP, visit key c
   await page.locator('#access-form button[type="submit"]').click();
   await expect(page.locator(".access-member")).toHaveCount(2);
   await page.locator("#access-dialog .close-dialog").click();
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#connect-key").click();
   await expect(page.locator("#backend-field")).toBeHidden();
   const visitKey = "test-only-pages-visit-key";
@@ -308,7 +314,7 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
   page.on("pageerror", (error) => errors.push(error.message));
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   const language = page.locator(".topbar [data-ui-language]");
   await language.selectOption("uk");
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
@@ -444,7 +450,7 @@ test("an image failure keeps text and other previews, blocks ZIP and retries onl
 }) => {
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#connect-key").click();
   await page.locator("#openai-key").fill("test-failure-key");
   await page.locator("#save-connection").click();
@@ -479,7 +485,7 @@ test("copy length errors keep real AI images and are repaired locally before app
 }) => {
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#connect-key").click();
   await page.locator("#openai-key").fill("test-caption-key");
   await page.locator("#save-connection").click();
@@ -509,7 +515,7 @@ test("cancellation aborts active image work and never starts queued images", asy
 }) => {
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#connect-key").click();
   await page.locator("#openai-key").fill("test-cancel-key");
   await page.locator("#save-connection").click();
@@ -534,7 +540,7 @@ test("a planner failure preserves independently generated posts and sends no ima
 }) => {
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#connect-key").click();
   await page.locator("#openai-key").fill("test-planner-failure-key");
   await page.locator("#save-connection").click();
@@ -572,7 +578,7 @@ test("new Pages template packs also require image and text approval without send
 }) => {
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#generation-mode").selectOption("template");
   let requests = 0;
   await page.route("https://api.openai.com/**", (route) => {
@@ -593,7 +599,7 @@ test("AI finalization preserves original logo pixels and exact social PNG dimens
 }, testInfo) => {
   await pagesFixture(page);
   await login(page);
-  await page.locator("#example-button").click();
+  await loadExample(page);
   await page.locator("#logo-list .remove-asset").click();
   const buffers = [];
   for (const color of ["#E60036", "#00A6EB"])
