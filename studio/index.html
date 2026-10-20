@@ -274,9 +274,10 @@
                           maxlength="300"
                           placeholder="Confident, academic, bright. An invitation to build together."
                         /><small
-                          >AI plans the story and chooses supported branded
-                          layouts. Your original photos and logos are composed
-                          locally without AI image editing.</small
+                          >In Pages AI mode, OpenAI plans and generates the
+                          artwork from your assets. Original logos are added
+                          unchanged after generation. Template mode stays
+                          local.</small
                         >
                       </div>
                       <div class="field">
@@ -670,9 +671,10 @@
                           Create content pack <span aria-hidden="true">→</span>
                         </button>
                         <p class="privacy-note">
-                          Images stay on this device. AI mode sends only your
-                          event text to the configured server.
+                          Template mode processes images locally. Pages AI mode
+                          sends event text, photos and logos to OpenAI.
                         </p>
+                        <p id="ai-cost-note" class="input-help" hidden></p>
                         <div id="form-errors" role="alert" hidden></div>
                       </div>
                     </div>
@@ -727,6 +729,18 @@
                   publishing.
                 </p>
               </div>
+              <p
+                id="review-status"
+                class="review-status"
+                role="status"
+                hidden
+              ></p>
+              <section
+                id="posts-review"
+                class="posts-review"
+                aria-label="Review post texts"
+                hidden
+              ></section>
               <div id="output-grid" class="output-grid"></div>
               <details class="run-details">
                 <summary>Original brief & generation details</summary>

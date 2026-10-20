@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { browserCopy } from "../src/browser-copy.js";
+import {
+  browserCopy,
+  browserStoryboard,
+  browserPostCopy,
+} from "../src/browser-copy.js";
+import { generateAIVisual } from "../src/ai-visual.js";
+import { openaiRequest } from "../src/openai.js";
 import { requestCopy } from "../src/copy.js";
 import { BRAND_POLICY } from "../src/brand.js";
 const brief = {
@@ -11,6 +17,7 @@ const brief = {
   formats: ["google_chat"],
   languages: ["en"],
   variants: 1,
+  colors: ["#00a6eb", "#e60036", "#302a40"],
 };
 const outputs = [
   {
@@ -18,6 +25,9 @@ const outputs = [
     format: "google_chat",
     language: "en",
     variant: 1,
+    postId: "google_chat-en",
+    width: 1200,
+    height: 675,
     photoId: "private-photo-id",
     logoIds: ["private-logo-id"],
   },
@@ -33,85 +43,241 @@ const visual = {
     direction: "Clear event hook with original logos.",
   },
 };
-const valid = {
-  posts: [
-    { id: "google_chat-en", caption: "Join Creative Lab.", visuals: [visual] },
-  ],
+const storyboard = { posts: [{ id: "google_chat-en", visuals: [visual] }] };
+const copy = {
+  posts: [{ id: "google_chat-en", caption: "Join Creative Lab." }],
 };
-const flattened = [
-  { ...visual, postId: "google_chat-en", caption: valid.posts[0].caption },
-];
-
-test("Pages AI sends a visit key only to fixed OpenAI with brand instructions and no image data", async (t) => {
-  let count = 0;
-  t.mock.method(globalThis, "fetch", async (url, options) => {
-    count++;
-    assert.equal(url, "https://api.openai.com/v1/chat/completions");
-    assert.equal(options.headers.Authorization, "Bearer test-visit-key");
-    assert.equal(options.credentials, "omit");
-    assert.equal(options.redirect, "error");
-    assert.equal(options.referrerPolicy, "no-referrer");
-    assert.equal(options.cache, "no-store");
-    assert.ok(
-      !options.body.includes("test-visit-key") &&
-        !options.body.includes("private-photo-id") &&
-        !options.body.includes("private-logo-id"),
-    );
-    const body = JSON.parse(options.body);
-    assert.equal(body.store, false);
-    const payload = JSON.parse(
-      body.messages.find((message) => message.role === "user").content,
-    );
-    assert.equal(payload.outputs[0].maximumCharacters.caption, 450);
-    assert.equal(
-      payload.outputs[0].maximumCharacters.subheading,
-      BRAND_POLICY.formats.google_chat.subheading.maxCharacters,
-    );
-    assert.equal(payload.outputs[0].photoAvailable, true);
-    assert.equal(payload.outputs[0].logoCount, 1);
-    assert.equal(
-      body.messages.filter((message) => message.role === "developer").length,
-      2,
-    );
-    assert.match(body.messages[1].content, /ONE carousel/);
-    assert.match(body.messages[2].content, /ONE shared caption/);
-    assert.ok(body.messages[0].content.includes(JSON.stringify(BRAND_POLICY)));
-    return Response.json({
-      choices: [
-        { finish_reason: "stop", message: { content: JSON.stringify(valid) } },
-      ],
-    });
+const response = (data) =>
+  Response.json({
+    choices: [
+      { finish_reason: "stop", message: { content: JSON.stringify(data) } },
+    ],
   });
-  const result = await browserCopy(brief, outputs, "test-visit-key");
-  assert.deepEqual(result.outputs, flattened);
-  assert.equal(count, 1);
+
+test("planner and copy are separate concurrent requests with repository prompts and mandatory per-network policy", async (t) => {
+  const pending = [];
+  t.mock.method(
+    globalThis,
+    "fetch",
+    (url, options) =>
+      new Promise((resolve) => {
+        assert.equal(url, "https://api.openai.com/v1/chat/completions");
+        assert.equal(options.headers.Authorization, "Bearer visit-test-key");
+        assert.equal(options.credentials, "omit");
+        assert.equal(options.redirect, "error");
+        assert.equal(options.referrerPolicy, "no-referrer");
+        assert.ok(
+          !options.body.includes("private-photo-id") &&
+            !options.body.includes("private-logo-id") &&
+            !options.body.includes("visit-test-key"),
+        );
+        const body = JSON.parse(options.body);
+        assert.equal(body.store, false);
+        assert.ok(
+          body.messages[0].content.includes(JSON.stringify(BRAND_POLICY)),
+        );
+        const payload = JSON.parse(body.messages[1].content);
+        if (body.response_format.json_schema.name === "visual_storyboard") {
+          assert.match(body.messages[0].content, /storyboard planner/);
+          assert.match(payload.outputs[0].visualStyle, /internal-team/);
+          assert.equal(payload.outputs[0].photoAvailable, true);
+          assert.equal(
+            payload.outputs[0].maximumCharacters.subheading,
+            BRAND_POLICY.formats.google_chat.subheading.maxCharacters,
+          );
+          pending.push(() => resolve(response(storyboard)));
+        } else {
+          assert.equal(body.response_format.json_schema.name, "social_posts");
+          assert.match(body.messages[0].content, /ONE post caption/);
+          assert.equal(payload.posts[0].maximumCharacters, 450);
+          pending.push(() => resolve(response(copy)));
+        }
+      }),
+  );
+  const task = browserCopy(brief, outputs, "visit-test-key");
+  assert.equal(
+    pending.length,
+    2,
+    "both requests must start before either response is ready",
+  );
+  pending.forEach((resolve) => resolve());
+  const result = await task;
+  assert.equal(result.outputs[0].caption, copy.posts[0].caption);
+  assert.deepEqual(result.outputs[0].visualPlan, visual.visualPlan);
 });
-test("Pages uses common response validation and rejects unknown outputs or proxy URLs", async (t) => {
-  globalThis.window = { STUDIO_RUNTIME: { pages: true } };
-  t.after(() => delete globalThis.window);
-  t.mock.method(globalThis, "fetch", async () =>
-    Response.json({
-      choices: [
+
+test("unknown IDs, duplicate frames and malformed planners are rejected without synthetic replacements", async (t) => {
+  let payload;
+  t.mock.method(globalThis, "fetch", async () => response(payload));
+  for (payload of [
+    null,
+    { posts: [null] },
+    { posts: [{ ...storyboard.posts[0], visuals: [null] }] },
+    {
+      posts: [
+        { ...storyboard.posts[0], visuals: [{ ...visual, id: "foreign" }] },
+      ],
+    },
+    {
+      posts: [
         {
-          finish_reason: "stop",
-          message: {
-            content: JSON.stringify({
-              posts: [
-                {
-                  ...valid.posts[0],
-                  visuals: [{ ...visual, id: "foreign-output" }],
-                },
-              ],
-            }),
-          },
+          ...storyboard.posts[0],
+          visuals: [
+            {
+              ...visual,
+              visualPlan: { ...visual.visualPlan, layout: "arbitrary-code" },
+            },
+          ],
+        },
+      ],
+    },
+  ])
+    await assert.rejects(
+      browserStoryboard(brief, outputs, "test-key"),
+      /does not match this run/,
+    );
+  const second = { ...outputs[0], id: "google_chat-en-2", variant: 2 };
+  payload = { posts: [{ ...storyboard.posts[0], visuals: [visual, visual] }] };
+  await assert.rejects(
+    browserStoryboard(brief, [...outputs, second], "test-key"),
+    /does not match/,
+  );
+});
+
+test("provider response order cannot change carousel frame order", async (t) => {
+  const second = { ...outputs[0], id: "google_chat-en-2", variant: 2 };
+  t.mock.method(globalThis, "fetch", async () =>
+    response({
+      posts: [
+        {
+          id: "google_chat-en",
+          visuals: [{ ...visual, id: second.id }, visual],
         },
       ],
     }),
   );
-  await assert.rejects(
-    requestCopy(brief, outputs, "", undefined, "test-key"),
-    /does not match/,
+  const result = await browserStoryboard(
+    brief,
+    [...outputs, second],
+    "test-key",
   );
+  assert.deepEqual(
+    result[0].visuals.map((frame) => frame.id),
+    [visual.id, second.id],
+  );
+});
+
+test("overlong post text remains editable and is flagged without truncating event facts", async (t) => {
+  t.mock.method(globalThis, "fetch", async () =>
+    response({ posts: [{ id: "google_chat-en", caption: "x".repeat(451) }] }),
+  );
+  const [post] = await browserPostCopy(brief, outputs, "test-key");
+  assert.equal(post.caption.length, 451);
+  assert.equal(post.status, "failed");
+  assert.match(post.error, /limit 450/);
+});
+
+test("errors never echo provider content or keys, and requests do not silently retry", async (t) => {
+  let requests = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    requests++;
+    return new Response("SENSITIVE PROVIDER RESPONSE", { status: 403 });
+  });
+  await assert.rejects(
+    openaiRequest("images/edits", new FormData(), "test-key"),
+    (error) =>
+      error.message.includes("HTTP 403") &&
+      error.message.includes("organization verification") &&
+      !error.message.includes("SENSITIVE") &&
+      !error.message.includes("test-key"),
+  );
+  assert.equal(requests, 1);
+  await assert.rejects(
+    openaiRequest("https://foreign.example", {}, "test-key"),
+    /Unsupported OpenAI endpoint/,
+  );
+  assert.equal(requests, 1);
+});
+
+test("image edits receive the planner, only the assigned photo, all original logos and revision feedback", async (t) => {
+  const logos = [
+      {
+        id: "private-logo-id",
+        blob: new Blob(["ORIGINAL LOGO"], { type: "image/png" }),
+      },
+    ],
+    photos = [
+      {
+        id: "private-photo-id",
+        blob: new Blob(["ASSIGNED PHOTO"], { type: "image/jpeg" }),
+      },
+      {
+        id: "unused",
+        blob: new Blob(["MUST NOT UPLOAD"], { type: "image/png" }),
+      },
+    ];
+  let withPhoto = true;
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.equal(url, "https://api.openai.com/v1/images/edits");
+    assert.equal(options.headers.Authorization, "Bearer test-key");
+    assert.equal(
+      options.headers["Content-Type"],
+      undefined,
+      "browser sets multipart boundary",
+    );
+    const body = options.body,
+      refs = body.getAll("image[]");
+    assert.equal(body.get("model"), "gpt-image-1.5");
+    assert.equal(body.get("n"), "1");
+    assert.equal(body.get("input_fidelity"), "high");
+    assert.equal(refs.length, withPhoto ? 3 : 1);
+    assert.equal(await refs.at(-1).text(), "ORIGINAL LOGO");
+    if (withPhoto) {
+      assert.equal(await refs[0].text(), "PREVIOUS VISUAL");
+      assert.equal(await refs[1].text(), "ASSIGNED PHOTO");
+    }
+    const prompt = body.get("prompt");
+    assert.ok(!prompt.includes("test-key"));
+    assert.match(prompt, /#00a6eb/);
+    assert.match(prompt, /internal-team/);
+    assert.match(prompt, /Clear event hook/);
+    if (withPhoto) assert.match(prompt, /Make the heading larger/);
+    // Do not silently accept a URL or invalid image as a generated visual.
+    return Response.json({
+      data: [{ url: "https://untrusted.example/image" }],
+    });
+  });
+  await assert.rejects(
+    generateAIVisual(
+      brief,
+      { ...outputs[0], ...visual },
+      storyboard.posts[0],
+      { logos, photos },
+      "test-key",
+      undefined,
+      {
+        previousImage: new Blob(["PREVIOUS VISUAL"], { type: "image/png" }),
+        feedback: "Make the heading larger",
+      },
+    ),
+    /invalid image content/,
+  );
+  withPhoto = false;
+  await assert.rejects(
+    generateAIVisual(
+      brief,
+      { ...outputs[0], ...visual, photoId: null },
+      storyboard.posts[0],
+      { logos, photos },
+      "test-key",
+    ),
+    /invalid image content/,
+  );
+});
+
+test("Pages copy compatibility refuses custom proxy URLs before transmitting a key", async (t) => {
+  globalThis.window = { STUDIO_RUNTIME: { pages: true } };
+  t.after(() => delete globalThis.window);
   await assert.rejects(
     requestCopy(
       brief,
@@ -123,104 +289,27 @@ test("Pages uses common response validation and rejects unknown outputs or proxy
     /proxy URLs are disabled/,
   );
 });
-test("provider errors and malformed responses do not echo bodies, keys or silently retry", async (t) => {
-  let count = 0;
-  t.mock.method(globalThis, "fetch", async () => {
-    count++;
-    return new Response("SECRET PROVIDER RESPONSE", { status: 401 });
-  });
-  await assert.rejects(
-    browserCopy(brief, outputs, "test-key"),
-    (error) =>
-      error.message.includes("HTTP 401") &&
-      !error.message.includes("SECRET") &&
-      !error.message.includes("test-key"),
-  );
-  assert.equal(count, 1);
-});
 
-test("overlong copy marks only affected outputs and keeps valid storyboard frames", async (t) => {
-  globalThis.window = { STUDIO_RUNTIME: { pages: true } };
-  t.after(() => delete globalThis.window);
-  const second = { ...outputs[0], id: "google_chat-en-2", variant: 2 };
+test("planner JSON cannot override photo allocation, original logos or review state", async (t) => {
   t.mock.method(globalThis, "fetch", async () =>
-    Response.json({
-      choices: [
-        {
-          finish_reason: "stop",
-          message: {
-            content: JSON.stringify({
-              posts: [
-                {
-                  ...valid.posts[0],
-                  visuals: [
-                    visual,
-                    {
-                      ...visual,
-                      id: second.id,
-                      subheading: "x".repeat(500),
-                      visualPlan: {
-                        role: "closing",
-                        layout: "poster",
-                        direction: "Closing next step",
-                      },
-                    },
-                  ],
-                },
-              ],
-            }),
-          },
-        },
-      ],
-    }),
-  );
-  const result = await requestCopy(
-    brief,
-    [...outputs, second],
-    "",
-    undefined,
-    "test-key",
-  );
-  assert.equal(result.outputs[0].error, undefined);
-  assert.match(result.outputs[1].error, /subheading has 500 characters; limit/);
-  assert.equal(result.outputs[1].subheading.length, 500);
-  assert.equal(result.outputs[0].caption, result.outputs[1].caption);
-  assert.equal(result.outputs[1].visualPlan.role, "closing");
-});
-
-test("malformed storyboards are rejected as content errors, without retrying", async (t) => {
-  let payload;
-  t.mock.method(globalThis, "fetch", async () =>
-    Response.json({
-      choices: [
-        {
-          finish_reason: "stop",
-          message: { content: JSON.stringify(payload) },
-        },
-      ],
-    }),
-  );
-  for (payload of [
-    null,
-    { posts: [null] },
-    { posts: [{ ...valid.posts[0], visuals: [null] }] },
-    {
+    response({
       posts: [
         {
-          ...valid.posts[0],
+          id: "google_chat-en",
           visuals: [
             {
               ...visual,
-              visualPlan: { ...visual.visualPlan, layout: "arbitrary-code" },
+              photoId: "unassigned-photo",
+              logoIds: [],
+              approved: true,
+              caption: "unrequested",
+              visualPlan: { ...visual.visualPlan, reference: "unexpected" },
             },
           ],
         },
       ],
-    },
-  ]) {
-    await assert.rejects(
-      browserCopy(brief, outputs, "test-key"),
-      /does not match this run/,
-    );
-  }
+    }),
+  );
+  const [post] = await browserStoryboard(brief, outputs, "test-key");
+  assert.deepEqual(post.visuals[0], visual);
 });

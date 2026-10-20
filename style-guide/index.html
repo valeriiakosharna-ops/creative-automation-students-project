@@ -753,14 +753,19 @@
             <p>
               Studio implements original-logo compositing, per-network photo
               allocation, language selection, channel-specific copy and ZIP
-              export. Generation applies the shared safe-area margins and
-              minimum type sizes. Final destination-app previews and publishing
-              remain part of human review.
+              export. Finalization applies the shared safe-area margins and
+              original logo shelf. AI-generated lettering needs manual review;
+              minimum raster type sizes cannot be measured reliably. Final
+              destination-app previews and publishing remain part of human
+              review.
             </p>
             <p>
-              The shared JSON policy drives Canvas spacing, typography, logo
-              placement and AI copy. The visual-direction field guides copy
-              tone; original uploaded photos supply the imagery.
+              The shared JSON policy and per-channel directions are included in
+              separate planner, image-generator and copywriter prompts. Planner
+              and copywriter run in parallel; the image API receives the plan,
+              assigned photo and logos. Review each visual, request revisions
+              through its feedback field, and approve every visual and post
+              before ZIP export.
             </p>
             <a href="../studio/QUICKSTART.md"
               >MVP launch & API-key instructions →</a

@@ -1,0 +1,14 @@
+# Versioned OpenAI prompts
+
+- `planner.js`: visual-storyboard prompt. The caller appends `brand-policy.json` and the user's effective palette, and supplies each network's distinct visual direction, frame counts, language, dimensions and photo availability. It returns ordered JSON frames with a narrative role, composition direction and on-image wording.
+- `visual.js`: Images API prompt. Receives the event brief, storyboard, per-network visual style, brand policy/palette, target safe areas, original-logo shelf, and reference index roles. Each request uploads only its assigned event photo and all original logos. A revision also includes the prior generated visual and feedback. It produces artwork, then the local finalizer fits it without cropping and overlays original logos unchanged.
+- `social-copy.js`: independent copywriter prompt. Uses event facts, selected formats/languages, shared policy and channel-specific caption constraints. Returns one shared caption per requested post. It does not wait for or pretend to inspect the storyboard.
+- `channel-styles.js`: different visual directions for Instagram feed, Stories, Facebook and Google Chat; default text/image model IDs and image quality.
+
+Planner and copywriter calls start in parallel. Image requests depend on the planner and can start while copy is still running. Up to two image requests run concurrently; they are never automatically retried. Initial request count is 2 text calls + N images. Revising one image is 1 additional paid image edit.
+
+Every final visual and post text must be reviewed and approved before ZIP generation. Visual revisions create a new run and clear that visual's approval. Post-text edits are local and create a new run on approval; they do not use OpenAI. Other unchanged items keep their approvals. Original and generated captions, prompt versions, assets and revisions remain traceable in local history.
+
+Change prompts here and increment their exported versions, rebuild/redeploy via the normal GitHub Pages workflow, and test before use. **Never place API keys, real account addresses or confidential sample event data in these files.** Prompts and branding are public application code. Provider image access, billing and any required organization verification are separate from the Firebase login.
+
+The image-edit payload is based on the [official OpenAI SDK image definitions](https://github.com/openai/openai-node/blob/master/src/resources/images.ts): GPT Image edits accept multiple PNG/JPEG/WebP references and return base64 image data. `gpt-image-1.5` supports high input fidelity and the standard square/portrait/landscape sizes used here. Check current [image generation documentation](https://developers.openai.com/api/docs/guides/image-generation) and pricing before changing the model.

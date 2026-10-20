@@ -2,7 +2,7 @@
 
 A proposed project style guide based on the original NIX logo/favicon and the supplied corporate palette. The standalone web guide includes composition studies, English/Ukrainian caption examples, a safe-area overlay, contrast reference, palette copy, and Print / Save PDF.
 
-The generation source of truth is [`studio/brand-policy.json`](../studio/brand-policy.json). It is bundled into both the frontend renderer and Java AI server. Update the policy, increment its version, rebuild both components, and check the visual guide when changing generation rules.
+The mandatory brand-policy source of truth is [`studio/brand-policy.json`](../studio/brand-policy.json). It is bundled into both the frontend renderer and Java AI server. Update the policy, increment its version, rebuild both components, and check the visual guide when changing generation rules.
 
 ## Brand identity
 
@@ -80,12 +80,14 @@ Check event facts, original logo integrity, per-network photo uniqueness, langua
 
 See [`studio/QUICKSTART.md`](../studio/QUICKSTART.md) for key setup and launch instructions. Style-guide edits take effect in generation through the policy JSON and a rebuild of both components, not through editing this prose alone.
 
-## Connected multi-frame posts (Pages AI)
+## Connected AI posts and approval (Pages)
 
-Frame counts are independent per format (1–10 per language, 24 total per run). A count of four means one four-frame carousel with a shared caption; Stories are a connected sequence. For multiple frames, plan an opening hook, complementary context/benefits/details, and a closing CTA. Avoid repeating the full event title and description on every frame. Keep all supplied facts consistent.
+Frame counts are independent per format (1–10 per language, 24 total per run). Four frames mean one four-frame carousel with a shared caption; Stories are a connected sequence. Plan an opening hook, complementary context/benefits/details, and a closing CTA without repeating the full announcement on every frame.
 
-The Pages AI request contains separate planner and copywriter instructions plus the shared policy. Structured JSON returns posts with shared captions and ordered visuals with `visualPlan.role`, `visualPlan.layout` (`split-right`, `split-left`, `poster`) and `visualPlan.direction`. The Canvas renderer applies the supported layout choice using exact uploaded assets; free-text directions are saved for review, not executed as drawing code. No images are sent to OpenAI. `storyboard.json` exports this plan, and each format/language folder contains `post.txt`.
+The versioned repository prompts are [`planner.js`](../studio/src/prompts/planner.js), [`visual.js`](../studio/src/prompts/visual.js) and [`social-copy.js`](../studio/src/prompts/social-copy.js). [`channel-styles.js`](../studio/src/prompts/channel-styles.js) defines distinct visual direction per social format and model settings. The full brand policy and effective palette are appended to the planner and copywriter, and included in each image-edit request.
 
-Per-output character budgets are included explicitly in the prompt, with shorter target budgets. If a field is still too long, only that output fails. Manual copy repair creates a new run without a new AI call and preserves the old run. A shared caption edit applies to every frame in its post. There is no silent factual truncation or automatic paid retry.
+Planner and copywriter run as separate parallel calls. The planner returns ordered visual JSON with narrative role, composition direction and on-image copy; the copywriter returns one shared caption per format/language. Images API edits receive the plan, the assigned event photo (or none for information-only frames), and all logos. The image model creates the artwork; a local finalizer fits it inside safe areas without cropping and adds every original logo unchanged. AI typography, colors and photo fidelity still require human review; minimum type sizes cannot be reliably measured in model-generated raster artwork.
 
-Event dates can be a single date, a calendar range, multiple dates or a free-text schedule. Calendar dates/ranges are localized; custom schedule wording is printed exactly as supplied. Include the year and check that the complete date text fits without reducing type below the policy minimum.
+Results appear in the browser. Per-visual feedback regenerates just that image using its prior version and original references, costing one additional request. Posts can be edited locally. Every visual and post must be complete and individually approved before ZIP download. New/edited content requires renewed approval. ZIPs contain ordered PNGs, `posts.txt`, per-post `post.txt`, `storyboard.json`, and the manifest/policy snapshot. No keys or original upload files are included.
+
+Event dates can be single, ranges, multiple dates or free-text schedules. Include the year, preserve all event facts in both languages and verify actual image lettering before approval. AI generation sends referenced assets to OpenAI; only Template mode keeps all processing local.

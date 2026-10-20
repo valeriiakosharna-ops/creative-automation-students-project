@@ -27,6 +27,17 @@ export function translate(text) {
   if (ukrainian[source])
     return text.match(/^\s*/)[0] + ukrainian[source] + text.match(/\s*$/)[0];
   let match;
+  if (
+    (match = source.match(
+      /^Approved visuals: (\d+)\/(\d+) · Approved posts: (\d+)\/(\d+)\./,
+    ))
+  )
+    return `Погоджено візуалів: ${match[1]}/${match[2]} · Погоджено текстів: ${match[3]}/${match[4]}. Погодьте кожен візуал і текст, щоб завантажити ZIP.`;
+  if ((match = source.match(/^AI requests: 2 text \+ (\d+) images\./)))
+    return `AI-запити: 2 для тексту + ${match[1]} для зображень. Перегенерація одного візуалу — ще 1 платний запит на зображення. Автоматичних повторів немає.`;
+  if ((match = source.match(/^Post text must contain 1–(\d+) characters\.$/)))
+    return `Текст публікації має містити від 1 до ${match[1]} символів.`;
+
   if ((match = source.match(/^Remove (.+)$/))) return `Видалити ${match[1]}`;
   if ((match = source.match(/^(\d+) files? processed\.$/)))
     return `Оброблено файлів: ${match[1]}.`;
@@ -87,9 +98,9 @@ export function translate(text) {
   if ((match = source.match(/^(Photo included|Information-only) · V(\d+)$/)))
     return `${ukrainian[match[1]]} · №${match[2]}`;
   if (
-    (match = source.match(/^(AI COPY|TEMPLATE COPY) \/ (\w+) \/ GUIDE (.+)$/))
+    (match = source.match(/^(AI VISUALS \+ POSTS|AI COPY|TEMPLATE COPY) \/ (\w+) \/ GUIDE (.+)$/))
   )
-    return `${match[1] === "AI COPY" ? "AI-ТЕКСТ" : "ТЕКСТ ШАБЛОНУ"} / ${(statuses[match[2].toLowerCase()] || match[2]).toUpperCase()} / СТИЛЬ ${match[3]}`;
+    return `${match[1] === "AI VISUALS + POSTS" ? "AI-ВІЗУАЛИ + ДОПИСИ" : match[1] === "AI COPY" ? "AI-ТЕКСТ" : "ТЕКСТ ШАБЛОНУ"} / ${(statuses[match[2].toLowerCase()] || match[2]).toUpperCase()} / СТИЛЬ ${match[3]}`;
   if (
     (match = source.match(
       /^headline: (\d+) · subheading: (\d+) · CTA: (\d+) · caption: (\d+)$/,

@@ -11,6 +11,13 @@ import {
   quantityFor,
 } from "./planner.js";
 import { templateCopy, requestCopy, PROMPT_VERSION } from "./copy.js";
+import { postRequirements } from "./browser-copy.js";
+import {
+  generatePagesRun,
+  refreshAIStatus,
+  reviewReady,
+} from "./ai-pipeline.js";
+import { generateAIVisual } from "./ai-visual.js";
 import { renderVisual, decodeImage } from "./renderer.js";
 import { all, get, put, runsFor, deleteProject } from "./storage.js";
 import { buildArchive, download } from "./archive.js";
@@ -380,11 +387,22 @@ function updateSummary() {
     $(`#${id}-hex`).textContent = $(`#${id}-color`).value.toUpperCase();
   const ai = b.mode === "ai";
   $("#mode-indicator").lastChild.textContent = ai
-    ? " AI copy mode"
+    ? runtime.pages
+      ? " AI visuals + posts"
+      : " AI copy mode"
     : " Template mode";
   $("#mode-note").textContent = ai
-    ? "AI plans a connected visual story and writes one shared caption per format and language. Uploaded images stay on this device; only event text and anonymous layout constraints are sent for AI processing."
+    ? runtime.pages
+      ? "AI plans the visuals and writes social posts in parallel, then generates each visual from the plan and uploaded assets. Review and approve every visual and post before downloading ZIP."
+      : "AI creates channel-specific copy. This optional Java mode uses local template visuals."
     : "Template mode uses your supplied wording, with channel-specific structure. It does not translate descriptions. Add localized copy below, or connect AI for translation.";
+  $("#ai-cost-note").hidden = !runtime.pages || !ai;
+  $("#ai-cost-note").textContent =
+    `AI requests: 2 text + ${outputs.length} images. Regenerating one visual makes 1 additional paid image request. No automatic retries.`;
+  if (runtime.pages)
+    $(".privacy-note").textContent = ai
+      ? "AI mode sends event text, assigned photos, all logos and revision instructions directly to OpenAI. Projects and results are saved locally; your key is never saved."
+      : "Template mode works locally without sending event text or images to OpenAI.";
 }
 async function updatePreview() {
   const token = ++state.previewToken,
@@ -429,7 +447,9 @@ async function updatePreview() {
   img.alt = `Layout preview for ${FORMATS[first.format].label}`;
   $("#visual-preview").replaceChildren(img);
   $("#preview-label").textContent =
-    `Layout preview · ${FORMATS[first.format].label} · ${LANGUAGES[first.language]} · ${first.width} × ${first.height}. AI wording may differ.`;
+    runtime.pages && b.mode === "ai"
+      ? "Reference preview only. AI-generated artwork appears after generation and must be reviewed."
+      : `Layout preview · ${FORMATS[first.format].label} · ${LANGUAGES[first.language]} · ${first.width} × ${first.height}. AI wording may differ.`;
 }
 $("#variants").addEventListener("change", () => {
   for (const format of Object.keys(FORMATS))
@@ -505,6 +525,19 @@ async function generate(event) {
     styleGuideSnapshot: snapshotPolicy(brief.colors),
     outputs: planOutputs(brief, state.assets.photos, state.assets.logos),
   };
+  if (runtime.pages) {
+    run.reviewRequired = true;
+    run.posts = postRequirements(run.outputs).map(
+      ({ id, format, language }) => ({
+        id,
+        format,
+        language,
+        caption: "",
+        status: "pending",
+        approved: false,
+      }),
+    );
+  }
   state.run = run;
   state.cancelled = false;
   state.controller = new AbortController();
@@ -513,6 +546,29 @@ async function generate(event) {
   showRun(run);
   await renderSidebar();
   try {
+    if (runtime.pages && brief.mode === "ai") {
+      await generatePagesRun(
+        run,
+        requestApiKey,
+        state.controller.signal,
+        async () => {
+          $("#progress-message").textContent =
+            run.pipeline.planner.status === "running"
+              ? "Planning visuals and writing posts in parallel…"
+              : "Generating AI visuals; preparing posts for review…";
+          $("#run-progress").value = Math.round(
+            (100 *
+              (run.outputs.filter((output) => output.image).length +
+                (run.pipeline.planner.status !== "running" ? 1 : 0) +
+                (run.pipeline.copy.status !== "running" ? 1 : 0))) /
+              (run.outputs.length + 2),
+          );
+          await persistRun(run);
+          renderResults();
+        },
+      );
+      return;
+    }
     let copies;
     if (brief.mode === "ai") {
       $("#progress-message").textContent =
@@ -528,6 +584,12 @@ async function generate(event) {
       run.model = response.model;
       run.promptVersion = response.promptVersion;
     } else copies = run.outputs.map((o) => templateCopy(brief, o));
+    if (runtime.pages && brief.mode === "template")
+      for (const post of run.posts) {
+        post.caption = copies.find((copy) => copy.postId === post.id).caption;
+        post.generatedCaption = post.caption;
+        post.status = "completed";
+      }
     for (let index = 0; index < run.outputs.length; index++) {
       const output = run.outputs[index];
       if (state.cancelled) break;
@@ -612,6 +674,292 @@ function showRun(run) {
   $("#workspace").focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+function updateReviewGate(run) {
+  if (!run.reviewRequired || state.run?.id !== run.id) return;
+  $("#download-zip").disabled = state.busy || !reviewReady(run);
+  if (run.status === "completed")
+    $("#results-title").textContent = reviewReady(run)
+      ? "Approved and ready."
+      : "Review your content.";
+  $("#review-status").textContent =
+    `Approved visuals: ${run.outputs.filter((output) => output.approved).length}/${run.outputs.length} · Approved posts: ${run.posts.filter((post) => post.approved).length}/${run.posts.length}. Approve every visual and post to unlock ZIP.`;
+}
+function renderPostReviews(run) {
+  const section = $("#posts-review");
+  section.hidden = !run.reviewRequired;
+  section.replaceChildren();
+  if (!run.reviewRequired) return;
+  section.append(
+    element("h2", "", "Review post texts"),
+    element(
+      "p",
+      "",
+      "One shared caption per carousel or Story sequence. Edit the text, then approve it. Text edits do not call OpenAI.",
+    ),
+  );
+  for (const post of run.posts) {
+    const card = element("article", "post-review-card");
+    card.dataset.postId = post.id;
+    card.append(
+      element(
+        "h3",
+        "",
+        `${FORMATS[post.format].label} · ${LANGUAGES[post.language]}`,
+      ),
+    );
+    const label = element("label", "", "Post text"),
+      editor = element("textarea", "post-copy-editor"),
+      id = `post-copy-${post.id}`;
+    label.htmlFor = id;
+    editor.id = id;
+    editor.rows = 7;
+    editor.lang = post.language;
+    editor.maxLength = copyLimits(post.format).caption;
+    editor.value = post.draftCaption ?? post.caption;
+    editor.disabled = state.busy;
+    const error = element("p", "review-error", post.error || "");
+    error.setAttribute("role", "status");
+    const approve = element(
+      "button",
+      "button secondary approve-post",
+      post.approved ? "Reopen post review" : "Approve post",
+    );
+    approve.type = "button";
+    approve.disabled = state.busy;
+    editor.addEventListener("input", () => {
+      post.draftCaption = editor.value;
+      post.approved = false;
+      approve.textContent = "Approve edited post";
+      const badge = card.querySelector(".approval-badge");
+      badge.textContent = "Needs approval";
+      badge.classList.remove("is-approved");
+      updateReviewGate(run);
+      persistRun(run).catch(handleError);
+    });
+    approve.addEventListener("click", () =>
+      approvePost(run, post).catch(handleError),
+    );
+    card.append(
+      label,
+      editor,
+      error,
+      element(
+        "span",
+        `approval-badge ${post.approved ? "is-approved" : ""}`,
+        post.approved ? "Approved" : "Needs approval",
+      ),
+      approve,
+    );
+    section.append(card);
+  }
+}
+async function approvePost(source, original) {
+  if (state.busy || state.run?.id !== source.id) return;
+  const caption = (original.draftCaption ?? original.caption).trim();
+  const limit = copyLimits(original.format).caption;
+  if (!caption || caption.length > limit) {
+    notice(`Post text must contain 1–${limit} characters.`, true);
+    return;
+  }
+  let run = source;
+  if (caption !== original.caption) {
+    run = structuredClone(source);
+    run.id = crypto.randomUUID();
+    run.createdAt = new Date().toISOString();
+    run.derivedFromRunId = source.id;
+    run.finishedAt = run.createdAt;
+  }
+  const post = run.posts.find((item) => item.id === original.id);
+  const wasApproved = post.approved;
+  Object.assign(post, { caption, status: "completed", approved: !wasApproved });
+  delete post.error;
+  if (caption !== original.caption) post.copySource = "manual";
+  delete post.draftCaption;
+  if (run !== source) {
+    delete original.draftCaption;
+    await persistRun(source);
+  }
+  if (run.pipeline && run.posts.every((item) => item.status === "completed")) {
+    run.pipeline.copy = { status: "completed", source: "reviewed" };
+    run.error = run.pipeline.planner.error || "";
+  }
+  refreshAIStatus(run);
+  state.run = run;
+  await persistRun(run);
+  renderResults();
+  await renderSidebar();
+}
+function visualReviewControls(run, output) {
+  const controls = element("div", "visual-review");
+  if (output.imageError)
+    controls.append(element("p", "review-error", output.imageError));
+  const label = element("label", "", "Changes for this visual"),
+    feedback = element("textarea", "visual-feedback"),
+    id = `feedback-${output.id}`;
+  label.htmlFor = id;
+  feedback.id = id;
+  feedback.rows = 3;
+  feedback.maxLength = 1500;
+  feedback.value = output.feedback || "";
+  feedback.placeholder =
+    "For example: make the heading larger, use more cyan, and move the photo to the left.";
+  feedback.disabled = state.busy;
+  const actions = element("div", "review-actions");
+  const regenerate = element(
+    "button",
+    "button secondary regenerate-visual",
+    output.image ? "Regenerate visual · paid" : "Generate visual · paid",
+  );
+  regenerate.type = "button";
+  regenerate.disabled = state.busy || !output.visualPlan;
+  regenerate.addEventListener("click", () =>
+    regenerateVisual(run, output).catch(handleError),
+  );
+  const approve = element(
+    "button",
+    "button primary approve-visual",
+    output.approved ? "Reopen visual review" : "Approve visual",
+  );
+  approve.type = "button";
+  approve.disabled =
+    state.busy ||
+    !output.image ||
+    Boolean(output.imageError) ||
+    Boolean(output.feedback?.trim());
+  approve.addEventListener("click", async () => {
+    if (
+      state.busy ||
+      !output.image ||
+      output.imageError ||
+      output.feedback?.trim()
+    )
+      return;
+    output.approved = !output.approved;
+    try {
+      await persistRun(run);
+      renderResults();
+    } catch (error) {
+      handleError(error);
+    }
+  });
+  feedback.addEventListener("input", () => {
+    output.feedback = feedback.value;
+    output.approved = false;
+    approve.textContent = "Approve visual";
+    const badge = controls.querySelector(".approval-badge");
+    badge.textContent = "Needs approval";
+    badge.classList.remove("is-approved");
+    approve.disabled =
+      !output.image ||
+      Boolean(output.imageError) ||
+      Boolean(feedback.value.trim());
+    updateReviewGate(run);
+    persistRun(run).catch(handleError);
+  });
+  actions.append(regenerate, approve);
+  if (!run.pipeline) {
+    controls.append(
+      element(
+        "span",
+        `approval-badge ${output.approved ? "is-approved" : ""}`,
+        output.approved ? "Approved" : "Needs approval",
+      ),
+      approve,
+    );
+    return controls;
+  }
+  controls.append(
+    label,
+    feedback,
+    element(
+      "p",
+      "input-help",
+      "Regeneration makes one new paid image request. Apply the feedback or clear it before approval. Every new image needs approval again.",
+    ),
+    element(
+      "span",
+      `approval-badge ${output.approved ? "is-approved" : ""}`,
+      output.approved ? "Approved" : "Needs approval",
+    ),
+    actions,
+  );
+  return controls;
+}
+async function regenerateVisual(source, original) {
+  if (state.busy || state.uploading || state.run?.id !== source.id) return;
+  if (!requestApiKey) {
+    openConnection();
+    return;
+  }
+  if (original.image && !original.feedback?.trim()) {
+    notice("Describe the changes before regenerating this visual.", true);
+    return;
+  }
+  const run = structuredClone(source),
+    output = run.outputs.find((item) => item.id === original.id);
+  run.id = crypto.randomUUID();
+  run.createdAt = new Date().toISOString();
+  run.derivedFromRunId = source.id;
+  run.status = "running";
+  delete run.error;
+  delete run.finishedAt;
+  const previousImage = output.image,
+    feedback = output.feedback || "";
+  output.approved = false;
+  output.imageStatus = "running";
+  output.status = "pending";
+  delete output.imageError;
+  delete output.error;
+  state.run = run;
+  state.cancelled = false;
+  state.controller = new AbortController();
+  setBusy(true);
+  showRun(run);
+  $("#progress-message").textContent =
+    "Regenerating the selected visual with your feedback…";
+  try {
+    await persistRun(run);
+    const rendered = await generateAIVisual(
+      run.brief,
+      output,
+      run.storyboard.find((post) => post.id === output.postId),
+      run.assets,
+      requestApiKey,
+      state.controller.signal,
+      { previousImage, feedback },
+    );
+    if (state.controller.signal.aborted)
+      throw new Error("Generation cancelled.");
+    Object.assign(output, {
+      image: rendered.blob,
+      style: rendered.style,
+      imageModel: rendered.imageModel,
+      imageSource: rendered.imageSource,
+      visualPromptVersion: rendered.visualPromptVersion,
+      imageStatus: "completed",
+      feedback: "",
+    });
+    (output.revisions ||= []).push({
+      createdAt: new Date().toISOString(),
+      instructions: feedback,
+      previousRunId: source.id,
+    });
+  } catch (error) {
+    output.imageError = state.cancelled
+      ? "Generation cancelled."
+      : error.message;
+    output.imageStatus = state.cancelled ? "cancelled" : "failed";
+  } finally {
+    refreshAIStatus(run);
+    if (state.cancelled) run.status = "cancelled";
+    run.finishedAt = new Date().toISOString();
+    await persistRun(run);
+    setBusy(false);
+    renderResults();
+    await renderSidebar();
+  }
+}
+
 function renderResults() {
   const run = state.run;
   if (!run) return;
@@ -619,12 +967,16 @@ function renderResults() {
   const completed = run.outputs.filter((o) => o.status === "completed").length;
   $("#run-label").textContent = `RUN / ${run.id.slice(0, 8).toUpperCase()}`;
   $("#run-mode-label").textContent =
-    `${run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()} / GUIDE ${run.styleGuideVersion || "LEGACY"}`;
+    `${run.pipeline ? "AI VISUALS + POSTS" : run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()} / GUIDE ${run.styleGuideVersion || "LEGACY"}`;
   $("#results-title").textContent =
     run.status === "running"
       ? "Making it yours."
       : run.status === "completed"
-        ? "Ready to share."
+        ? run.reviewRequired
+          ? reviewReady(run)
+            ? "Approved and ready."
+            : "Review your content."
+          : "Ready to share."
         : run.status === "partial"
           ? "A pack in progress."
           : run.status === "cancelled"
@@ -640,8 +992,19 @@ function renderResults() {
     run.error ||
     (run.status === "interrupted"
       ? "The page closed during generation. Completed outputs were kept. Reuse the brief to start a new run."
-      : "Some outputs could not be rendered. Successful files can be downloaded; failures are listed in the manifest.");
-  $("#download-zip").disabled = !completed || run.status === "running";
+      : run.reviewRequired
+        ? "Some AI stages failed. Review the available results and retry failed visuals; ZIP unlocks after every visual and post is complete and approved."
+        : "Some outputs could not be rendered. Successful files can be downloaded; failures are listed in the manifest.");
+  $("#download-zip").disabled =
+    state.busy ||
+    (run.reviewRequired
+      ? !reviewReady(run)
+      : !completed || run.status === "running");
+  renderPostReviews(run);
+  $("#review-status").hidden = !run.reviewRequired;
+  if (run.reviewRequired)
+    $("#review-status").textContent =
+      `Approved visuals: ${run.outputs.filter((output) => output.approved).length}/${run.outputs.length} · Approved posts: ${run.posts.filter((post) => post.approved).length}/${run.posts.length}. Approve every visual and post to unlock ZIP.`;
   $("#reuse-brief").disabled = state.busy;
   $("#back-to-editor").disabled = state.busy;
   const filter = $("#result-filter").value,
@@ -657,7 +1020,7 @@ function renderResults() {
       element("span", "language-tag", output.language === "uk" ? "UA" : "EN"),
     );
     card.append(header);
-    if (output.status === "completed") {
+    if (output.image) {
       const url = URL.createObjectURL(output.image);
       outputUrls.push(url);
       const button = element("button", "output-image"),
@@ -696,7 +1059,7 @@ function renderResults() {
           : output.error || output.status,
       );
       card.append(placeholder);
-      if (output.status === "failed" && !state.busy) {
+      if (output.status === "failed" && !state.busy && !run.reviewRequired) {
         const edit = element(
           "button",
           "button secondary repair-copy",
@@ -707,6 +1070,7 @@ function renderResults() {
         card.append(edit);
       }
     }
+    if (run.reviewRequired) card.append(visualReviewControls(run, output));
     grid.append(card);
   }
   $("#run-details-json").textContent = JSON.stringify(
@@ -715,6 +1079,9 @@ function renderResults() {
       createdAt: run.createdAt,
       mode: run.mode,
       model: run.model || null,
+      imageModel: run.imageModel || null,
+      pipeline: run.pipeline || null,
+      posts: run.posts || null,
       promptVersion: run.promptVersion,
       styleGuideVersion: run.styleGuideVersion || null,
       styleGuideSnapshot: run.styleGuideSnapshot || null,
@@ -752,7 +1119,7 @@ $("#download-zip").addEventListener("click", async () => {
   } catch (error) {
     handleError(error);
   } finally {
-    button.disabled = false;
+    renderResults();
   }
 });
 function openOutput(output) {
@@ -1115,8 +1482,9 @@ if (browserKeyMode) {
 if (runtime.pages) {
   form.autocomplete = "off";
   $("#connection-description").textContent =
-    "Enter your OpenAI key for this visit. This browser sends text directly to OpenAI; the key is never saved in projects, browser storage or exports. Anyone with access to this browser can inspect a key while it is in use.";
+    "Enter your OpenAI key for this visit. This browser sends event text, photos, logos and revision instructions directly to OpenAI for AI generation; the key is never saved in projects, browser storage or exports. Anyone with access to this browser can inspect a key while it is in use.";
   $("#check-connection").textContent = "Connection information";
+  $("#generation-mode option[value=ai]").textContent = "AI · visuals + posts";
   $("#mode-indicator").textContent = "PAGES / LOCAL PROJECTS";
   $(".local-indicator").textContent = "Your local Google workspace";
   $(".sidebar-bottom p").textContent =

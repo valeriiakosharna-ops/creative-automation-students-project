@@ -43,6 +43,7 @@ for (const [source, target] of [
       "(firebase/firestore.rules)",
       `(${repository}studio/firebase/firestore.rules)`,
     )
+    .replaceAll("(QUICKSTART.md)", "(quickstart.md)")
     .replaceAll("(../SECURITY.md)", `(${repository}SECURITY.md)`)
     .replaceAll("(../DEPLOYMENT.md)", `(${repository}DEPLOYMENT.md)`);
   await writeFile(new URL(target, directory), text);

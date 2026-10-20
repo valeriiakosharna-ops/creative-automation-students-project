@@ -147,3 +147,5 @@ GitHub Pages now runs the separate browser-only Studio described in [Free Pages 
 | Projects seem missing                          | Use the same browser/profile/origin/port. Data is in IndexedDB; clearing browser data removes it.                                |
 
 No real key is needed for local tests. Live AI generation remains a separate check after you configure your own key and billing.
+
+The Pages deployment uses a separate three-stage planner/image-generation/copywriter pipeline with uploaded references and per-item approval. The text-only/local-asset statement above describes this optional Java development mode. See [Pages setup](PAGES_SETUP.md) for the deployed browser workflow.

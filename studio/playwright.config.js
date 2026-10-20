@@ -15,5 +15,5 @@ export default defineConfig({
     url: "http://127.0.0.1:4173",
     reuseExistingServer: false,
   },
-  reporter: "list",
+  reporter: process.env.CI ? [["list"], ["github"]] : "list",
 });
