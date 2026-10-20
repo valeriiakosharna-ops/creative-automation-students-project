@@ -93,10 +93,24 @@ export function templateCopy(b, o) {
     caption,
   };
 }
-export async function requestCopy(brief, outputs, baseUrl, signal) {
+export async function requestCopy(
+  brief,
+  outputs,
+  baseUrl,
+  signal,
+  apiKey = "",
+) {
+  if (apiKey && baseUrl)
+    throw Error(
+      "Open the full hosted Studio site to use your key. Keys are sent only to this site's own server.",
+    );
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/copy`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    ...(apiKey ? { mode: "same-origin", redirect: "error" } : {}),
+    headers: {
+      "Content-Type": "application/json",
+      ...(apiKey ? { "X-OpenAI-Key": apiKey } : {}),
+    },
     body: JSON.stringify({
       brief,
       styleGuideVersion: BRAND_POLICY.version,

@@ -10,6 +10,7 @@
     />
     <title>Creative Automation Studio</title>
     <link rel="icon" href="./favicon.svg" />
+    <script src="./runtime.js"></script>
     <script type="module" src="/src/main.js"></script>
   </head>
   <body>
@@ -64,6 +65,9 @@
             ><strong id="current-project-name">Loading…</strong>
           </div>
           <div class="topbar-actions">
+            <button id="connect-key" class="button secondary" hidden>
+              Connect OpenAI
+            </button>
             <span class="mode-indicator" id="mode-indicator"
               ><i></i> Template mode</span
             ><a href="./brief/index.html" class="brief-link">Student brief →</a>
@@ -451,7 +455,8 @@
                       Add a logo and event details to preview your first visual.
                     </p>
                     <a class="applied-guide" href="./style-guide/index.html">
-                      Brand style guide v<span data-style-version>1.0.0</span> applied →
+                      Brand style guide v<span data-style-version>1.0.0</span>
+                      applied →
                     </a>
                     <div class="pack-summary">
                       <h2>
@@ -614,34 +619,61 @@
           ×
         </button>
       </div>
-      <p>
-        Template mode works without a server. For AI copy and translation, run
-        the Java backend and add your key to its private configuration.
+      <p id="connection-description">
+        Template mode works here without a key. For AI without installation,
+        open your hosted Studio site. See the
+        <a href="./quickstart.md">launch guide</a>. Advanced: connect a
+        separately managed server below.
       </p>
       <form id="settings-form">
-        <div class="field">
+        <div class="field" id="backend-field">
           <label for="backend-url">Backend address</label
           ><input
             type="url"
             id="backend-url"
-            placeholder="http://127.0.0.1:8080"
+            placeholder="https://studio.example.org"
           /><small
             >Leave empty when the Java server serves this app. No API keys
             belong in this form.</small
           >
         </div>
+        <div id="client-key-field" class="field" hidden>
+          <label for="openai-key">Your OpenAI API key</label>
+          <input
+            id="openai-key"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="512"
+            placeholder="Paste your API key"
+            aria-describedby="key-privacy"
+          />
+          <small id="key-privacy"
+            >Only enter a key on a Studio deployment you trust. It is sent to
+            this site's server to call OpenAI. Studio keeps it in this page's
+            memory only; it is never saved in projects, browser storage, logs or
+            exports. Refreshing or closing this page clears it.</small
+          >
+          <p id="key-status" role="status"></p>
+          <button type="button" id="forget-key" class="button secondary">
+            Forget key
+          </button>
+        </div>
         <div class="dialog-actions">
           <button type="button" id="check-connection" class="button secondary">
             Test connection</button
-          ><button type="submit" class="button primary">Save connection</button>
+          ><button type="submit" id="save-connection" class="button primary">
+            Save connection
+          </button>
         </div>
         <p id="connection-status" role="status"></p>
       </form>
       <div class="settings-note">
-        <strong>Local workspace</strong>
+        <strong>Your browser workspace</strong>
         <p>
-          Your browser stores projects and generated files with IndexedDB. There
-          is no cloud sync or account login in this single-user MVP.
+          Projects and generated files are saved in this browser. They are not
+          synced across devices; export important ZIPs before clearing browser
+          data.
         </p>
       </div>
     </dialog>

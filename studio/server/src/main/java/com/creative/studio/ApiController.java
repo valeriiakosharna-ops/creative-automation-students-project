@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -16,13 +17,20 @@ import static com.creative.studio.CopyModels.*;
 @RequestMapping("/api")
 public class ApiController {
     private final OpenAiCopyService copy;
-    public ApiController(OpenAiCopyService copy) { this.copy=copy; }
+    private final boolean clientKeysEnabled;
+    public ApiController(OpenAiCopyService copy,@Value("${creative.openai.client-keys-enabled:false}") boolean clientKeysEnabled) { this.copy=copy;this.clientKeysEnabled=clientKeysEnabled; }
     @GetMapping("/health") public Map<String,Object> health() {
-        return Map.of("service","creative-automation-studio","aiConfigured",copy.configured(),"styleGuideVersion",copy.policyVersion());
+        return Map.of("service","creative-automation-studio","aiConfigured",!clientKeysEnabled&&copy.configured(),"clientKeysEnabled",clientKeysEnabled,"styleGuideVersion",copy.policyVersion());
     }
-    @PostMapping("/copy") public CopyResponse generate(@Valid @RequestBody CopyRequest request) {
+    @PostMapping("/copy") public CopyResponse generate(@Valid @RequestBody CopyRequest request,
+            @RequestHeader(value="X-OpenAI-Key",required=false) String clientKey) {
         validatePlan(request);
         if(request.styleGuideVersion()!=null && !request.styleGuideVersion().equals(copy.policyVersion()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Browser and server style guide versions differ. Rebuild/restart the server and reload Studio.");
+        if(clientKeysEnabled) {
+            if(clientKey==null||clientKey.isBlank())throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED,"Connect your OpenAI key in Studio for this visit, or choose Template mode.");
+            if(clientKey.length()>512||clientKey.chars().anyMatch(c->c<=32||c>=127))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The API key contains unexpected characters. Paste the key without spaces or quotes.");
+            return copy.generate(request,clientKey);
+        }
         return copy.generate(request);
     }
     static void validatePlan(CopyRequest request) {

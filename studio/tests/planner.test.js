@@ -165,3 +165,36 @@ test("shortening an optional caption body preserves an identical title and the c
   assert.ok(copy.caption.length <= 450);
   assert.equal(b.description.length, 80);
 });
+
+test("a visitor key is forwarded only in the same-origin request header, never in the brief", async (t) => {
+  const { requestCopy } = await import("../src/copy.js");
+  const outputs = planOutputs(brief, photos, logos);
+  let captured;
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    captured = { url, ...options };
+    return new Response(
+      JSON.stringify({
+        styleGuideVersion: "1.0.0",
+        outputs: outputs.map((o) => templateCopy(brief, o)),
+      }),
+    );
+  });
+  await assert.rejects(
+    () =>
+      requestCopy(
+        brief,
+        outputs,
+        "https://another.invalid",
+        undefined,
+        "visitor-test-key",
+      ),
+    /own server/,
+  );
+  assert.equal(captured, undefined);
+  await requestCopy(brief, outputs, "", undefined, "visitor-test-key");
+  assert.equal(captured.url, "/api/copy");
+  assert.equal(captured.headers["X-OpenAI-Key"], "visitor-test-key");
+  assert.equal(captured.mode, "same-origin");
+  assert.equal(captured.redirect, "error");
+  assert.ok(!captured.body.includes("visitor-test-key"));
+});

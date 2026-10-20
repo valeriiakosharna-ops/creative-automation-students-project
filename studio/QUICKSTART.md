@@ -1,151 +1,64 @@
-# Run the MVP and connect your OpenAI key
+# Use Studio online — no installation
 
-The simplest complete setup is **one Java server serving the built app**. It keeps the key on your computer/server and needs no frontend backend-address configuration. These instructions assume the feature changes have been merged into `main`, or that you have checked out the corresponding PR branch.
+You do not need Java, Node.js, Docker, a terminal, or a local server on your computer. A hosting service runs the complete app. You open its HTTPS address and paste your own OpenAI API key for the visit.
 
-## 1. Install the prerequisites
+## First time: create your hosted site
 
-- Node.js **24 LTS** (or 22.12+), including npm: <https://nodejs.org/en/download>.
-- A full **JDK 21**, including `javac`, not only a Java runtime: <https://adoptium.net/temurin/releases/?version=21>.
-- Git. Maven is supplied by the repository's wrapper; no separate Maven install is required.
-- An OpenAI API project with model access and active API billing. A ChatGPT subscription does not supply API credits.
+Do this after the hosting PR is merged into the repository's `main` branch.
 
-Verify in a terminal:
+1. Open **[Deploy to Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fvaleriiakosharna-ops%2Fcreative-automation-students-project)** in your browser.
+2. Sign in or create a Render account. Connect GitHub if prompted and give it access to this repository. Private repositories require access through the owning account/organization.
+3. Review the `creative-automation-studio` web service and confirm deployment. The committed `render.yaml` selects the Free plan and the Docker build. No OpenAI key or other secret is required in this form.
+4. Wait until the service is **Live**. The initial build takes several minutes.
+5. Open the **HTTPS service URL** shown by Render. Bookmark it. This is your complete Studio site, including its AI server.
 
-```sh
-node --version
-npm --version
-java --version
-javac --version
-```
+If Render asks for a Blueprint rather than showing the deploy-button flow: Dashboard → **New → Blueprint** → connect this repository → select `main` and `render.yaml` → review → deploy.
 
-`java` and `javac` should both report version 21. If several JDKs are installed, point `JAVA_HOME` to JDK 21 and put its `bin` directory first in `PATH`.
+Render controls account verification, plan availability and pricing. Review any billing prompt before accepting it. Free services can sleep when idle and take about a minute to wake. Your own OpenAI API usage is billed separately. For an always-on site, choose an appropriate hosted plan or use company infrastructure.
 
-## 2. Get the repository and build the app
+## Every visit: paste your key and create a pack
 
-```sh
-git clone https://github.com/valeriiakosharna-ops/creative-automation-students-project.git
-cd creative-automation-students-project
-cd studio
-npm ci
-npm run build
-cd server
-```
+1. Open your bookmarked Studio HTTPS URL.
+2. Click **Connect OpenAI** at the top.
+3. Paste your OpenAI API key and click **Use key for this visit**.
+4. Create a project or click **Use example brief**. Upload your logos and event photos, enter event details, and choose formats, quantity and **English, Ukrainian, or both**.
+5. Keep **AI · your OpenAI key** selected and generate the pack. Start with one format/language/variant for your first test.
+6. Review the visuals and channel-specific captions, then download the ZIP.
 
-If you already have the repository, use that checkout and update it after saving your own changes. Do not clone over existing work. From this point, run server commands in **`studio/server/`**. The Java application reads local configuration relative to this working directory.
+No backend address, local configuration file or server restart is needed. **Check server** checks availability only; OpenAI verifies your key/model access during your first generation. A ChatGPT subscription does not include OpenAI API credits.
 
-## 3. Create your private local configuration
+To try the whole image/ZIP workflow without spending API credits, choose **Template · no API key needed**. It uses supplied English/Ukrainian wording and does not translate text automatically.
 
-**macOS / Linux / Git Bash**, from `studio/server/`:
+## Where the key and work live
 
-```sh
-test -f application-local.properties || cp application-local.properties.example application-local.properties
-```
+- Your key stays in the open page's memory. **Forget key**, refreshing or closing that page clears it. Paste it again on a new visit. Studio does not save it in browser storage, projects, history, exports or application logs.
+- The key is sent over HTTPS to **this site's server**, which forwards it in the OpenAI request header. It is not sent to a separately entered backend URL. Only enter a key on a Studio deployment you trust. Hosting administrators control that server.
+- Each visitor supplies their own key. Hosted mode never falls back to an owner's shared key, even if one was accidentally set in the hosting environment. There is no shared account or sign-in in this MVP.
+- Projects, uploads and history remain in IndexedDB in your browser, at this site's origin. They survive a normal server restart, but are not synced across browsers/devices. Clearing browser data or changing the domain separates/removes the workspace. Keep important ZIPs.
 
-**Windows PowerShell**, from `studio/server/`:
+Every visual contains every uploaded logo. A photo is used at most once per social network/run across variants and languages; Instagram post and Story share a pool. Extra outputs use information-only layouts. The shared brand policy applies to visuals and AI copy; ZIPs contain PNG/caption pairs, the brief, manifest and `style-guide.json`.
 
-```powershell
-if (-not (Test-Path application-local.properties)) {
-    Copy-Item application-local.properties.example application-local.properties
-}
-```
+## Future changes build online
 
-These commands preserve a configuration file that already exists. Open **`studio/server/application-local.properties`** in your editor, then replace the blank key value:
+On GitHub, pushes to `main` build/test the site and the complete container. Render is configured to redeploy from `main` automatically. A PR builds without publishing a container. GitHub Pages still serves the student brief and static Template demo; its URL is different from your full hosted Studio URL.
 
-```properties
-creative.openai.api-key=YOUR_API_KEY_HERE
-creative.openai.model=gpt-4.1-mini
-```
+For an **internal GitLab**, ask IT to follow `DEPLOYMENT.md` in the repository: the same Dockerfile builds the app, the included GitLab pipeline tests/publishes it to the project registry, and the company's container platform runs it behind HTTPS. Users then get one internal URL and enter their own key. IT needs to configure the runner/hosting once; users need no local tools. Internal hosting must allow outbound `api.openai.com`.
 
-Replace `YOUR_API_KEY_HERE` with your actual key on your machine. Do not add quotes. Leave no spaces before/after the key. Do not send it in chat, take a screenshot of it, or paste it into the Studio browser settings.
+Do not deploy this as a Pages-only site and expect it to execute Java. GitHub/GitLab repositories and registries store code/images; they do not by themselves run an always-on application server.
 
-The real local file is gitignored; the committed `.example` stays empty. Before any commit, `git status --short` should not list the real `application-local.properties`. You can check the ignore rule without printing its contents:
+## If something does not work
 
-```sh
-git check-ignore application-local.properties
-```
-
-An alternative is setting `CREATIVE_OPENAI_API_KEY` securely in the **Java server process environment**. A value in the local properties file overrides the default environment-variable binding. Use one method consistently; remove a local key override if you want to use only the environment variable. Do not use a `VITE_` variable for a secret.
-
-## 4. Build and start the Java server
-
-**macOS / Linux / Git Bash**, still in `studio/server/`:
-
-```sh
-./mvnw --batch-mode verify
-java -jar target/studio-server-0.1.0.jar
-```
-
-**Windows PowerShell**, still in `studio/server/`:
-
-```powershell
-.\mvnw.cmd --batch-mode verify
-java -jar target/studio-server-0.1.0.jar
-```
-
-The first build downloads dependencies and verifies the Maven distribution checksum. Leave the terminal running. Open `http://127.0.0.1:8080` on the same computer. Stop the app with Ctrl+C. Restart after changing the key, model, or server configuration.
-
-The full JAR includes the app, the student brief, the social style guide, and the versioned generation policy. When changing the shared style guide, rebuild the frontend and JAR together so their versions agree.
-
-## 5. Verify the connection and make a small first run
-
-Open `http://127.0.0.1:8080/api/health`. You should see:
-
-```json
-{"service":"creative-automation-studio","aiConfigured":true,"styleGuideVersion":"1.0.0"}
-```
-
-JSON field order may differ. `aiConfigured: true` means a nonempty key was loaded; it does not prove billing or model access. Confirm those with the following small generation:
-
-1. Open the app and create a project, or use the example brief.
-2. Upload your original logos and a few event photos. Supported uploads are PNG/JPG/WebP, not SVG; export the logo as a transparent PNG first.
-3. Enter the event details and choose **one format, one language, one variant** for the first test.
-4. Select **AI · connected Java server** in Copy generation.
-5. Create the content pack. Inspect the visual, matching caption and applied style-guide version.
-6. Download the ZIP and check the PNG, text, `manifest.json` and `style-guide.json`.
-
-All logos appear on every visual. Photo reuse is limited to once per social network/run across languages and variants. Extra outputs are information-only. Text-only event data is sent to the AI provider; original logos/photos stay in your browser.
-
-AI drafts and translations use the shared style policy. Visuals are composed locally from your original assets; the MVP does not synthesize new photos. Keep the final human review before publication.
-
-## 6. If you want frontend hot reload
-
-Keep Java running in one terminal. In a second terminal, from the repository root:
-
-```sh
-cd studio
-npm run dev
-```
-
-Use Vite's printed address, normally `http://127.0.0.1:5173`. Requests to `/api` are proxied to the Java server on port 8080. Leave the Studio backend address empty in this setup. The UI served at port 5173 and the UI served at port 8080 have different browser storage: projects do not automatically appear across those origins. Use one address consistently for real work.
-
-## 7. If you use the GitHub Pages frontend
-
-GitHub Pages serves the browser UI at `/creative-automation-students-project/studio/`; it does not execute Java. To use AI there:
-
-1. Host the Java server separately behind HTTPS and authenticated access. The current MVP is a local single-user tool and does not provide accounts/public API authentication.
-2. Set `STUDIO_BIND_ADDRESS` and `PORT` as needed by that hosting platform.
-3. Set `STUDIO_ALLOWED_ORIGINS=https://valeriiakosharna-ops.github.io` on the Java server. An origin includes the scheme/host, **not** `/creative-automation-students-project` or `/studio/`.
-4. In Studio → **Connection settings**, enter the Java server's HTTPS base URL (no `/api` suffix), save it, and use **Test connection**.
-5. Select AI mode and make a small generation.
-
-A public Pages page cannot normally call your computer's loopback server across origins; use the locally served app for the simplest first setup. Template mode needs no key/server and works on Pages immediately.
-
-For this managed cloud environment, allow outbound `api.openai.com` in Environment settings, save the configuration and publish the environment before testing live AI. This affects the managed server's network, not the Pages build. Keep the provided HTTPS proxy and trusted CA configuration; never disable TLS verification.
-
-## Troubleshooting
-
-| What you see | What to check |
+| What you see | What to do |
 | --- | --- |
-| `aiConfigured: false` / 503 | Key is in the real local file, not only `.example`; server started from `studio/server/`; no blank local override; restart Java. |
-| Provider HTTP 401 | Actual API key is valid, unrevoked and loaded by the server. Never paste it into logs or chat. |
-| Provider HTTP 403 / 404 | Project/model access and model name. Keep a model that supports Chat Completions structured JSON output. |
-| Provider HTTP 429 | API billing/credits or provider rate limit. Check the API account; a ChatGPT subscription is separate. |
-| Provider timeout / network error | Outbound access to `api.openai.com`, proxy/CA configuration, and provider status. No automatic retry is made. |
-| 409 / style-guide mismatch | Rebuild both frontend and Java JAR from the same checkout and reload the browser. |
-| Style text cannot fit | Shorten the visual headline, summary, location or link; the renderer preserves minimum font sizes instead of clipping. |
-| Browser CORS / connection error | Exact frontend origin allowed on the Java server, HTTPS URL, and no `/api` suffix in the saved backend address. |
-| Java release 21 unsupported / missing compiler | Install the full JDK 21 and check `JAVA_HOME`, `PATH`, `java` and `javac`. |
-| Port 8080 already in use | Stop the other local server or set `PORT`. Update the Vite proxy or backend address if changing the port. |
-| Projects seem missing | Use the same browser/profile/origin/port. Data is in IndexedDB; clearing browser data removes it. |
+| Site is waking up | Wait for the free hosted service to start, then reload. |
+| No Connect OpenAI button | Open the full hosted Studio URL, not its GitHub/GitLab Pages demo. |
+| Add your key for this visit | Paste it through Connect OpenAI; refresh/new tabs intentionally forget it. |
+| Provider HTTP 401 | Check that the complete API key was pasted without quotes/spaces and has not been revoked. |
+| Provider HTTP 403/404 | Check OpenAI project/model access. Hosting defaults to `gpt-4.1-mini`. |
+| Provider HTTP 429 | Check API credits/billing or wait for a provider rate limit. ChatGPT billing is separate. |
+| Server is handling another run | Wait for that run to finish. The MVP processes one AI request at a time. |
+| Network/timeout error | Check hosting logs/provider status; IT should check outbound HTTPS, proxy and trusted CA. |
+| Text does not fit | Shorten the visual title, optional summary or location. Minimum brand type sizes are preserved. |
+| Projects are missing | Use the same browser/profile and exactly the same bookmarked domain. There is no cloud workspace sync. |
 
-No real key is needed for local tests. Live AI generation remains a separate check after you configure your own key and billing.
+For optional contributor-only local development, see `studio/LOCAL_DEVELOPMENT.md` in the repository. Local setup is not required for hosted use.

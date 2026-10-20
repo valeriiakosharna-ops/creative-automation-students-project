@@ -1,0 +1,30 @@
+# Allow only the sources required to build the complete app.
+**
+!Dockerfile
+!index.html
+!styles.css
+!script.js
+!assets/
+!assets/**
+!style-guide/
+!style-guide/**
+!studio/
+!studio/index.html
+!studio/package.json
+!studio/package-lock.json
+!studio/vite.config.js
+!studio/QUICKSTART.md
+!studio/brand-policy.json
+!studio/src/
+!studio/src/**
+!studio/scripts/
+!studio/scripts/**
+!studio/public/
+!studio/public/runtime.js
+!studio/tests/
+!studio/tests/*.test.js
+!studio/server/
+!studio/server/pom.xml
+!studio/server/src/
+!studio/server/src/**
+# Local credentials, generated files, Git metadata and caches are never sent.

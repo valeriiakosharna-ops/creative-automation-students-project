@@ -48,7 +48,10 @@ public class OpenAiCopyService {
     public String policyVersion() {return brandPolicy.path("version").asText();}
     public boolean configured(){return !key.isBlank();}
     public CopyResponse generate(CopyRequest request) {
-        if(!configured())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI is not configured. Set CREATIVE_OPENAI_API_KEY or creative.openai.api-key on the Java server. Template mode works without a key.");
+        return generate(request,key);
+    }
+    public CopyResponse generate(CopyRequest request,String requestKey) {
+        if(requestKey==null||requestKey.isBlank())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI is not configured. Set CREATIVE_OPENAI_API_KEY or creative.openai.api-key on the Java server. Template mode works without a key.");
         if(!slot.tryAcquire())throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"The AI server is handling another run. Try again after it finishes.");
         try {
             var properties=new LinkedHashMap<String,Object>();
@@ -70,7 +73,7 @@ public class OpenAiCopyService {
             var body=Map.of("model",model,"messages",List.of(Map.of("role","system","content",system),Map.of("role","user","content",mapper.writeValueAsString(request))),
                 "response_format",Map.of("type","json_schema","json_schema",Map.of("name","social_content","strict",true,"schema",schema)),"max_completion_tokens",12000);
             var httpRequest=HttpRequest.newBuilder(URI.create(base+"/chat/completions")).timeout(Duration.ofSeconds(120))
-                .header("Authorization","Bearer "+key).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body))).build();
+                .header("Authorization","Bearer "+requestKey).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body))).build();
             var response=client.send(httpRequest,HttpResponse.BodyHandlers.ofString());
             if(response.statusCode()==429)throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"AI rate or billing limit reached. Check your provider account, then try again. No automatic retry was made.");
             if(response.statusCode()<200||response.statusCode()>=300)throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI provider rejected the request (HTTP "+response.statusCode()+"). Check server key, model access and billing.");

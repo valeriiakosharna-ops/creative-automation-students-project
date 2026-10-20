@@ -11,6 +11,9 @@ document.querySelectorAll("[data-style-version]").forEach((node) => {
 });
 const $ = (selector) => document.querySelector(selector);
 const form = $("#campaign-form");
+const runtime = window.STUDIO_RUNTIME || {};
+const browserKeyMode = runtime.serverManaged && runtime.clientKeysEnabled;
+let requestApiKey = "";
 const state = {
   projects: [],
   projectId: null,
@@ -78,7 +81,11 @@ function readBrief() {
 }
 function fillBrief(b) {
   form.reset();
-  if (!b) return;
+  if (!b) {
+    if (browserKeyMode || runtime.aiConfigured)
+      $("#generation-mode").value = "ai";
+    return;
+  }
   for (const [key, value] of Object.entries(b)) {
     const input = form.elements.namedItem(key);
     if (input && typeof value === "string" && "value" in input)
@@ -418,6 +425,13 @@ async function generate(event) {
     return;
   }
   box.hidden = true;
+  if (brief.mode === "ai" && browserKeyMode && !requestApiKey) {
+    openConnection();
+    $("#connection-status").textContent =
+      "Add your API key for this visit, or choose Template mode.";
+    $("#openai-key").focus();
+    return;
+  }
   notice("");
   await saveDraft();
   clearTimeout(previewTimer);
@@ -452,6 +466,7 @@ async function generate(event) {
         run.outputs,
         state.backend,
         state.controller.signal,
+        browserKeyMode ? requestApiKey : "",
       );
       copies = response.outputs;
       run.model = response.model;
@@ -810,14 +825,55 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setSidebar(false);
 });
 try {
-  state.backend = localStorage.getItem("studio:backend") || "";
+  state.backend = runtime.serverManaged
+    ? ""
+    : localStorage.getItem("studio:backend") || "";
 } catch {}
-$("#open-settings").addEventListener("click", () => {
+function updateKeyStatus() {
+  $("#connect-key").textContent = requestApiKey
+    ? "OpenAI key connected"
+    : "Connect OpenAI";
+  $("#key-status").textContent = requestApiKey
+    ? "A key is active for this visit. Leave the field empty to keep it, or paste a replacement."
+    : "No key connected. Template mode is available without one.";
+  $("#forget-key").disabled = !requestApiKey;
+}
+function openConnection() {
   $("#backend-url").value = state.backend;
+  $("#openai-key").value = "";
   $("#connection-status").textContent = "";
+  updateKeyStatus();
   $("#settings-dialog").showModal();
+}
+$("#open-settings").addEventListener("click", openConnection);
+$("#connect-key").addEventListener("click", openConnection);
+$("#forget-key").addEventListener("click", () => {
+  requestApiKey = "";
+  $("#openai-key").value = "";
+  updateKeyStatus();
+  $("#connection-status").textContent =
+    "Key forgotten. Paste it again when you need AI copy.";
 });
+$("#settings-dialog").addEventListener("close", () => {
+  $("#openai-key").value = "";
+});
+if (runtime.serverManaged) $("#backend-field").hidden = true;
+if (browserKeyMode) {
+  document.body.classList.add("hosted-key-mode");
+  $("#client-key-field").hidden = false;
+  $("#connect-key").hidden = false;
+  $("#open-settings").textContent = "Your OpenAI key →";
+  $("#save-connection").textContent = "Use key for this visit";
+  $("#check-connection").textContent = "Check server";
+  $("#generation-mode option[value=ai]").textContent = "AI · your OpenAI key";
+  $("#connection-description").textContent =
+    "Paste your OpenAI API key once for this visit. No installation or server address is needed. Your API account pays for your generation requests.";
+} else if (runtime.serverManaged) {
+  $("#connection-description").textContent =
+    "This site is already connected to its own server. The owner manages the OpenAI key in the server settings.";
+}
 function backendValue() {
+  if (runtime.serverManaged) return "";
   const value = $("#backend-url").value.trim().replace(/\/$/, "");
   if (!value) return "";
   const u = new URL(value);
@@ -838,8 +894,26 @@ function backendValue() {
 $("#settings-form").addEventListener("submit", (event) => {
   event.preventDefault();
   try {
+    if (browserKeyMode) {
+      const entered = $("#openai-key").value.trim();
+      if (entered && !/^[\x21-\x7e]{1,512}$/.test(entered))
+        throw Error("Paste the key without spaces or quotes.");
+      if (entered) requestApiKey = entered;
+      if (!requestApiKey)
+        throw Error(
+          "Paste your API key, or close this window to use Template mode.",
+        );
+      $("#openai-key").value = "";
+      updateKeyStatus();
+      $("#settings-dialog").close();
+      notice(
+        "OpenAI key connected for this visit. It will be cleared when you refresh or close this page.",
+      );
+      return;
+    }
     state.backend = backendValue();
-    localStorage.setItem("studio:backend", state.backend);
+    if (!runtime.serverManaged)
+      localStorage.setItem("studio:backend", state.backend);
     $("#settings-dialog").close();
     notice(
       "Backend address saved. Your API key stays in the Java server configuration.",
@@ -859,9 +933,11 @@ $("#check-connection").addEventListener("click", async () => {
     const data = await response.json();
     if (data.service !== "creative-automation-studio")
       throw Error("This address does not point to the Studio Java server.");
-    status.textContent = data.aiConfigured
-      ? "Connected. The server has an AI key configured."
-      : "Connected. Add your key to the Java server configuration to enable AI copy.";
+    status.textContent = data.clientKeysEnabled
+      ? "Studio is online. Your key is checked by OpenAI on your first generation; this server check spends no API credits."
+      : data.aiConfigured
+        ? "Connected. The server has an AI key configured."
+        : "Connected. Add your key to the Java server configuration to enable AI copy.";
   } catch (error) {
     status.textContent = `Connection failed: ${error.message}. Template mode is still available.`;
   }
@@ -919,7 +995,7 @@ $("#example-button").addEventListener("click", async () => {
       formats: ["instagram_post", "facebook"],
       languages: ["en", "uk"],
       variants: 1,
-      mode: "template",
+      mode: browserKeyMode || runtime.aiConfigured ? "ai" : "template",
       colors: ["#00a6eb", "#e60036", "#302a40"],
     });
     renderAssets();
@@ -963,6 +1039,11 @@ async function init() {
     handleError(error);
   }
 }
+window.addEventListener("pagehide", () => {
+  requestApiKey = "";
+  $("#openai-key").value = "";
+  updateKeyStatus();
+});
 window.addEventListener("beforeunload", (event) => {
   if (state.busy) {
     event.preventDefault();

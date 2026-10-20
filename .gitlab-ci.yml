@@ -1,0 +1,34 @@
+# A Docker-capable runner builds/tests the same image as GitHub and Render.
+# The runner administrator enables TLS-enabled Docker-in-Docker services.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+stages: [build]
+hosted-studio:
+  stage: build
+  image: docker:28-cli
+  services:
+    - name: docker:28-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: /certs
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: /certs/client
+  script:
+    - docker info
+    - docker build --tag studio-ci:$CI_COMMIT_SHA .
+    - docker run -d --name studio-smoke studio-ci:$CI_COMMIT_SHA
+    - docker run --rm -i --network container:studio-smoke python:3.12-alpine python - http://127.0.0.1:8080 < scripts/check_hosted.py
+    - |
+      if [ "${CI_COMMIT_BRANCH:-}" = "$CI_DEFAULT_BRANCH" ]; then
+        printf '%s' "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+        docker tag studio-ci:$CI_COMMIT_SHA "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+        docker tag studio-ci:$CI_COMMIT_SHA "$CI_REGISTRY_IMAGE:latest"
+        docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+        docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
+  after_script:
+    - docker logs studio-smoke
+    - docker rm -f studio-smoke
