@@ -27,17 +27,20 @@ jobs:
           node --check script.js
           python3 scripts/check_site.py
       - name: Build Studio MVP
+        env:
+          STUDIO_FIREBASE_PROJECT_ID: ${{ vars.STUDIO_FIREBASE_PROJECT_ID }}
+          STUDIO_FIREBASE_API_KEY: ${{ vars.STUDIO_FIREBASE_API_KEY }}
         run: |
           npm ci --prefix studio
           npm --prefix studio test
-          npm --prefix studio run build
+          npm --prefix studio run build:pages
       - name: Build static site
         run: |
           mkdir -p _site
           cp index.html styles.css script.js _site/
           cp -R assets _site/assets
           mkdir -p _site/studio
-          cp studio/pages.html _site/studio/index.html
+          cp -R studio/dist/. _site/studio/
           cp -R style-guide _site/style-guide
           cp studio/QUICKSTART.md _site/studio/QUICKSTART.md
           touch _site/.nojekyll

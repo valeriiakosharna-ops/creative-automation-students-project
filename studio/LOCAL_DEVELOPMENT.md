@@ -128,7 +128,7 @@ Use Vite's printed address, normally `http://127.0.0.1:5173`. Requests to `/api`
 
 The preceding instructions intentionally use an unauthenticated contributor profile and browser-local storage. Never expose that setup to colleagues or use it for confidential company material. The default Docker image instead requires corporate mode; follow [Deployment](../DEPLOYMENT.md) for Google login, the owner access panel, a shared encrypted disk and private server key configuration.
 
-GitHub Pages now contains only a Studio landing page. It cannot run the private Java API and must not be used for company uploads or API keys. Real Google/OpenAI integration needs approved outbound access and trusted CA configuration; never disable TLS verification.
+GitHub Pages now runs the separate browser-only Studio described in [Free Pages setup](PAGES_SETUP.md), with per-account local projects and visit-only keys sent directly to OpenAI. It cannot run the private Java API or provide its encrypted shared library. Real Google/OpenAI integration needs approved outbound access and trusted CA configuration; never disable TLS verification.
 
 ## Troubleshooting
 

@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function google() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function email() { return request.auth.token.email.lower(); }
+    function configuration() { return get(/databases/$(database)/documents/studioSettings/access).data; }
+    function owner() {
+      return google() && configuration().ownerEmail == email()
+        && (configuration().get('ownerUid', null) == null || configuration().ownerUid == request.auth.uid);
+    }
+    match /studioSettings/access {
+      allow get: if owner();
+      allow update: if owner() && resource.data.get('ownerUid', null) == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid'])
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow create, delete, list: if false;
+    }
+    match /studioAccess/{address} {
+      function valid() {
+        return request.resource.data.keys().hasOnly(['email', 'active', 'uid', 'updatedAt'])
+          && request.resource.data.keys().hasAll(['email', 'active', 'uid', 'updatedAt'])
+          && address == address.lower() && address.size() <= 254
+          && address.matches('^[^/@\\s]+@[^/@\\s]+\\.[^/@\\s]+$')
+          && request.resource.data.email == address
+          && request.resource.data.active is bool
+          && (request.resource.data.uid == null || request.resource.data.uid is string)
+          && request.resource.data.updatedAt == request.time;
+      }
+      allow get: if owner() || (google() && email() == address);
+      allow list: if owner();
+      allow create: if owner() && address != configuration().ownerEmail && valid()
+        && request.resource.data.uid == null;
+      allow update: if (owner() && address != configuration().ownerEmail && valid())
+        || (google() && email() == address && resource.data.active == true
+          && resource.data.uid == null
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid'])
+          && request.resource.data.uid == request.auth.uid);
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

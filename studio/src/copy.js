@@ -1,4 +1,5 @@
 import { BRAND_POLICY } from "./brand.js";
+import { browserCopy } from "./browser-copy.js";
 import { csrfHeaders } from "./private-api.js";
 export const PROMPT_VERSION = "studio-copy-v2";
 export function eventDate(b, lang) {
@@ -101,42 +102,51 @@ export async function requestCopy(
   signal,
   apiKey = "",
 ) {
-  if (apiKey && baseUrl)
-    throw Error(
-      "Open the full hosted Studio site to use your key. Keys are sent only to this site's own server.",
-    );
-  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/copy`, {
-    method: "POST",
-    ...(apiKey ? { mode: "same-origin", redirect: "error" } : {}),
-    headers: {
-      "Content-Type": "application/json",
-      ...(await csrfHeaders()),
-      ...(apiKey ? { "X-OpenAI-Key": apiKey } : {}),
-    },
-    body: JSON.stringify({
-      brief,
-      styleGuideVersion: BRAND_POLICY.version,
-      outputs: outputs.map(({ id, format, language, variant }) => ({
-        id,
-        format,
-        language,
-        variant,
-      })),
-    }),
-    signal,
-  });
   let data;
-  try {
-    data = await response.json();
-  } catch {
-    throw Error(
-      "The AI server returned an unreadable response. Check the backend URL.",
-    );
+  if (typeof window !== "undefined" && window.STUDIO_RUNTIME?.pages) {
+    if (baseUrl)
+      throw Error(
+        "Pages AI requests use OpenAI directly; custom proxy URLs are disabled.",
+      );
+    data = await browserCopy(brief, outputs, apiKey, signal);
+  } else {
+    if (apiKey && baseUrl)
+      throw Error(
+        "Open the full hosted Studio site to use your key. Keys are sent only to this site's own server.",
+      );
+    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/copy`, {
+      method: "POST",
+      ...(apiKey ? { mode: "same-origin", redirect: "error" } : {}),
+      headers: {
+        "Content-Type": "application/json",
+        ...(await csrfHeaders()),
+        ...(apiKey ? { "X-OpenAI-Key": apiKey } : {}),
+      },
+      body: JSON.stringify({
+        brief,
+        styleGuideVersion: BRAND_POLICY.version,
+        outputs: outputs.map(({ id, format, language, variant }) => ({
+          id,
+          format,
+          language,
+          variant,
+        })),
+      }),
+      signal,
+    });
+
+    try {
+      data = await response.json();
+    } catch {
+      throw Error(
+        "The AI server returned an unreadable response. Check the backend URL.",
+      );
+    }
+    if (!response.ok)
+      throw Error(
+        data.message || "AI copy generation failed. Your brief has been kept.",
+      );
   }
-  if (!response.ok)
-    throw Error(
-      data.message || "AI copy generation failed. Your brief has been kept.",
-    );
   if (data.styleGuideVersion !== BRAND_POLICY.version)
     throw Error(
       "AI server and browser style guide versions differ. Rebuild/restart the server and reload Studio.",

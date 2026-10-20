@@ -1,4 +1,6 @@
-# Private corporate deployment
+# Optional private corporate deployment
+
+For free GitHub Pages with visit keys and browser-local libraries, follow [Free Pages setup](studio/PAGES_SETUP.md). The following is a separate corporate hosting option, not required by Pages.
 
 The default Docker image serves frontend and Java API at one HTTPS origin, with Google Workspace OIDC sign-in, an owner-managed exact-email access list, a company server-side OpenAI key and one encrypted shared library. Ordinary users install nothing. Google/GitHub/GitLab repositories alone do not run this server.
 
@@ -61,7 +63,7 @@ The HTTPS sign-in page is reachable publicly, but Studio pages, APIs and materia
 4. Company Kubernetes/OpenShift/container hosting pulls the commit image with approved registry credentials. Configure one replica, persistent storage, HTTPS, the secret settings above and a health-checked rollout trigger. CI cannot infer the company's cluster credentials or hosting target.
 5. Share only the private Studio URL. Colleagues sign in with Google; no local setup or API key entry is involved.
 
-GitHub builds the same image and publishes it on default-branch pushes. GitHub Pages serves documentation and a static landing page, not a working team Studio. No real colleague addresses or private configuration belong in CI variables used for builds/artifacts.
+GitHub builds the same image and publishes it on default-branch pushes. GitHub Pages serves documentation and the separate browser-only Studio; it does not run the private corporate Java service or share its library. No real colleague addresses or private configuration belong in CI variables used for builds/artifacts.
 
 ## 3. Verify before inviting the team
 

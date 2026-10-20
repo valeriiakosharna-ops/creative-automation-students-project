@@ -18,3 +18,11 @@ studio/public/favicon.svg
 studio/public/style-guide/
 studio/public/brand-policy.json
 studio/public/quickstart.md
+
+# Firebase emulators and generated documentation
+firebase-debug.log
+firestore-debug.log
+.firebase/
+studio/public/RENDER_SETUP.md
+
+/test-results/
