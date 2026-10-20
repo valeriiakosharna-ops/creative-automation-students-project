@@ -1,33 +1,5 @@
-export const FORMATS = {
-  instagram_post: {
-    label: "Instagram post",
-    network: "instagram",
-    width: 1080,
-    height: 1080,
-    ratio: "1:1",
-  },
-  instagram_story: {
-    label: "Instagram story",
-    network: "instagram",
-    width: 1080,
-    height: 1920,
-    ratio: "9:16",
-  },
-  facebook: {
-    label: "Facebook post",
-    network: "facebook",
-    width: 1200,
-    height: 630,
-    ratio: "1.91:1",
-  },
-  google_chat: {
-    label: "Google Chat",
-    network: "google_chat",
-    width: 1200,
-    height: 675,
-    ratio: "16:9",
-  },
-};
+import { BRAND_POLICY } from "./brand.js";
+export const FORMATS = BRAND_POLICY.formats;
 export const LANGUAGES = { en: "English", uk: "Українська" };
 export function validateBrief(b, logos) {
   const errors = [];
@@ -41,7 +13,10 @@ export function validateBrief(b, logos) {
   if (!b.timeZone) errors.push("Choose a time zone.");
   if (!b.formats?.length || b.formats.some((f) => !FORMATS[f]))
     errors.push("Select at least one supported format.");
-  if (!b.languages?.length || b.languages.some((l) => !LANGUAGES[l]))
+  if (
+    !b.languages?.length ||
+    b.languages.some((l) => !BRAND_POLICY.languages.includes(l))
+  )
     errors.push("Choose English, Ukrainian, or both.");
   if (!Number.isInteger(b.variants) || b.variants < 1 || b.variants > 3)
     errors.push("Choose 1–3 variants per format and language.");

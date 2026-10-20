@@ -11,6 +11,7 @@ export async function buildArchive(run) {
       mode: run.mode,
       model: run.model || null,
       promptVersion: run.promptVersion,
+      styleGuideVersion: run.styleGuideVersion || null,
       brief: run.brief,
       assets: {
         logos: run.assets.logos.map(({ id, name }) => ({ id, name })),
@@ -36,6 +37,10 @@ export async function buildArchive(run) {
     throw Error("This run has no completed outputs to export.");
   files["manifest.json"] = strToU8(JSON.stringify(manifest, null, 2));
   files["brief.json"] = strToU8(JSON.stringify(run.brief, null, 2));
+  if (run.styleGuideSnapshot)
+    files["style-guide.json"] = strToU8(
+      JSON.stringify(run.styleGuideSnapshot, null, 2),
+    );
   files["README.txt"] = strToU8(
     "Creative Automation Studio\nEach PNG has a matching UTF-8 caption. Review before publishing.\nmanifest.json records inputs, photo assignments, all logo IDs, generation mode and failures. Original uploads are not included. Failed/cancelled outputs are omitted from content folders.\n",
   );

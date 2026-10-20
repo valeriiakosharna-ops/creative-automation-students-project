@@ -11,3 +11,6 @@ studio/playwright-report/
 studio/public/brief/
 studio/public/logo.svg
 studio/public/favicon.svg
+studio/public/style-guide/
+studio/public/brand-policy.json
+studio/public/quickstart.md

@@ -40,6 +40,10 @@ class ApiTest {
         var data=request();((Map<String,Object>)data.get("brief")).put("date","2026-02-30");
         mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isBadRequest());
     }
+    @Test void mismatchedStyleGuideIsRejectedBeforeSpendingCredits() throws Exception {
+        var data=request();data.put("styleGuideVersion","old-guide");
+        mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isConflict());
+    }
     @Test void oversizedJsonIsRejectedBeforeParsing() throws Exception {
         mvc.perform(post("/api/copy").contentType("application/json").content(" ".repeat(65537))).andExpect(status().isPayloadTooLarge());
     }

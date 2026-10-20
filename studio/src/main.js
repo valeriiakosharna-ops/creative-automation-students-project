@@ -1,3 +1,4 @@
+import { BRAND_POLICY, snapshotPolicy } from "./brand.js";
 import "./style.css";
 import { FORMATS, LANGUAGES, validateBrief, planOutputs } from "./planner.js";
 import { templateCopy, requestCopy, PROMPT_VERSION } from "./copy.js";
@@ -5,6 +6,9 @@ import { renderVisual, decodeImage } from "./renderer.js";
 import { all, get, put, runsFor, deleteProject } from "./storage.js";
 import { buildArchive, download } from "./archive.js";
 
+document.querySelectorAll("[data-style-version]").forEach((node) => {
+  node.textContent = BRAND_POLICY.version;
+});
 const $ = (selector) => document.querySelector(selector);
 const form = $("#campaign-form");
 const state = {
@@ -353,7 +357,7 @@ async function updatePreview() {
   );
   const first = outputs[0];
   if (!first) return;
-  const blob = await renderVisual(
+  const { blob } = await renderVisual(
     b,
     first,
     templateCopy(b, first),
@@ -427,6 +431,8 @@ async function generate(event) {
     assets: structuredClone(state.assets),
     mode: brief.mode,
     promptVersion: PROMPT_VERSION,
+    styleGuideVersion: BRAND_POLICY.version,
+    styleGuideSnapshot: snapshotPolicy(brief.colors),
     outputs: planOutputs(brief, state.assets.photos, state.assets.logos),
   };
   state.run = run;
@@ -458,8 +464,12 @@ async function generate(event) {
       $("#run-progress").value = 10 + (index / run.outputs.length) * 90;
       const copy = copies.find((c) => c.id === output.id);
       try {
-        const image = await renderVisual(brief, output, copy, run.assets);
-        Object.assign(output, copy, { image, status: "completed" });
+        const rendered = await renderVisual(brief, output, copy, run.assets);
+        Object.assign(output, copy, {
+          image: rendered.blob,
+          style: rendered.style,
+          status: "completed",
+        });
       } catch (error) {
         output.status = "failed";
         output.error = error.message;
@@ -535,7 +545,7 @@ function renderResults() {
   const completed = run.outputs.filter((o) => o.status === "completed").length;
   $("#run-label").textContent = `RUN / ${run.id.slice(0, 8).toUpperCase()}`;
   $("#run-mode-label").textContent =
-    `${run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()}`;
+    `${run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()} / GUIDE ${run.styleGuideVersion || "LEGACY"}`;
   $("#results-title").textContent =
     run.status === "running"
       ? "Making it yours."
@@ -621,6 +631,8 @@ function renderResults() {
       mode: run.mode,
       model: run.model || null,
       promptVersion: run.promptVersion,
+      styleGuideVersion: run.styleGuideVersion || null,
+      styleGuideSnapshot: run.styleGuideSnapshot || null,
       brief: run.brief,
       outputs: run.outputs.map(
         ({ image, caption, subheading, ...rest }) => rest,

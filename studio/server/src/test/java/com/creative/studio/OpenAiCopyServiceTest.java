@@ -25,12 +25,17 @@ class OpenAiCopyServiceTest {
         try {
             var service=new OpenAiCopyService(mapper,"test-only","test-model","http://127.0.0.1:"+server.getAddress().getPort()+"/v1");
             var response=service.generate(request());assertEquals("Тиждень ML",response.outputs().getFirst().headline());
-            var sent=mapper.readTree(captured.get());assertEquals("json_schema",sent.path("response_format").path("type").asText());assertEquals("test-model",sent.path("model").asText());
+            var sent=mapper.readTree(captured.get());assertEquals("json_schema",sent.path("response_format").path("type").asText());assertEquals("test-model",sent.path("model").asText());assertTrue(sent.path("messages").path(0).path("content").asText().contains("Mandatory brand style guide"));assertTrue(sent.path("messages").path(0).path("content").asText().contains("#00A6EB"));assertEquals("1.0.0",response.styleGuideVersion());
         }finally{server.stop(0);}
     }
     @Test void duplicateAndIncompleteOutputsAreRejected() throws Exception {
-        assertThrows(IllegalArgumentException.class,()->OpenAiCopyService.validateResponse(mapper.readTree("{\"outputs\":[]}"),request()));
-        assertThrows(IllegalArgumentException.class,()->OpenAiCopyService.validateResponse(mapper.readTree("{\"outputs\":[{\"id\":\"wrong\",\"headline\":\"Title\",\"subheading\":\"\",\"cta\":\"Go\",\"caption\":\"Text\"}]}"),request()));
+        assertThrows(IllegalArgumentException.class,()->OpenAiCopyService.validateResponse(mapper.readTree("{\"outputs\":[]}"),request(),OpenAiCopyService.readPolicy(mapper)));
+        assertThrows(IllegalArgumentException.class,()->OpenAiCopyService.validateResponse(mapper.readTree("{\"outputs\":[{\"id\":\"wrong\",\"headline\":\"Title\",\"subheading\":\"\",\"cta\":\"Go\",\"caption\":\"Text\"}]}"),request(),OpenAiCopyService.readPolicy(mapper)));
+    }
+    @Test void formatSpecificStyleLimitsAreEnforced() throws Exception {
+        var output=Map.of("id","facebook-uk-1","headline","Title","subheading","x".repeat(71),"cta","Join","caption","Valid caption");
+        var content=mapper.valueToTree(Map.of("outputs",List.of(output)));
+        assertThrows(IllegalArgumentException.class,()->OpenAiCopyService.validateResponse(content,request(),OpenAiCopyService.readPolicy(mapper)));
     }
     @Test void providerErrorsNeverEchoItsBody() throws Exception {
         var server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);

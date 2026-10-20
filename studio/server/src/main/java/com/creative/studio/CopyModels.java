@@ -27,7 +27,7 @@ public final class CopyModels {
         @NotBlank @Pattern(regexp="instagram_post|instagram_story|facebook|google_chat") String format,
         @NotBlank @Pattern(regexp="en|uk") String language,
         @Min(1) @Max(3) int variant) {}
-    public record CopyRequest(@NotNull @Valid Brief brief,@NotEmpty @Size(max=24) List<@NotNull @Valid OutputSpec> outputs) {}
+    public record CopyRequest(@NotNull @Valid Brief brief,@NotEmpty @Size(max=24) List<@NotNull @Valid OutputSpec> outputs, @Size(max=32) String styleGuideVersion) {}
     public record CopyOutput(String id,String headline,String subheading,String cta,String caption) {}
-    public record CopyResponse(String model,String promptVersion,List<CopyOutput> outputs) {}
+    public record CopyResponse(String model,String promptVersion,String styleGuideVersion,List<CopyOutput> outputs) {}
 }

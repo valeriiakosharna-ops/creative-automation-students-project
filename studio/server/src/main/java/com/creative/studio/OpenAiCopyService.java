@@ -15,15 +15,17 @@ import static com.creative.studio.CopyModels.*;
 
 @Service
 public class OpenAiCopyService {
-    static final String PROMPT_VERSION="studio-copy-v1";
+    static final String PROMPT_VERSION="studio-copy-v2";
     private final ObjectMapper mapper;
     private final String key,model,base;
     private final HttpClient client;
+    private final JsonNode brandPolicy;
     private final Semaphore slot=new Semaphore(1);
     public OpenAiCopyService(ObjectMapper mapper,@Value("${creative.openai.api-key:}") String key,
         @Value("${creative.openai.model:gpt-4.1-mini}") String model,
         @Value("${creative.openai.base-url:https://api.openai.com/v1}") String base) {
         this.mapper=mapper;this.key=key;this.model=model;this.base=base.replaceAll("/+$","");
+        this.brandPolicy=readPolicy(mapper);
         var builder=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15));
         // Java does not automatically read HTTPS_PROXY. Preserve the session route.
         var proxy=System.getenv("HTTPS_PROXY");
@@ -39,6 +41,11 @@ public class OpenAiCopyService {
         }
         this.client=builder.build();
     }
+    static JsonNode readPolicy(ObjectMapper mapper) {
+        try(var input=new org.springframework.core.io.ClassPathResource("brand-policy.json").getInputStream()) {return mapper.readTree(input);}
+        catch(java.io.IOException error) {throw new IllegalStateException("Cannot load bundled brand style guide.",error);}
+    }
+    public String policyVersion() {return brandPolicy.path("version").asText();}
     public boolean configured(){return !key.isBlank();}
     public CopyResponse generate(CopyRequest request) {
         if(!configured())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI is not configured. Set CREATIVE_OPENAI_API_KEY or creative.openai.api-key on the Java server. Template mode works without a key.");
@@ -59,6 +66,7 @@ public class OpenAiCopyService {
                 *bold* title, no hashtag clutter. Each variant has a different hook without changing facts. Use visual direction
                 for tone only. Return only structured JSON.
                 """;
+            system += "\nMandatory brand style guide (visuals are composited by the renderer; follow its channel copy rules, language rules, tone and format-specific character maxima):\n"+mapper.writeValueAsString(brandPolicy);
             var body=Map.of("model",model,"messages",List.of(Map.of("role","system","content",system),Map.of("role","user","content",mapper.writeValueAsString(request))),
                 "response_format",Map.of("type","json_schema","json_schema",Map.of("name","social_content","strict",true,"schema",schema)),"max_completion_tokens",12000);
             var httpRequest=HttpRequest.newBuilder(URI.create(base+"/chat/completions")).timeout(Duration.ofSeconds(120))
@@ -69,7 +77,7 @@ public class OpenAiCopyService {
             var choice=mapper.readTree(response.body()).path("choices").path(0);
             if(!"stop".equals(choice.path("finish_reason").asText()))throw new IllegalArgumentException("Incomplete response");
             var content=mapper.readTree(choice.path("message").path("content").asText());
-            return new CopyResponse(model,PROMPT_VERSION,validateResponse(content,request));
+            return new CopyResponse(model,PROMPT_VERSION,policyVersion(),validateResponse(content,request,brandPolicy));
         } catch(ResponseStatusException error){throw error;}
         catch(HttpTimeoutException error){throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,"AI timed out. Your brief is saved. Check the provider before retrying; no automatic retry was made.");}
         catch(InterruptedException error){Thread.currentThread().interrupt();throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI generation interrupted.");}
@@ -77,14 +85,18 @@ public class OpenAiCopyService {
         catch(Exception error){throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI returned incomplete or invalid content. No template text was substituted.");}
         finally{slot.release();}
     }
-    static List<CopyOutput> validateResponse(JsonNode root,CopyRequest request) {
+    static List<CopyOutput> validateResponse(JsonNode root,CopyRequest request,JsonNode policy) {
         var array=root.path("outputs");if(!array.isArray()||array.size()!=request.outputs().size())throw new IllegalArgumentException("Wrong output count");
         var expected=new HashSet<String>();request.outputs().forEach(o->expected.add(o.id()));
         var actual=new HashSet<String>();var outputs=new ArrayList<CopyOutput>();
         for(var item:array) {
             for(var field:List.of("id","headline","subheading","cta","caption"))if(!item.path(field).isTextual())throw new IllegalArgumentException("Wrong type");
             var o=new CopyOutput(item.path("id").asText(),item.path("headline").asText(),item.path("subheading").asText(),item.path("cta").asText(),item.path("caption").asText());
-            if(!expected.contains(o.id())||!actual.add(o.id())||o.headline().isBlank()||o.caption().isBlank()||o.headline().length()>80||o.subheading().length()>160||o.cta().length()>40||o.caption().length()>3000)throw new IllegalArgumentException("Invalid content");outputs.add(o);
+            if(!expected.contains(o.id())||!actual.add(o.id())||o.headline().isBlank()||o.caption().isBlank()||o.headline().length()>80||o.subheading().length()>160||o.cta().length()>40||o.caption().length()>3000)throw new IllegalArgumentException("Invalid content");
+            var spec=request.outputs().stream().filter(value->value.id().equals(o.id())).findFirst().orElseThrow();
+            var guide=policy.path("formats").path(spec.format());
+            if(o.subheading().length()>guide.path("subheading").path("maxCharacters").asInt() || o.caption().length()>guide.path("caption").path("maxCharacters").asInt())throw new IllegalArgumentException("Style guide character limit exceeded");
+            outputs.add(o);
         }
         return outputs;
     }

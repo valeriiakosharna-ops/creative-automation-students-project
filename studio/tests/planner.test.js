@@ -110,3 +110,58 @@ test("ZIP contains paired PNG/caption files, immutable brief and explicit failed
   assert.ok(!("image" in manifest.outputs[0]));
   assert.deepEqual(JSON.parse(strFromU8(files["brief.json"])), brief);
 });
+
+test("shared policy snapshots are independent and template text obeys each format limit", async () => {
+  const { BRAND_POLICY, snapshotPolicy } = await import("../src/brand.js");
+  const snapshot = snapshotPolicy(["#111111", "#222222", "#333333"]);
+  snapshot.formats.instagram_story.safeArea.bottom = 1;
+  assert.equal(BRAND_POLICY.formats.instagram_story.safeArea.bottom, 320);
+  const long = {
+    ...brief,
+    description: "A practical workshop for student builders. ".repeat(40),
+  };
+  for (const output of planOutputs(long, photos, logos).filter(
+    (o) => o.language === "en",
+  )) {
+    const copy = templateCopy(long, output),
+      rule = BRAND_POLICY.formats[output.format];
+    assert.ok(copy.caption.length <= rule.caption.maxCharacters);
+    assert.ok(copy.subheading.length <= rule.subheading.maxCharacters);
+    assert.match(copy.caption, /ML Week/);
+  }
+  assert.ok(long.description.length > 1000);
+});
+test("AI copy rejects a different guide version before it can be rendered", async (t) => {
+  const { requestCopy } = await import("../src/copy.js");
+  t.mock.method(
+    globalThis,
+    "fetch",
+    async () =>
+      new Response(JSON.stringify({ styleGuideVersion: "old", outputs: [] })),
+  );
+  await assert.rejects(
+    () => requestCopy(brief, planOutputs(brief, photos, logos), "", undefined),
+    /versions differ/,
+  );
+});
+
+test("shortening an optional caption body preserves an identical title and the complete URL", () => {
+  const b = {
+    ...brief,
+    title: "T".repeat(80),
+    description: "T".repeat(80),
+    location: "L".repeat(100),
+    url: "https://example.com/" + "p".repeat(140),
+  };
+  const output = {
+    id: "chat",
+    format: "google_chat",
+    language: "en",
+    variant: 1,
+  };
+  const copy = templateCopy(b, output);
+  assert.ok(copy.caption.startsWith(`*${b.title}*`));
+  assert.ok(copy.caption.includes(b.url));
+  assert.ok(copy.caption.length <= 450);
+  assert.equal(b.description.length, 80);
+});

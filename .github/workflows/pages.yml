@@ -37,6 +37,8 @@ jobs:
           cp index.html styles.css script.js _site/
           cp -R assets _site/assets
           cp -R studio/dist _site/studio
+          cp -R style-guide _site/style-guide
+          cp studio/QUICKSTART.md _site/studio/QUICKSTART.md
           touch _site/.nojekyll
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

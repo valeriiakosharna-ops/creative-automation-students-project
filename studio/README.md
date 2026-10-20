@@ -2,6 +2,10 @@
 
 A working single-user content studio in the same palette as the student project brief. The frontend works on GitHub Pages. A separate Java 21 / Spring Boot server adds OpenAI copy generation and translation; it can also serve the complete built frontend.
 
+## Start here
+
+Use [Quickstart](QUICKSTART.md) for full macOS/Linux/Windows key and launch instructions. The [social style guide](../style-guide/README.md) is applied through the shared `brand-policy.json`, bundled into both frontend and Java server. It controls dimensions, safe areas, type floors, logo layout, and channel-specific copy. Each new run snapshots the effective policy; its ZIP includes `style-guide.json` and layout measurements. Legacy runs retain their original results.
+
 ## What works
 
 - Create, rename and delete project folders. Drafts, original uploads, generation snapshots and output files persist in IndexedDB in this browser.
@@ -21,7 +25,7 @@ Example: 2 photos + Instagram post and story + 2 languages + 2 variants = 8 Inst
 
 ### Copy modes
 
-**Template** works immediately without a key, using localized channel-specific structures. It does not translate your text. Optional English/Ukrainian title and description fields supply exact localized wording; otherwise a title stays as supplied, and the description is included only when its source language matches. Full descriptions stay in captions; visual summaries are shortened to 160 characters. Variants change their hook and template accents.
+**Template** works immediately without a key, using localized channel-specific structures. It does not translate your text. Optional English/Ukrainian title and description fields supply exact localized wording; otherwise a title stays as supplied, and the description is included only when its source language matches. Optional descriptions are shortened to each channel’s style-guide limits; the full original description remains in the saved brief. Essential details are preserved, and an output reports an error if they cannot fit. Variants change their hook and template accents.
 
 **AI** sends only the text brief and requested output specifications to the Java server. The server requests structured output from OpenAI (`gpt-4.1-mini` by default) and validates count, identities and text limits. It translates and adapts copy for each selected channel and language. Uploaded photos/logos are never sent to the provider. An AI error stays an error; no template text is silently substituted. Timeouts and provider errors are not automatically retried, avoiding unexpected repeat requests.
 
@@ -53,7 +57,7 @@ The API key placeholder is intentionally empty in `server/application-local.prop
 
 ```sh
 cd studio/server
-cp application-local.properties.example application-local.properties
+test -f application-local.properties || cp application-local.properties.example application-local.properties
 ```
 
 Edit the ignored `application-local.properties` file and set `creative.openai.api-key=` to your key. Alternatively set the server environment variable `CREATIVE_OPENAI_API_KEY`. Never place the key in frontend code, a `VITE_` variable, GitHub Pages files, or a committed properties file.
@@ -90,6 +94,7 @@ instagram_post/en/variant-01.txt
 ... (one pair for each completed output)
 brief.json
 manifest.json
+style-guide.json
 README.txt
 ```
 
