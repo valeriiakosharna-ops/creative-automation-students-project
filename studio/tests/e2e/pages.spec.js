@@ -415,10 +415,11 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
       ),
     ),
   ).toHaveLength(1);
-  expect(requests.images[0].files).toHaveLength(2);
-  expect(
-    requests.images.slice(1).every((request) => request.files.length === 1),
-  ).toBe(true);
+  // Vision planning runs concurrently: completion order is not frame order.
+  const photoRequest = requests.images.find((request) => request.input.references.some((ref) => ref.role.startsWith("ASSIGNED_EVENT_PHOTO")));
+  expect(photoRequest.input.frame.id).toBe("instagram_post-en-1");
+  expect(photoRequest.files).toHaveLength(2);
+  expect(requests.images.filter((request) => request !== photoRequest).every((request) => request.files.length === 1)).toBe(true);
   expect(
     requests.images.every(
       (request) =>
