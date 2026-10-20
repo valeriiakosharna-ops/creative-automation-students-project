@@ -43,14 +43,14 @@ const visual = {
     direction: "Clear event hook with original logos.",
   },
 };
-const storyboard = { posts: [{ id: "google_chat-en", visuals: [visual] }] };
+const storyboard = { campaignStyle: "Contemporary editorial, shared cyan/red identity", posts: [{ id: "google_chat-en", visuals: [visual] }] };
 const copy = {
   posts: [{ id: "google_chat-en", caption: "Join Creative Lab." }],
 };
 const response = (data) =>
   Response.json({
     choices: [
-      { finish_reason: "stop", message: { content: JSON.stringify(data) } },
+      { finish_reason: "stop", message: { content: JSON.stringify(data?.posts?.[0]?.visuals ? { campaignStyle: storyboard.campaignStyle, ...data } : data) } },
     ],
   });
 
@@ -73,23 +73,21 @@ test("planner and copy are separate concurrent requests with repository prompts 
         );
         const body = JSON.parse(options.body);
         assert.equal(body.store, false);
-        assert.ok(
-          body.messages[0].content.includes(JSON.stringify(BRAND_POLICY)),
-        );
+        assert.ok(!body.messages[0].content.includes("minimumTextContrast"));
+        assert.ok(!body.messages[0].content.includes("logo shelf;"));
         const payload = JSON.parse(body.messages[1].content);
         if (body.response_format.json_schema.name === "visual_storyboard") {
-          assert.match(body.messages[0].content, /storyboard planner/);
-          assert.match(payload.outputs[0].visualStyle, /internal-team/);
+          assert.match(body.messages[0].content, /coherent visual campaign/);
+          assert.match(payload.outputs[0].visualStyle, /internal announcement/);
           assert.equal(payload.outputs[0].photoAvailable, true);
-          assert.equal(
-            payload.outputs[0].maximumCharacters.subheading,
-            BRAND_POLICY.formats.google_chat.subheading.maxCharacters,
-          );
+          assert.equal(payload.outputs[0].maximumCharacters, undefined);
+          assert.match(body.messages[0].content, /#00a6eb/);
           pending.push(() => resolve(response(storyboard)));
         } else {
           assert.equal(body.response_format.json_schema.name, "social_posts");
-          assert.match(body.messages[0].content, /ONE post caption/);
-          assert.equal(payload.posts[0].maximumCharacters, 450);
+          assert.match(body.messages[0].content, /ONE polished post caption/);
+          assert.equal(payload.posts[0].captionGuidance.recommendedMax, 600);
+          assert.equal(payload.posts[0].maximumCharacters, undefined);
           pending.push(() => resolve(response(copy)));
         }
       }),
@@ -125,7 +123,7 @@ test("unknown IDs, duplicate frames and malformed planners are rejected without 
           visuals: [
             {
               ...visual,
-              visualPlan: { ...visual.visualPlan, layout: "arbitrary-code" },
+              visualPlan: { ...visual.visualPlan, layout: null },
             },
           ],
         },
@@ -167,14 +165,14 @@ test("provider response order cannot change carousel frame order", async (t) => 
   );
 });
 
-test("overlong post text remains editable and is flagged without truncating event facts", async (t) => {
+test("captions above the writing target remain complete and ready for approval", async (t) => {
   t.mock.method(globalThis, "fetch", async () =>
-    response({ posts: [{ id: "google_chat-en", caption: "x".repeat(451) }] }),
+    response({ posts: [{ id: "google_chat-en", caption: "x".repeat(601) }] }),
   );
   const [post] = await browserPostCopy(brief, outputs, "test-key");
-  assert.equal(post.caption.length, 451);
-  assert.equal(post.status, "failed");
-  assert.match(post.error, /limit 450/);
+  assert.equal(post.caption.length, 601);
+  assert.equal(post.status, "completed");
+  assert.equal(post.error, undefined);
 });
 
 test("errors never echo provider content or keys, and requests do not silently retry", async (t) => {
@@ -227,9 +225,9 @@ test("image edits receive the planner, only the assigned photo, all original log
     );
     const body = options.body,
       refs = body.getAll("image[]");
-    assert.equal(body.get("model"), "gpt-image-1.5");
+    assert.equal(body.get("model"), "gpt-image-2.5-flare");
     assert.equal(body.get("n"), "1");
-    assert.equal(body.get("input_fidelity"), "high");
+    assert.equal(body.get("input_fidelity"), null);
     assert.equal(refs.length, withPhoto ? 3 : 1);
     assert.equal(await refs.at(-1).text(), "ORIGINAL LOGO");
     if (withPhoto) {
@@ -239,8 +237,14 @@ test("image edits receive the planner, only the assigned photo, all original log
     const prompt = body.get("prompt");
     assert.ok(!prompt.includes("test-key"));
     assert.match(prompt, /#00a6eb/);
-    assert.match(prompt, /internal-team/);
+    assert.match(prompt, /internal announcement/);
     assert.match(prompt, /Clear event hook/);
+    const input = JSON.parse(prompt.split("DATA:\n")[1]);
+    assert.equal(input.brandPolicy, undefined);
+    assert.equal(input.artworkRegion, undefined);
+    assert.equal(input.logoShelf, undefined);
+    assert.equal(input.campaignStyle, storyboard.campaignStyle);
+    assert.equal(body.get("quality"), "high");
     if (withPhoto) assert.match(prompt, /Make the heading larger/);
     // Do not silently accept a URL or invalid image as a generated visual.
     return Response.json({
@@ -251,7 +255,7 @@ test("image edits receive the planner, only the assigned photo, all original log
     generateAIVisual(
       brief,
       { ...outputs[0], ...visual },
-      storyboard.posts[0],
+      { ...storyboard.posts[0], campaignStyle: storyboard.campaignStyle },
       { logos, photos },
       "test-key",
       undefined,
@@ -267,7 +271,7 @@ test("image edits receive the planner, only the assigned photo, all original log
     generateAIVisual(
       brief,
       { ...outputs[0], ...visual, photoId: null },
-      storyboard.posts[0],
+      { ...storyboard.posts[0], campaignStyle: storyboard.campaignStyle },
       { logos, photos },
       "test-key",
     ),

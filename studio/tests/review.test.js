@@ -78,3 +78,31 @@ test("pending feedback and draft captions block export even if an old approval f
   assert.equal(reviewReady(run), false);
   await assert.rejects(buildArchive(run), /Approve every/);
 });
+
+test("retired caption budgets are recovered from history without an API call or changing approvals", async () => {
+  const { recoverCaptionBudgets } = await import("../src/ai-pipeline.js");
+  const run = makeRun();
+  run.status = "failed";
+  Object.assign(run.posts[0], { caption: "x".repeat(651), status: "failed", approved: false,
+    error: "Instagram post · en: caption has 651 characters; limit 650. Edit this post without another AI request." });
+  Object.assign(run.outputs[0], { status: "failed", error: run.posts[0].error, captionError: run.posts[0].error });
+  assert.equal(recoverCaptionBudgets(run), true);
+  assert.equal(run.status, "completed");
+  assert.equal(run.posts[0].caption.length, 651);
+  assert.equal(run.posts[0].approved, false);
+  assert.equal(run.outputs[0].status, "completed");
+  assert.equal(run.outputs[0].error, "");
+  assert.equal(recoverCaptionBudgets(run), false);
+});
+
+test("a real caption API error never turns an available image into a failed visual", async () => {
+  const { refreshAIStatus, recoverCaptionBudgets } = await import("../src/ai-pipeline.js");
+  const run = makeRun();
+  Object.assign(run.posts[0], { caption: "", status: "failed", error: "OpenAI rejected the request (HTTP 403).", approved: false });
+  refreshAIStatus(run);
+  assert.equal(run.outputs[0].status, "completed");
+  assert.equal(run.outputs[0].error, "");
+  assert.equal(run.status, "partial");
+  assert.equal(reviewReady(run), false);
+  assert.equal(recoverCaptionBudgets(run), false);
+});

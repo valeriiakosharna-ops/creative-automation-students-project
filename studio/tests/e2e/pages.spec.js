@@ -60,6 +60,7 @@ async function mockOpenAI(
   const state = {
     text: [],
     images: [],
+    research: [],
     activeImages: 0,
     maxActiveImages: 0,
     plannerDone: false,
@@ -82,9 +83,7 @@ async function mockOpenAI(
         body = request.postDataJSON(),
         stage = body.response_format.json_schema.name;
       if (key) expect(request.headers().authorization).toBe(`Bearer ${key}`);
-      expect(body.messages[0].content).toContain(
-        "Creative Automation Social Style Guide",
-      );
+      expect(body.messages[0].content).not.toContain("minimumTextContrast");
       const input = JSON.parse(
         body.messages.find((message) => message.role === "user").content,
       );
@@ -129,16 +128,27 @@ async function mockOpenAI(
             choices: [
               {
                 finish_reason: "stop",
-                message: { content: JSON.stringify({ posts }) },
+                message: { content: JSON.stringify({ campaignStyle: "Contemporary editorial; consistent cyan/red campaign with organic typography and photo treatment", posts }) },
               },
             ],
           },
         });
       };
-      if (stage === "social_posts" && holdCopyUntilImage) heldCopy = fulfill;
+      if (stage === "social_posts" && holdCopyUntilImage && !state.images.length) heldCopy = fulfill;
       else await fulfill();
     },
   );
+  await page.route("https://api.openai.com/v1/responses", async (route) => {
+    const body = route.request().postDataJSON();
+    if (key) expect(route.request().headers().authorization).toBe(`Bearer ${key}`);
+    state.research.push(body);
+    expect(Object.keys(JSON.parse(body.input)).sort()).toEqual(["checkedOn", "formats"]);
+    const source = "https://buffer.com/resources/social-media-captions/";
+    await route.fulfill({ json: { status: "completed", output: [
+      { type: "web_search_call", status: "completed", action: { type: "search", sources: [{ type: "url", url: source }] } },
+      { type: "message", content: [{ type: "output_text", text: JSON.stringify({ channels: JSON.parse(body.input).formats.map((format) => ({ format, summary: "Relevant opening, natural keywords, useful event details and one next step.", recommendedMin: 150, recommendedMax: 900, sourceUrls: [source] })) }), annotations: [{ type: "url_citation", url: source, title: "Public writing research" }] }] },
+    ] } });
+  });
   await page.route("https://api.openai.com/v1/images/edits", async (route) => {
     const req = route.request();
     if (key) expect(req.headers().authorization).toBe(`Bearer ${key}`);
@@ -160,12 +170,18 @@ async function mockOpenAI(
     );
     state.images.push({ input, files, model: form.get("model") });
     expect(state.plannerDone).toBe(true);
-    expect(form.get("model")).toBe("gpt-image-1.5");
-    expect(input.brandPolicy.defaultColors).toContain("#00A6EB");
+    expect(form.get("model")).toBe("gpt-image-2.5-flare");
+    expect(input.brandPolicy).toBeUndefined();
+    expect(input.logoShelf).toBeUndefined();
+    expect(input.effectiveColors.map((color) => color.toUpperCase())).toContain("#00A6EB");
+    expect(input.campaignStyle).toContain("consistent cyan/red");
+    expect(form.get("quality")).toBe("high");
+    expect(form.get("input_fidelity")).toBeNull();
     if (heldCopy) {
       expect(state.copyDone).toBe(false);
-      await heldCopy();
+      const release = heldCopy;
       heldCopy = null;
+      await release();
     }
     state.activeImages++;
     state.maxActiveImages = Math.max(state.maxActiveImages, state.activeImages);
@@ -367,6 +383,7 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
   await expect(page.locator("#download-zip")).toBeDisabled();
   expect(requests.text).toHaveLength(2);
   expect(requests.images).toHaveLength(6);
+  expect(new Set(requests.images.map((request) => request.input.campaignStyle)).size).toBe(1);
   expect(
     requests.images.filter((request) =>
       request.input.references.some((ref) =>
@@ -480,7 +497,7 @@ test("an image failure keeps text and other previews, blocks ZIP and retries onl
   await approvePack(page);
 });
 
-test("copy length errors keep real AI images and are repaired locally before approval", async ({
+test("651-character captions never block images or approval, and editors have no hard caption budget", async ({
   page,
 }) => {
   await pagesFixture(page);
@@ -491,18 +508,17 @@ test("copy length errors keep real AI images and are repaired locally before app
   await page.locator("#save-connection").click();
   const requests = await mockOpenAI(page, { longPost: true });
   await page.locator("#generate-button").click();
-  await expect(page.locator("#run-mode-label")).toContainText("PARTIAL", {
-    timeout: 45000,
-  });
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
   await expect(page.locator(".output-image")).toHaveCount(4);
-  await expect(
-    page.locator(".post-review-card").first().locator(".review-error"),
-  ).toContainText("limit 650");
-  await expect(page.locator("#download-zip")).toBeDisabled();
+  await expect(page.locator(".post-copy-editor").first()).toHaveValue("x".repeat(651));
+  await expect(page.locator(".post-copy-editor").first()).not.toHaveAttribute("maxlength");
+  await expect(page.locator(".post-review-card .review-error").first()).toBeEmpty();
+  await expect(page.locator(".caption-count").first()).toContainText("651 characters");
+  await approvePack(page);
   await page
     .locator(".post-copy-editor")
     .first()
-    .fill("Reviewed and concise event post.");
+    .fill("A".repeat(1201) + " https://example.com/full-event-link");
   await page.locator(".approve-post").first().click();
   await expect(page.locator("#run-mode-label")).toContainText("COMPLETED");
   await approvePack(page);
@@ -594,7 +610,7 @@ test("new Pages template packs also require image and text approval without send
   expect(requests).toBe(0);
 });
 
-test("AI finalization preserves original logo pixels and exact social PNG dimensions", async ({
+test("AI output fills the canvas without borders, a second logo block or layout postprocessing", async ({
   page,
 }, testInfo) => {
   await pagesFixture(page);
@@ -644,7 +660,8 @@ test("AI finalization preserves original logo pixels and exact social PNG dimens
     manifest = JSON.parse(strFromU8(files["manifest.json"])),
     output = manifest.outputs[0];
   expect(output.imageSource).toBe("openai");
-  expect(output.style.logoRects).toHaveLength(2);
+  expect(output.style.processing).toBe("full-canvas-resize-only");
+  expect(output.style.logoRects).toBeUndefined();
   expect(requests.images[0].files).toHaveLength(2);
   const pixels = await page.evaluate(
     async ({ bytes, rects }) => {
@@ -671,13 +688,13 @@ test("AI finalization preserves original logo pixels and exact social PNG dimens
     },
     {
       bytes: Array.from(files[output.imageFile]),
-      rects: output.style.logoRects,
+      rects: [{x: 0, y: 0, width: 1, height: 1}, {x: 1078, y: 1078, width: 1, height: 1}],
     },
   );
   expect(pixels.width).toBe(1080);
   expect(pixels.height).toBe(1080);
   expect(pixels.pixels).toEqual([
-    [230, 0, 54, 255],
-    [0, 166, 235, 255],
+    [129, 208, 244, 255],
+    [129, 208, 244, 255],
   ]);
 });

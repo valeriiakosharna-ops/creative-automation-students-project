@@ -115,7 +115,7 @@ test("ZIP contains paired PNG/caption files, immutable brief and explicit failed
   assert.deepEqual(JSON.parse(strFromU8(files["brief.json"])), brief);
 });
 
-test("shared policy snapshots are independent and template text obeys each format limit", async () => {
+test("shared policy snapshots are independent and templates shorten optional text without imposing caption errors", async () => {
   const { BRAND_POLICY, snapshotPolicy } = await import("../src/brand.js");
   const snapshot = snapshotPolicy(["#111111", "#222222", "#333333"]);
   snapshot.formats.instagram_story.safeArea.bottom = 1;
@@ -129,7 +129,7 @@ test("shared policy snapshots are independent and template text obeys each forma
   )) {
     const copy = templateCopy(long, output),
       rule = BRAND_POLICY.formats[output.format];
-    assert.ok(copy.caption.length <= rule.caption.maxCharacters);
+    assert.ok(copy.caption.length < long.description.length);
     assert.ok(copy.subheading.length <= rule.subheading.maxCharacters);
     assert.match(copy.caption, /ML Week/);
   }
@@ -166,7 +166,7 @@ test("shortening an optional caption body preserves an identical title and the c
   const copy = templateCopy(b, output);
   assert.ok(copy.caption.startsWith(`*${b.title}*`));
   assert.ok(copy.caption.includes(b.url));
-  assert.ok(copy.caption.length <= 450);
+  assert.ok(copy.caption.length <= 600);
   assert.equal(b.description.length, 80);
 });
 
@@ -178,7 +178,7 @@ test("a visitor key is forwarded only in the same-origin request header, never i
     captured = { url, ...options };
     return new Response(
       JSON.stringify({
-        styleGuideVersion: "1.0.0",
+        styleGuideVersion: "1.1.0",
         outputs: outputs.map((o) => templateCopy(brief, o)),
       }),
     );

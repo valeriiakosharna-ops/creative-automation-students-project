@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Creative Automation Social Style Guide",
   "palette": {
     "cyan": "#00A6EB",
@@ -11,7 +11,11 @@
     "ink": "#302A40",
     "wine": "#951B3C"
   },
-  "defaultColors": ["#00A6EB", "#E60036", "#302A40"],
+  "defaultColors": [
+    "#00A6EB",
+    "#E60036",
+    "#302A40"
+  ],
   "typography": {
     "family": "Arial, sans-serif",
     "headlineWeight": 800,
@@ -35,7 +39,10 @@
     "overflow": "information-only",
     "crossNetworkReuse": true
   },
-  "languages": ["en", "uk"],
+  "languages": [
+    "en",
+    "uk"
+  ],
   "copy": {
     "voice": "Clear, confident, welcoming and practical. Invite participation without hype.",
     "facts": "Preserve dates, time zones, venues, proper names and real URLs. Invent no facts, speakers, price, deadline or registration link.",
@@ -50,15 +57,30 @@
       "width": 1080,
       "height": 1080,
       "ratio": "1:1",
-      "safeArea": { "left": 65, "right": 65, "top": 65, "bottom": 65 },
-      "headline": { "preferred": 76, "min": 48 },
-      "subheading": { "preferred": 32, "min": 24, "maxCharacters": 100 },
-      "details": { "preferred": 28, "min": 22 },
+      "safeArea": {
+        "left": 65,
+        "right": 65,
+        "top": 65,
+        "bottom": 65
+      },
+      "headline": {
+        "preferred": 76,
+        "min": 48
+      },
+      "subheading": {
+        "preferred": 32,
+        "min": 24,
+        "maxCharacters": 100
+      },
+      "details": {
+        "preferred": 28,
+        "min": 22
+      },
       "logoRowHeight": 100,
       "caption": {
         "targetMin": 250,
-        "maxCharacters": 650,
-        "direction": "Open with a benefit or question. Use short paragraphs, event details, one CTA and 1–3 relevant hashtags."
+        "direction": "Open with a benefit or question. Use short paragraphs, event details, one CTA and 1–3 relevant hashtags.",
+        "targetMax": 900
       }
     },
     "instagram_story": {
@@ -67,15 +89,30 @@
       "width": 1080,
       "height": 1920,
       "ratio": "9:16",
-      "safeArea": { "left": 90, "right": 90, "top": 250, "bottom": 320 },
-      "headline": { "preferred": 88, "min": 60 },
-      "subheading": { "preferred": 36, "min": 28, "maxCharacters": 100 },
-      "details": { "preferred": 30, "min": 26 },
+      "safeArea": {
+        "left": 90,
+        "right": 90,
+        "top": 250,
+        "bottom": 320
+      },
+      "headline": {
+        "preferred": 88,
+        "min": 60
+      },
+      "subheading": {
+        "preferred": 36,
+        "min": 28,
+        "maxCharacters": 100
+      },
+      "details": {
+        "preferred": 30,
+        "min": 26
+      },
       "logoRowHeight": 110,
       "caption": {
         "targetMin": 40,
-        "maxCharacters": 180,
-        "direction": "Use a very short event message and one CTA. No hashtag block. A native link sticker is added manually during publication."
+        "direction": "Use a very short event message and one CTA. No hashtag block. A native link sticker is added manually during publication.",
+        "targetMax": 180
       }
     },
     "facebook": {
@@ -84,15 +121,30 @@
       "width": 1200,
       "height": 630,
       "ratio": "1.91:1",
-      "safeArea": { "left": 72, "right": 72, "top": 72, "bottom": 72 },
-      "headline": { "preferred": 56, "min": 34 },
-      "subheading": { "preferred": 26, "min": 24, "maxCharacters": 70 },
-      "details": { "preferred": 24, "min": 20 },
+      "safeArea": {
+        "left": 72,
+        "right": 72,
+        "top": 72,
+        "bottom": 72
+      },
+      "headline": {
+        "preferred": 56,
+        "min": 34
+      },
+      "subheading": {
+        "preferred": 26,
+        "min": 24,
+        "maxCharacters": 70
+      },
+      "details": {
+        "preferred": 24,
+        "min": 20
+      },
       "logoRowHeight": 64,
       "caption": {
-        "targetMin": 350,
-        "maxCharacters": 900,
-        "direction": "Write a welcoming community announcement: who it is for, value, practical details and one direct next step. Use complete sentences and no hashtag block."
+        "targetMin": 300,
+        "direction": "Write a welcoming community announcement: who it is for, value, practical details and one direct next step. Use complete sentences and no hashtag block.",
+        "targetMax": 1000
       }
     },
     "google_chat": {
@@ -101,21 +153,36 @@
       "width": 1200,
       "height": 675,
       "ratio": "16:9",
-      "safeArea": { "left": 72, "right": 72, "top": 72, "bottom": 72 },
-      "headline": { "preferred": 58, "min": 36 },
-      "subheading": { "preferred": 26, "min": 24, "maxCharacters": 60 },
-      "details": { "preferred": 24, "min": 20 },
+      "safeArea": {
+        "left": 72,
+        "right": 72,
+        "top": 72,
+        "bottom": 72
+      },
+      "headline": {
+        "preferred": 58,
+        "min": 36
+      },
+      "subheading": {
+        "preferred": 26,
+        "min": 24,
+        "maxCharacters": 60
+      },
+      "details": {
+        "preferred": 24,
+        "min": 20
+      },
       "logoRowHeight": 64,
       "caption": {
-        "targetMin": 180,
-        "maxCharacters": 450,
-        "direction": "Write a concise team announcement with an optional *bold* title, essential details and one event link. No hashtag block."
+        "targetMin": 160,
+        "direction": "Write a concise team announcement with an optional *bold* title, essential details and one event link. No hashtag block.",
+        "targetMax": 600
       }
     }
   },
   "implementation": {
-    "visuals": "Deterministic branded composition of original assets; no synthetic photos or AI redrawing of logos.",
+    "visuals": "AI designs the full canvas from shared campaign identity, desired style, palette and references. No fixed layout, font rules, safe-area grid, border or local logo overlay. The optional offline template renderer retains its separate layout.",
     "paletteOverrides": "Project palette overrides the default three colors. Adjust text tones to maintain contrast; preserve original logo colors.",
-    "longText": "Shorten the optional visual summary and caption description to fit channel limits. Keep the full input description in the saved brief. Preserve factual essentials; report an output error if essential copy cannot fit at the minimum size or caption maximum."
+    "longText": "Caption ranges are editorial writing guidance, not validation limits. Preserve facts and full URLs; never block visual generation or approval because of caption length."
   }
 }

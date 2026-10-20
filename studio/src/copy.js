@@ -65,7 +65,7 @@ export function templateCopy(b, o) {
     return caption;
   }
   let caption = compose(description);
-  const captionLimit = BRAND_POLICY.formats[o.format].caption.maxCharacters;
+  const captionLimit = BRAND_POLICY.formats[o.format].caption.targetMax;
   if (
     caption.length > captionLimit &&
     description &&
@@ -80,10 +80,6 @@ export function templateCopy(b, o) {
         : "";
     caption = compose(short);
   }
-  if (caption.length > captionLimit)
-    throw Error(
-      `${o.format} caption cannot fit the guide's ${captionLimit}-character limit. Shorten the event name, location or link.`,
-    );
   const limit = BRAND_POLICY.formats[o.format].subheading.maxCharacters;
   return {
     id: o.id,

@@ -1,4 +1,5 @@
 import { translate, confirmTranslated, interfaceLanguage } from "./i18n.js";
+import { captionGuidance, characterCount } from "./caption-guidance.js";
 import { copyError, copyLimits } from "./copy-limits.js";
 import { BRAND_POLICY, snapshotPolicy } from "./brand.js";
 import { session, privateFetch, jsonResponse } from "./private-api.js";
@@ -16,6 +17,7 @@ import {
   generatePagesRun,
   refreshAIStatus,
   reviewReady,
+  recoverCaptionBudgets,
 } from "./ai-pipeline.js";
 import { generateAIVisual } from "./ai-visual.js";
 import { renderVisual, decodeImage } from "./renderer.js";
@@ -398,7 +400,7 @@ function updateSummary() {
     : "Template mode uses your supplied wording, with channel-specific structure. It does not translate descriptions. Add localized copy below, or connect AI for translation.";
   $("#ai-cost-note").hidden = !runtime.pages || !ai;
   $("#ai-cost-note").textContent =
-    `AI requests: 2 text + ${outputs.length} images. Regenerating one visual makes 1 additional paid image request. No automatic retries.`;
+    `AI requests: 3 text (including public web research) + ${outputs.length} images at high quality. Regenerating one visual makes 1 additional paid image request. No automatic retries.`;
   if (runtime.pages)
     $(".privacy-note").textContent = ai
       ? "AI mode sends event text, assigned photos, all logos and revision instructions directly to OpenAI. Projects and results are saved locally; your key is never saved."
@@ -407,6 +409,13 @@ function updateSummary() {
 async function updatePreview() {
   const token = ++state.previewToken,
     b = readBrief();
+  if (runtime.pages && b.mode === "ai") {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    $("#visual-preview").replaceChildren(element("p", "empty-preview", "AI will design the complete visual after generation."));
+    $("#preview-label").textContent = "One shared campaign style, with naturally varied compositions.";
+    return;
+  }
   if (!state.assets.logos.length || !b.title || !b.date) {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -666,6 +675,7 @@ function showRun(run) {
     return;
   }
   state.run = memoryRuns.get(run.id) || run;
+  if (recoverCaptionBudgets(state.run)) persistRun(state.run).catch(handleError);
   $("#editor-view").hidden = true;
   $("#results-view").hidden = false;
   renderResults();
@@ -697,6 +707,18 @@ function renderPostReviews(run) {
       "One shared caption per carousel or Story sequence. Edit the text, then approve it. Text edits do not call OpenAI.",
     ),
   );
+  if (run.captionResearch) {
+    const info = element("div", "research-note");
+    info.append(element("p", "input-help", run.captionResearch.status === "available"
+      ? `Public writing guidance checked on ${run.captionResearch.checkedAt.slice(0, 10)}. Sources inform the copy; recommendations are not hard limits.`
+      : "Live writing research was unavailable. Baseline channel recommendations were used; no live trend claim is made."));
+    for (const source of run.captionResearch.sources) {
+      const link = element("a", "research-source", source.title);
+      link.href = source.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      info.append(link);
+    }
+    section.append(info);
+  }
   for (const post of run.posts) {
     const card = element("article", "post-review-card");
     card.dataset.postId = post.id;
@@ -714,8 +736,13 @@ function renderPostReviews(run) {
     editor.id = id;
     editor.rows = 7;
     editor.lang = post.language;
-    editor.maxLength = copyLimits(post.format).caption;
+    const guidance = captionGuidance(post.format, run.captionResearch);
+    const count = element("p", "input-help caption-count");
+    const updateCount = () => {
+      count.textContent = `${characterCount(editor.value)} characters · Suggested length: ${guidance.recommendedMin}–${guidance.recommendedMax}. Guidance only; preserve important details.`;
+    };
     editor.value = post.draftCaption ?? post.caption;
+    updateCount();
     editor.disabled = state.busy;
     const error = element("p", "review-error", post.error || "");
     error.setAttribute("role", "status");
@@ -727,6 +754,7 @@ function renderPostReviews(run) {
     approve.type = "button";
     approve.disabled = state.busy;
     editor.addEventListener("input", () => {
+      updateCount();
       post.draftCaption = editor.value;
       post.approved = false;
       approve.textContent = "Approve edited post";
@@ -742,6 +770,7 @@ function renderPostReviews(run) {
     card.append(
       label,
       editor,
+      count,
       error,
       element(
         "span",
@@ -756,9 +785,8 @@ function renderPostReviews(run) {
 async function approvePost(source, original) {
   if (state.busy || state.run?.id !== source.id) return;
   const caption = (original.draftCaption ?? original.caption).trim();
-  const limit = copyLimits(original.format).caption;
-  if (!caption || caption.length > limit) {
-    notice(`Post text must contain 1–${limit} characters.`, true);
+  if (!caption) {
+    notice("Enter the post text before approval.", true);
     return;
   }
   let run = source;
@@ -967,7 +995,7 @@ function renderResults() {
   const completed = run.outputs.filter((o) => o.status === "completed").length;
   $("#run-label").textContent = `RUN / ${run.id.slice(0, 8).toUpperCase()}`;
   $("#run-mode-label").textContent =
-    `${run.pipeline ? "AI VISUALS + POSTS" : run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()} / GUIDE ${run.styleGuideVersion || "LEGACY"}`;
+    `${run.pipeline ? "AI VISUALS + POSTS" : run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()}${run.pipeline?.version === "openai-organic-v2" ? "" : ` / GUIDE ${run.styleGuideVersion || "LEGACY"}`}`;
   $("#results-title").textContent =
     run.status === "running"
       ? "Making it yours."
@@ -1081,6 +1109,7 @@ function renderResults() {
       model: run.model || null,
       imageModel: run.imageModel || null,
       pipeline: run.pipeline || null,
+      captionResearch: run.captionResearch || null,
       posts: run.posts || null,
       promptVersion: run.promptVersion,
       styleGuideVersion: run.styleGuideVersion || null,
@@ -1179,10 +1208,10 @@ function openCopyRepair(output) {
     $("#edit-" + field).maxLength = limits[field];
   }
   $("#output-caption").value = output.caption || "";
-  $("#output-caption").maxLength = limits.caption;
+  $("#output-caption").removeAttribute("maxlength");
   $("#copy-status").textContent = output.error || "";
   $("#copy-limits").textContent =
-    `headline: ${limits.headline} · subheading: ${limits.subheading} · CTA: ${limits.cta} · caption: ${limits.caption}`;
+    `headline: ${limits.headline} · subheading: ${limits.subheading} · CTA: ${limits.cta} · caption: writing guidance only`;
   $("#output-dialog").showModal();
 }
 $("#render-edited-output").addEventListener("click", async () => {

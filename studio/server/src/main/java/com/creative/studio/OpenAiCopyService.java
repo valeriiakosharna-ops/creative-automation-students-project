@@ -98,7 +98,7 @@ public class OpenAiCopyService {
             if(!expected.contains(o.id())||!actual.add(o.id())||o.headline().isBlank()||o.caption().isBlank()||o.headline().length()>80||o.subheading().length()>160||o.cta().length()>40||o.caption().length()>3000)throw new IllegalArgumentException("Invalid content");
             var spec=request.outputs().stream().filter(value->value.id().equals(o.id())).findFirst().orElseThrow();
             var guide=policy.path("formats").path(spec.format());
-            if(o.subheading().length()>guide.path("subheading").path("maxCharacters").asInt() || o.caption().length()>guide.path("caption").path("maxCharacters").asInt())throw new IllegalArgumentException("Style guide character limit exceeded");
+            if(o.subheading().length()>guide.path("subheading").path("maxCharacters").asInt())throw new IllegalArgumentException("Style guide character limit exceeded");
             outputs.add(o);
         }
         return outputs;

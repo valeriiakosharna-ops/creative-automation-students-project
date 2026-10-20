@@ -27,6 +27,16 @@ export function translate(text) {
   if (ukrainian[source])
     return text.match(/^\s*/)[0] + ukrainian[source] + text.match(/\s*$/)[0];
   let match;
+  if ((match = source.match(/^AI VISUALS \+ POSTS \/ (\w+)$/)))
+    return `AI-ВІЗУАЛИ + ДОПИСИ / ${(statuses[match[1].toLowerCase()] || match[1]).toUpperCase()}`;
+
+  if ((match = source.match(/^(\d+) characters · Suggested length: (\d+)–(\d+)\./)))
+    return `${match[1]} символів · Рекомендована довжина: ${match[2]}–${match[3]}. Це орієнтир; збережіть важливі деталі.`;
+  if ((match = source.match(/^Public writing guidance checked on (\d{4}-\d{2}-\d{2})\./)))
+    return `Рекомендації для текстів перевірено ${match[1]}. Джерела враховуються під час написання; рекомендована довжина не є обмеженням.`;
+  if ((match = source.match(/^AI requests: 3 text .*? \+ (\d+) images at high quality\./)))
+    return `AI-запити: 3 текстові (включно з пошуком публічних рекомендацій) + ${match[1]} зображень високої якості. Перегенерація одного візуалу — ще 1 платний запит. Автоматичних повторів немає.`;
+
   if (
     (match = source.match(
       /^Approved visuals: (\d+)\/(\d+) · Approved posts: (\d+)\/(\d+)\./,
