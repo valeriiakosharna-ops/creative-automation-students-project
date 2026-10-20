@@ -2114,6 +2114,7 @@ body:has(dialog[open]) {
 }
 .pages-signin a {
   color: #2a668e;
+  text-decoration: underline;
 }
 .pages-signin .button {
   margin-bottom: 12px;
