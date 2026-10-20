@@ -2,17 +2,17 @@
 
 A responsive, English-language project brief for students learning Java and JavaScript. It covers the product, user journey, MVP, architecture, implementation milestones, and acceptance criteria. The interactive brief explorer is an educational example; it does not call AI services or store uploads.
 
-## Private working MVP
+## Free Pages MVP
 
-The separate [Studio application](studio/README.md) creates branded PNG/caption packs and ZIP exports. It supports corporate Google Workspace sign-in, owner-managed colleague access, a shared encrypted project library and a server-managed company OpenAI key. Colleagues need only a browser and never enter or see the key.
+[Studio](studio/README.md) now runs on GitHub Pages, with Google sign-in through Firebase's Spark plan and an owner-managed private list of approved Google emails. Corporate accounts and Render are not required. Start with [Free Pages setup](studio/PAGES_SETUP.md): enable Google in Firebase Console, publish the included Firestore rules, seed the owner privately and add two public Firebase repository variables.
 
-The owner opens **Team access**, adds an exact corporate email and shares the protected Studio link. They can revoke or restore access without changing code or restarting. Only approved accounts enter; knowing the corporate domain is insufficient. Real email addresses, domains and secrets are private hosting settings and are absent from this repository.
+Each Google account keeps separate projects, uploads and history in its browser. There is no shared library or cross-device sync in this version. Users enter an OpenAI key for the visit; it stays in page memory and is sent directly to OpenAI, never saved to Firebase, GitHub, projects or ZIPs. API generation is billed by OpenAI separately from free hosting/auth quotas.
 
-Follow [Quickstart](studio/QUICKSTART.md) for daily use and [Private deployment](DEPLOYMENT.md) for the one-time Google/hosting administrator setup. No live host or Google OAuth credentials are provisioned by the code itself. The default container requires corporate mode and a persistent disk. The included Render template uses a paid service/storage; the same image runs on company infrastructure with GitLab CI.
+The owner can add/revoke exact Google account emails through **Team access**. Firebase rules protect the private access directory. Pages HTML/code/assets are public and client-side gating cannot prevent someone using a copied app; local files cannot be remotely erased. See [Security boundaries](SECURITY.md).
 
-The separate [social style guide](style-guide/README.md) and shared [generation policy](studio/brand-policy.json) control original-logo composition, format-specific visuals and English/Ukrainian AI copy. Every logo appears on every visual; photos are never repeated within a network/run. Extra visuals are information-only.
+The [social style guide](style-guide/README.md) and shared [generation policy](studio/brand-policy.json) control original-logo composition and English/Ukrainian copy. Every logo appears on every visual; photo use is limited to once per network/run and extra visuals are information-only.
 
-GitHub Pages publishes the student brief, style guide and a Studio landing page. The private working application runs at its own company-controlled HTTPS address. See [Security boundaries](SECURITY.md).
+The optional [corporate Java deployment](DEPLOYMENT.md) retains Google Workspace SSO, an encrypted shared server library and a company server-side key, requiring separate hosting. Its paid Render setup is not needed for the free Pages path.
 
 ## Preview the student brief locally (optional)
 
@@ -30,7 +30,7 @@ Open `http://localhost:8000`. All asset paths also work under a GitHub Pages rep
 
 In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. The workflow uses GitHub's built-in token; no deployment secret is required. Pull requests build without deploying. The Pages workflow also installs and builds the Studio frontend with Node.js 24. The `deploy` job reports the published URL after deployment succeeds.
 
-This brief is static. Pages includes a Studio landing page; it does not publish the private working application or accept team uploads/keys. GitHub Pages cannot run Spring Boot.
+This brief is static. Pages includes the browser-only Studio app. Missing Firebase settings show a locked setup screen. Event files stay local and an entered key is sent directly to OpenAI. GitHub Pages cannot run Spring Boot.
 
 ## Branding
 

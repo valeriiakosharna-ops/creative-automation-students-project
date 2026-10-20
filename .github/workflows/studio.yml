@@ -26,6 +26,11 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Check the actual Pages build and CSP
+        run: |
+          npm run build:pages
+          npx playwright test pages.spec.js
+          npm run build
       - uses: actions/upload-artifact@v4
         with:
           name: studio-web
@@ -35,6 +40,30 @@ jobs:
         with:
           name: studio-test-results
           path: studio/test-results
+  firebase-access-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firestore-emulator-firebase-tools-15.34.0
+      - run: npm ci
+      - name: Verify private roster rules with fake Google identities
+        run: npx --yes firebase-tools@15.34.0 emulators:exec --only firestore --project demo-creative-studio --config firebase/firebase.json "npm run test:rules"
   java-server:
     needs: frontend
     runs-on: ubuntu-latest

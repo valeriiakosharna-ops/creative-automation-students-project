@@ -1,5 +1,11 @@
 # Security boundaries
 
+The default Pages deployment is a public browser application, with Google/Firebase identity and a private Firestore access directory. The roster is protected by the included rules; unapproved users cannot list addresses or grant themselves access. App code, brand assets and public Firebase selectors remain visible. Client-side gating can be bypassed in a copied/modified app, and revocation cannot erase local files or prevent use of copied code. There is no shared material library or server-held OpenAI key in this mode.
+
+OpenAI visit keys are held in page memory only and sent directly to its fixed HTTPS endpoint with no redirect forwarding, persistence or automatic retries. Text and brand requirements go to OpenAI; photos/logos remain local. Firebase receives sign-in identities and the private roster, not event content/keys. Provider retention remains governed by its terms. UID-separated IndexedDB libraries prevent normal account mix-ups, not malicious access to an unencrypted browser profile. Use separate browser profiles on shared devices.
+
+The remaining sections describe the **optional corporate Java mode**, not the Pages runtime.
+
 Corporate mode authenticates Google Workspace accounts and enforces an exact-email access directory on the server. Only the configured owner can list, grant or revoke colleagues. Addresses and the private audit trail are encrypted on the persistent server disk; no real roster, domain or secrets are committed or published. Invitations are manual link sharing, with no email service integration.
 
 Approved colleagues share the entire library and may view, edit, delete and export it. Record versions reject conflicting edits; finished runs are immutable, and only their creator updates active runs. Access revocation prevents future server requests. It cannot recall downloaded ZIPs, screenshots or already rendered content. This MVP has no fine-grained project permissions, DLP or remotely erasable files.
@@ -12,4 +18,4 @@ Corporate mode uses secure HttpOnly SameSite=Lax session cookies, CSRF verificat
 
 Quotas limit stored data and daily AI attempts per account/team, persisted across restarts. They do not replace OpenAI project budgets, ingress traffic limits, infrastructure monitoring, backups or human review. The single-process MVP needs one replica and a POSIX persistent disk. Browser rendering/generation requires an open page; abandoned runs are interrupted after 15 minutes without progress, keeping saved outputs.
 
-GitHub Pages is public documentation with a Studio landing page only. Development and legacy `hosted` profiles remain for contributor compatibility and are unauthenticated; never use them with company data. The default container requires corporate mode. No production host, Google OAuth registration or live provider access is created by committing this code. Follow [Deployment](DEPLOYMENT.md) and complete the private acceptance checks before inviting colleagues.
+GitHub Pages uses the separate browser-only mode described above. Development and legacy `hosted` profiles remain for contributor compatibility and are unauthenticated; never use them with company data. The default container requires corporate mode. No production host, Google OAuth registration or live provider access is created by committing this code. Follow [Deployment](DEPLOYMENT.md) and complete the private acceptance checks before inviting colleagues.

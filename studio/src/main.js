@@ -13,7 +13,8 @@ document.querySelectorAll("[data-style-version]").forEach((node) => {
 const $ = (selector) => document.querySelector(selector);
 const form = $("#campaign-form");
 const runtime = window.STUDIO_RUNTIME || {};
-const browserKeyMode = runtime.serverManaged && runtime.clientKeysEnabled;
+const browserKeyMode =
+  runtime.pages || (runtime.serverManaged && runtime.clientKeysEnabled);
 let requestApiKey = "";
 const state = {
   projects: [],
@@ -839,9 +840,10 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setSidebar(false);
 });
 try {
-  state.backend = runtime.serverManaged
-    ? ""
-    : localStorage.getItem("studio:backend") || "";
+  state.backend =
+    runtime.serverManaged || runtime.pages
+      ? ""
+      : localStorage.getItem("studio:backend") || "";
 } catch {}
 function updateKeyStatus() {
   $("#connect-key").textContent = requestApiKey
@@ -912,7 +914,7 @@ $("#forget-key").addEventListener("click", () => {
 $("#settings-dialog").addEventListener("close", () => {
   $("#openai-key").value = "";
 });
-if (runtime.serverManaged) $("#backend-field").hidden = true;
+if (runtime.serverManaged || runtime.pages) $("#backend-field").hidden = true;
 if (browserKeyMode) {
   document.body.classList.add("hosted-key-mode");
   $("#client-key-field").hidden = false;
@@ -927,8 +929,45 @@ if (browserKeyMode) {
   $("#connection-description").textContent =
     "This site is already connected to its own server. The owner manages the OpenAI key in the server settings.";
 }
+if (runtime.pages) {
+  form.autocomplete = "off";
+  $("#connection-description").textContent =
+    "Enter your OpenAI key for this visit. This browser sends text directly to OpenAI; the key is never saved in projects, browser storage or exports. Anyone with access to this browser can inspect a key while it is in use.";
+  $("#check-connection").textContent = "Connection information";
+  $("#mode-indicator").textContent = "PAGES / LOCAL PROJECTS";
+  $(".local-indicator").textContent = "Your local Google workspace";
+  $(".sidebar-bottom p").textContent =
+    "Each Google account has a separate library in this browser. No cloud sync. Export important ZIPs before clearing browser data.";
+  $("#access-dialog > p").textContent =
+    "Only the owner can manage this private Google access list. Each person keeps their own projects in their browser and enters a key for the visit.";
+  $("#colleague-email").placeholder = "colleague@gmail.com";
+  $("#access-form label").textContent = "Google account email";
+  $("#access-dialog .settings-note p").textContent =
+    "Adding an account sends no email. Share the Studio link manually. Google access controls the private directory, while the Pages code remains public. Revocation cannot erase local files or prevent someone using a copied version of this app.";
+  $("#sign-out").hidden = false;
+  $("#sign-out").addEventListener("click", async () => {
+    if (state.busy && !confirm("Stop generation and sign out?")) return;
+    window.dispatchEvent(new Event("studio:access-lost"));
+    await (await import("./pages-auth.js")).signOutPages();
+    window.location.reload();
+  });
+}
+window.addEventListener("studio:access-lost", () => {
+  requestApiKey = "";
+  $("#openai-key").value = "";
+  state.cancelled = true;
+  state.controller?.abort();
+  clearTimeout(saveTimer);
+  clearTimeout(previewTimer);
+  revoke(assetUrls);
+  revoke(outputUrls);
+  memoryRuns.clear();
+  state.assets = { logos: [], photos: [] };
+  state.run = null;
+  $("#studio-app").hidden = true;
+});
 function backendValue() {
-  if (runtime.serverManaged) return "";
+  if (runtime.serverManaged || runtime.pages) return "";
   const value = $("#backend-url").value.trim().replace(/\/$/, "");
   if (!value) return "";
   const u = new URL(value);
@@ -981,6 +1020,11 @@ $("#check-connection").addEventListener("click", async () => {
   const status = $("#connection-status");
   status.textContent = "Checking…";
   try {
+    if (runtime.pages) {
+      status.textContent =
+        "Pages connects directly to OpenAI. Your key and API billing are checked on the first generation; this check spends no credits.";
+      return;
+    }
     const response = await fetch(`${backendValue()}/api/health`, {
       signal: AbortSignal.timeout(10000),
     });
@@ -1064,7 +1108,9 @@ $("#example-button").addEventListener("click", async () => {
   }
 });
 async function renderAccess() {
-  const members = await jsonResponse(await privateFetch("/api/access"));
+  const members = runtime.pages
+    ? await (await import("./pages-auth.js")).listPagesAccess()
+    : await jsonResponse(await privateFetch("/api/access"));
   const list = $("#access-list");
   list.replaceChildren();
   for (const member of members) {
@@ -1093,16 +1139,22 @@ async function renderAccess() {
       button.addEventListener("click", async () => {
         button.disabled = true;
         try {
-          await jsonResponse(
-            await privateFetch(
-              member.active ? "/api/access/revoke" : "/api/access",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: member.email }),
-              },
-            ),
-          );
+          if (runtime.pages)
+            await (
+              await import("./pages-auth.js")
+            ).changePagesAccess(member.email, !member.active);
+          else {
+            await jsonResponse(
+              await privateFetch(
+                member.active ? "/api/access/revoke" : "/api/access",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: member.email }),
+                },
+              ),
+            );
+          }
           $("#access-status").textContent = member.active
             ? "Access revoked. This account's next request will be blocked."
             : "Access restored. Share this Studio link with your colleague.";
@@ -1133,13 +1185,19 @@ $("#access-form").addEventListener("submit", async (event) => {
   const button = $("#access-form button");
   button.disabled = true;
   try {
-    await jsonResponse(
-      await privateFetch("/api/access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: $("#colleague-email").value.trim() }),
-      }),
-    );
+    if (runtime.pages)
+      await (
+        await import("./pages-auth.js")
+      ).changePagesAccess($("#colleague-email").value, true);
+    else {
+      await jsonResponse(
+        await privateFetch("/api/access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: $("#colleague-email").value.trim() }),
+        }),
+      );
+    }
     $("#colleague-email").value = "";
     $("#access-status").textContent =
       "Access enabled. Copy this Studio link and share it with your colleague. No invitation email was sent.";
@@ -1152,9 +1210,12 @@ $("#access-form").addEventListener("submit", async (event) => {
 });
 $("#copy-team-link").addEventListener("click", async () => {
   try {
-    await navigator.clipboard.writeText(window.location.origin + "/");
-    $("#access-status").textContent =
-      "Studio link copied. Only approved corporate accounts can open the library.";
+    await navigator.clipboard.writeText(
+      new URL("./", window.location.href).href,
+    );
+    $("#access-status").textContent = runtime.pages
+      ? "Studio link copied. Share it with your approved Google accounts."
+      : "Studio link copied. Only approved corporate accounts can open the library.";
   } catch {
     $("#access-status").textContent =
       "Share this site's address from your browser's address bar.";
@@ -1162,6 +1223,11 @@ $("#copy-team-link").addEventListener("click", async () => {
 });
 async function init() {
   try {
+    if (runtime.pages) {
+      const account = (await import("./pages-auth.js")).pagesAccount();
+      if (!account) throw Error("Sign in with an approved Google account.");
+      $("#manage-access").hidden = !account.owner;
+    }
     if (runtime.corporate) {
       const account = await session();
       $("#connection-status").textContent =
@@ -1202,7 +1268,7 @@ window.addEventListener("pagehide", () => {
   requestApiKey = "";
   $("#openai-key").value = "";
   updateKeyStatus();
-  if (runtime.corporate) {
+  if (runtime.corporate || runtime.pages) {
     revoke(assetUrls);
     revoke(outputUrls);
     memoryRuns.clear();

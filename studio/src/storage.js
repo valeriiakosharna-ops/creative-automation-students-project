@@ -5,10 +5,18 @@ import {
   deleteServerProject,
 } from "./server-storage.js";
 const serverStorage = window.STUDIO_RUNTIME?.workspaceStorage === "server";
+const pages = window.STUDIO_RUNTIME?.pages;
+if (pages && !window.STUDIO_RUNTIME.accountId)
+  throw Error(
+    "An approved Google session is required before opening local projects.",
+  );
+const databaseName = pages
+  ? `creative-automation-studio:${window.STUDIO_RUNTIME.firebase.projectId}:${window.STUDIO_RUNTIME.accountId}`
+  : "creative-automation-studio";
 const dbPromise = serverStorage
   ? null
   : new Promise((resolve, reject) => {
-      const r = indexedDB.open("creative-automation-studio", 1);
+      const r = indexedDB.open(databaseName, 1);
       r.onupgradeneeded = () => {
         const db = r.result;
         db.createObjectStore("projects", { keyPath: "id" });
