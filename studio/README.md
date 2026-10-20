@@ -1,20 +1,18 @@
-# Creative Automation Studio — MVP
+# Creative Automation Studio — private MVP
 
-A working single-user content studio in the same palette as the student project brief. The complete hosted app packages frontend and Java 21 / Spring Boot server together. Open its URL, paste your own API key for the visit and generate — no local installation. GitHub/GitLab Pages remain static Template demos.
+A corporate Google Workspace content studio in the student brief's brand palette. Frontend and Java 21 / Spring Boot API run at one HTTPS origin. Approved colleagues share projects and output history across devices, generate channel-specific English/Ukrainian captions and branded visuals, and download ZIP packs. No local installation or colleague API-key entry is required.
 
 ## Start here
 
-Use [Quickstart](QUICKSTART.md) for browser-only Render deployment and key entry. For company hosting and internal GitLab, see [Deployment](../DEPLOYMENT.md). Local contributor setup is optional in [Local development](LOCAL_DEVELOPMENT.md). The [social style guide](../style-guide/README.md) is applied through the shared `brand-policy.json`, bundled into both frontend and Java server. It controls dimensions, safe areas, type floors, logo layout, and channel-specific copy. Each new run snapshots the effective policy; its ZIP includes `style-guide.json` and layout measurements. Legacy runs retain their original results.
+[Quickstart](QUICKSTART.md) explains sign-in, **Team access**, adding/revoking colleagues and creating content packs. [Private deployment](../DEPLOYMENT.md) covers the one-time Google Internal OAuth registration, private owner/domain settings, company OpenAI key, persistent disk, backups and GitHub/GitLab hosting. The code does not provision a live service or Google credentials. [Security boundaries](../SECURITY.md) explains protections and limitations.
 
-## Hosted browser workflow
+Only the owner manages the exact-email access list. All approved members share the library with edit/delete/export access; no project-specific permissions are implemented. Access and material APIs enforce authentication on the server, including direct image downloads. Revocation blocks future requests from existing sessions, but cannot recall previously downloaded files.
 
-Deploy once through Render's browser flow or the company's container platform. Open the single HTTPS URL → **Connect OpenAI** → paste your key → **Use key for this visit**. The app automatically uses its own server and defaults to AI copy for new briefs. Refreshing, closing the page or **Forget key** clears the key. It is never saved in browser storage, project history, logs or exports. Only enter a key on a deployment you trust: the hosting server forwards it to OpenAI. Hosted mode never falls back to a shared owner's key.
-
-The same root Dockerfile builds/tests on GitHub and GitLab. Render follows `main` automatically; a company hosting platform needs its own rollout integration. Repository/Pages hosting alone cannot execute the Java API.
+The [social style guide](../style-guide/README.md) is applied through shared `brand-policy.json`, bundled into frontend and Java. It controls dimensions, safe areas, type floors, logo layout and copy. Each run snapshots its effective policy; ZIPs include `style-guide.json` and layout measurements. Finished runs remain immutable.
 
 ## What works
 
-- Create, rename and delete project folders. Drafts, original uploads, generation snapshots and output files persist in IndexedDB in this browser.
+- Create, rename and delete project folders. Drafts, original uploads, generation snapshots and output files persist in the encrypted shared server library in corporate mode.
 - Upload 1–8 logos and up to 20 photos (PNG/JPEG/WebP, 10 MB and 24 MP per file, 100 MB per brief). Duplicate image bytes are rejected within each upload group.
 - Choose Instagram post/story, Facebook and Google Chat independently. Choose **English, Ukrainian, or both**; a language choice is mandatory.
 - Request 1–3 variants per format and language, up to 24 PNG/caption pairs per run.
@@ -33,83 +31,24 @@ Example: 2 photos + Instagram post and story + 2 languages + 2 variants = 8 Inst
 
 **Template** works immediately without a key, using localized channel-specific structures. It does not translate your text. Optional English/Ukrainian title and description fields supply exact localized wording; otherwise a title stays as supplied, and the description is included only when its source language matches. Optional descriptions are shortened to each channel’s style-guide limits; the full original description remains in the saved brief. Essential details are preserved, and an output reports an error if they cannot fit. Variants change their hook and template accents.
 
-**AI** sends only the text brief and requested output specifications to the Java server. The server requests structured output from OpenAI (`gpt-4.1-mini` by default) and validates count, identities and text limits. It translates and adapts copy for each selected channel and language. Uploaded photos/logos are never sent to the provider. An AI error stays an error; no template text is silently substituted. Timeouts and provider errors are not automatically retried, avoiding unexpected repeat requests.
+**AI** uses the server-managed company key and sends only the text brief and requested output specifications to the Java server. The server requests structured output from OpenAI (`gpt-4.1-mini` by default) and validates count, identities and text limits. It translates and adapts copy for each selected channel and language. Uploaded photos/logos are never sent to the provider. An AI error stays an error; no template text is silently substituted. Timeouts and provider errors are not automatically retried, avoiding unexpected repeat requests.
 
 Visuals use deterministic Canvas composition inspired by the supplied reference: branded headings, exact event details, diagonal photo layouts and an original-logo shelf. This MVP does not generate synthetic photos or offer arbitrary AI-designed layouts. The visual-direction field guides AI copy tone.
 
-## Optional developer frontend
+## Persistence and exports
 
-Requirements: Node.js 22.12+ (CI uses 24).
+Corporate mode saves metadata, original assets, outputs, access grants/audit and daily quotas to an AES-256-GCM encrypted persistent server disk. It does not open IndexedDB for team data. Record versions prevent silently overwriting a colleague's changes. Keep the same disk and original storage key across deployments; administrators must arrange and test backups. Legacy browser-only prototype projects are not automatically migrated.
+
+ZIPs contain one PNG/caption pair per completed output, `brief.json`, `manifest.json`, `style-guide.json` and `README.txt`. They omit original source uploads and credentials, and are deliverables rather than re-importable workspace backups. Google Drive export is not included.
+
+Generation uses the browser for Canvas composition and needs the page to stay open. Saved partial results survive interruptions. After 15 minutes without progress the server marks an abandoned run interrupted; reuse its brief for a new run. Selective per-output retry is not implemented.
+
+## Contributor validation
+
+Local development is optional: see [Local development](LOCAL_DEVELOPMENT.md). Legacy/development profiles are unauthenticated and must never host company data. Corporate production setup is described separately in Deployment.
 
 ```sh
-cd studio
 npm ci
-npm run dev
-```
-
-Use the address printed by Vite. **Use example brief** creates a local demo campaign with a clearly marked example logo. Replace it with your own assets.
-
-```sh
-npm test
-npm run build
-npm run preview
-```
-
-`dist/` is the separate deployable web build. All paths are relative, including when hosted at `/repository/studio/`. Build/dev preparation copies the student brief and root branding assets; replace the logo/favicon in the repository's root `assets/` directory to update both sites.
-
-## Optional developer server key (non-hosted profile)
-
-Normal hosted use needs only the in-page visitor key. For local contributor testing without the `hosted` profile, the server key placeholder is intentionally empty in `server/application-local.properties.example`.
-
-```sh
-cd studio/server
-test -f application-local.properties || cp application-local.properties.example application-local.properties
-```
-
-Edit the ignored `application-local.properties` file and set `creative.openai.api-key=` to your key. Alternatively set the server environment variable `CREATIVE_OPENAI_API_KEY`. Never place the key in frontend code, a `VITE_` variable, GitHub Pages files, or a committed properties file.
-
-With a full **JDK 21** installed:
-
-```sh
-# Build the frontend first, from studio/:
-npm ci
-npm run build
-
-# Then, from studio/server/:
-./mvnw --batch-mode verify
-java -jar target/studio-server-0.1.0.jar
-```
-
-On Windows use `mvnw.cmd`. The Maven wrapper downloads Maven 3.9.11 and verifies its pinned SHA-256 checksum. The JAR includes the built frontend. Open the server's local address on port 8080, choose **AI** in Copy generation, and generate a pack. When running Vite, `/api` is proxied to port 8080.
-
-For a GitHub Pages frontend, open **Connection settings** in Studio and set the HTTPS URL of your separately hosted Java server. Configure `STUDIO_ALLOWED_ORIGINS` on the server to the exact frontend origin, such as `https://your-account.github.io` (no repository path). GitHub Pages cannot execute Java or protect a browser-delivered key.
-
-The server binds to `127.0.0.1` by default. For hosted use, configure `STUDIO_BIND_ADDRESS`, `PORT`, HTTPS and authenticated access at your hosting/reverse-proxy layer. This local single-user MVP does not implement accounts or public multi-user access controls. `CREATIVE_OPENAI_MODEL` selects another model supporting Chat Completions structured JSON output. Outbound access to `api.openai.com` and an API-enabled account/billing are required for live AI.
-
-In a managed environment Java/Maven may need the provided HTTPS proxy and trusted CA configuration. The AI client respects `HTTPS_PROXY`; Maven uses standard `~/.m2/settings.xml` proxy settings. Keep TLS and checksum verification enabled. Do not commit environment-specific proxy configuration or CA files.
-
-## Data and exports
-
-Clearing browser data removes the workspace. A different browser, origin, device or port has a separate workspace. There is no cloud sync or Google Drive export in this MVP. ZIP files are deliverables, not re-importable workspace backups.
-
-Archives contain:
-
-```text
-instagram_post/en/variant-01.png
-instagram_post/en/variant-01.txt
-... (one pair for each completed output)
-brief.json
-manifest.json
-style-guide.json
-README.txt
-```
-
-The manifest includes the input snapshot, mode/model/prompt version, language/format/variant, logo IDs, photo assignment, status and any error for each output. Original source uploads and credentials are not included. Regeneration creates a new immutable history entry. Closing the page during a run marks it interrupted on the next visit; completed files remain available. Reuse the brief to start a new run (selective per-output retry is not part of this MVP).
-
-## Validation and automation
-
-```sh
-cd studio
 npm test
 npx playwright install chromium
 npm run test:e2e
@@ -118,6 +57,6 @@ cd server
 ./mvnw --batch-mode verify
 ```
 
-Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when using an existing system Chromium. Tests cover photo allocation, mandatory languages/logos, per-channel/localized copy, actual PNG sizes, pixels from every original logo, ZIP contents, persisted history, isolated projects, cancellation/interruption, and AI success/failure contracts. Java tests use a local HTTP stub; they never spend API credits. Live OpenAI generation requires your key and remains an integration to verify after configuration.
+Use JDK 21 and Node 24 (minimum Node 22.12). `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` selects an existing Chromium. Tests cover branded PNG/ZIP output, assets/languages, shared-library browser wiring, owner grant/revocation, Google OIDC token validation, CSRF, private file access, encrypted persistence, conflicts and quotas. Tests use fake accounts and local provider stubs, with no real credentials or API spend. Live Google/OpenAI access must be checked after private hosting configuration.
 
-`.github/workflows/studio.yml` builds/tests the frontend and Java server as separate downloadable artifacts. `.github/workflows/pages.yml` publishes the student brief at the site root and the Studio app at `studio/` after changes land on `main`.
+The root Dockerfile builds/tests frontend and Java together. GitHub/GitLab CI runs the private container smoke test. Pages deploys documentation and a landing page rather than the private application. Repository/registry hosting alone does not run an application server.

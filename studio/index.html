@@ -46,6 +46,9 @@
           <button id="open-settings">
             Connection settings <span aria-hidden="true">→</span>
           </button>
+          <button id="manage-access" hidden>
+            Team access <span aria-hidden="true">→</span>
+          </button>
         </div>
       </aside>
       <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
@@ -65,6 +68,9 @@
             ><strong id="current-project-name">Loading…</strong>
           </div>
           <div class="topbar-actions">
+            <button id="sign-out" class="button secondary" hidden>
+              Sign out
+            </button>
             <button id="connect-key" class="button secondary" hidden>
               Connect OpenAI
             </button>
@@ -675,6 +681,50 @@
           synced across devices; export important ZIPs before clearing browser
           data.
         </p>
+      </div>
+    </dialog>
+    <dialog id="access-dialog" aria-labelledby="team-access-title">
+      <div class="dialog-heading">
+        <h2 id="team-access-title">Team access.</h2>
+        <button
+          type="button"
+          class="close-dialog"
+          aria-label="Close team access"
+        >
+          ×
+        </button>
+      </div>
+      <p>
+        Only you can see and change this list. Approved colleagues share the
+        project library and use the company's AI connection.
+      </p>
+      <form id="access-form">
+        <div class="field">
+          <label for="colleague-email">Corporate email</label
+          ><input
+            id="colleague-email"
+            type="email"
+            autocomplete="off"
+            maxlength="254"
+            required
+            placeholder="colleague@your-company.example"
+          />
+        </div>
+        <button class="button primary" type="submit">Add colleague</button>
+      </form>
+      <p id="access-status" role="status"></p>
+      <div id="access-list" class="access-list"></div>
+      <div class="settings-note">
+        <strong>Share one protected link</strong>
+        <p>
+          Adding a colleague enables their account; it does not send an email.
+          Share this site's link with them. They must sign in with that exact
+          corporate account. Revoking access blocks their next request,
+          including direct file downloads.
+        </p>
+        <button id="copy-team-link" class="button secondary">
+          Copy Studio link
+        </button>
       </div>
     </dialog>
     <dialog id="output-dialog" class="output-dialog">

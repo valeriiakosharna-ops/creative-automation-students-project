@@ -19,8 +19,8 @@ hosted-studio:
   script:
     - docker info
     - docker build --tag studio-ci:$CI_COMMIT_SHA .
-    - docker run -d --name studio-smoke studio-ci:$CI_COMMIT_SHA
-    - docker run --rm -i --network container:studio-smoke python:3.12-alpine python - http://127.0.0.1:8080 < scripts/check_hosted.py
+    - sh scripts/run_private_smoke.sh studio-ci:$CI_COMMIT_SHA studio-smoke
+    - docker run --rm -i --network container:studio-smoke python:3.12-alpine python - http://127.0.0.1:8080 < scripts/check_private.py
     - |
       if [ "${CI_COMMIT_BRANCH:-}" = "$CI_DEFAULT_BRANCH" ]; then
         printf '%s' "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin

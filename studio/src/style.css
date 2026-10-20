@@ -2032,3 +2032,59 @@ body:has(dialog[open]) {
     padding: 8px 10px;
   }
 }
+
+.access-list {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+}
+.access-member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 14px;
+}
+.access-member > div {
+  min-width: 0;
+}
+.access-member strong {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.access-member small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 5px;
+}
+.access-member button {
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 9px 12px;
+}
+#access-status {
+  color: var(--ocean);
+  font-size: 12px;
+  line-height: 1.6;
+}
+#access-dialog .button {
+  font-size: 11px;
+}
+@media (max-width: 700px) {
+  .corporate-mode .mode-indicator {
+    display: none;
+  }
+  .corporate-mode .breadcrumb strong {
+    max-width: 140px;
+  }
+}
+@media (max-width: 420px) {
+  .access-member {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -27,8 +27,10 @@ RUN --mount=type=cache,target=/root/.m2 \
 
 FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
+RUN install -d -m 0700 -o 10001 -g 10001 /var/lib/creative-studio
 COPY --from=server --chmod=0444 /build/server/target/studio-server-0.1.0.jar /app/studio.jar
-ENV SPRING_PROFILES_ACTIVE=hosted \
+ENV SPRING_PROFILES_ACTIVE=corporate \
+    STUDIO_REQUIRE_PRIVATE=true \
     STUDIO_BIND_ADDRESS=0.0.0.0 \
     PORT=8080 \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"

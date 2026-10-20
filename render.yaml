@@ -2,12 +2,30 @@ services:
   - type: web
     name: creative-automation-studio
     runtime: docker
-    plan: free
+    plan: starter
     branch: main
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /api/health
+    healthCheckPath: /healthz
     autoDeploy: true
+    disk:
+      name: private-studio-library
+      mountPath: /var/lib/creative-studio
+      sizeGB: 10
     envVars:
       - key: PORT
         value: "10000"
+      - key: STUDIO_EMAIL_DOMAIN
+        sync: false
+      - key: STUDIO_OWNER_EMAIL
+        sync: false
+      - key: STUDIO_PUBLIC_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: CREATIVE_OPENAI_API_KEY
+        sync: false
+      - key: STUDIO_STORAGE_KEY
+        generateValue: true
