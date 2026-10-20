@@ -1,66 +1,87 @@
-# Hosted deployment and internal GitLab handoff
+# Private corporate deployment
 
-## One portable application
+The default Docker image serves frontend and Java API at one HTTPS origin, with Google Workspace OIDC sign-in, an owner-managed exact-email access list, a company server-side OpenAI key and one encrypted shared library. Ordinary users install nothing. Google/GitHub/GitLab repositories alone do not run this server.
 
-The root `Dockerfile` builds the frontend with Node 24, verifies the Java 21 server and packages both in one non-root JRE container. It includes the student brief, social style guide, runtime configuration and ZIP workflow. No database, separate frontend origin, local machine, or OpenAI key is required to build it.
+No production service, OAuth application or secret has been provisioned by this PR. An authorized company administrator completes the following setup in company-controlled accounts. Never send credentials in chat, commit them, put them in a PR, or expose them through a frontend `VITE_*` variable.
 
-The default container runs the **hosted** Spring profile, binds `0.0.0.0`, and listens on `PORT` (8080 by default). The platform should terminate HTTPS and proxy the whole domain to that port. Serve the application at the **domain root**, including `/api` and `/runtime.js`; no repository subpath rewrite is needed. Do not route the frontend and API to different hosts. Health check: `GET /api/health`.
+## 1. Configure corporate Google sign-in
 
-Visitors enter their own key through **Connect OpenAI**. It stays in page memory, travels only to this origin in `X-OpenAI-Key`, and is forwarded to OpenAI in its authorization header. Hosted generation rejects requests without that header and never uses a shared server key. Keys are not included in the JSON brief, provider prompt, logs or ZIP. The hosted profile disables cross-origin API access and constrains scripts/connections to the same site. Keep request-header/body tracing disabled/redacted at the reverse proxy and monitoring layer.
+1. In a company Google Cloud project belonging to the Workspace organization, configure Google Auth Platform with **Internal** audience. Follow the organization's application approval rules and enforce Google MFA through Workspace policy.
+2. Create an OAuth client of type **Web application**. Choose the final Studio HTTPS origin before configuring the callback. Add exactly `https://YOUR-STUDIO-HOST/login/oauth2/code/corporate` as its authorized redirect URI. Replace the host; no trailing slash or additional path. The application requests only `openid` and `email`, with no Gmail or Drive permissions.
+3. Store the client ID and secret privately in the hosting settings as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Set `STUDIO_PUBLIC_URL` to that HTTPS origin, without a path or trailing slash.
+4. Set `STUDIO_EMAIL_DOMAIN` to the corporate domain after `@` and `STUDIO_OWNER_EMAIL` to the initial owner's exact primary Workspace address. These are private deployment values, not repository configuration. Initially only this account is approved. The owner adds others through **Team access** after signing in.
 
-The service is an MVP with a shared one-request AI concurrency limit. There are no user accounts or cloud workspace storage. If access should be corporate-only, put it behind your company's VPN/SSO/access gateway. Browser IndexedDB stores each visitor's projects and output history.
+The server validates Google's signed ID token, issuer, audience, expiry, nonce, verified email and hosted-domain claim. A matching domain is necessary but not sufficient: the exact address must be active in the encrypted access directory. First successful login binds the entry to Google's stable account subject, preventing a recycled address from silently inheriting an existing grant. The server rechecks grants on authenticated requests; revocation applies to existing sessions. Use primary account addresses, not mailing lists or aliases.
 
-## GitHub → Render: browser-only setup
+The owner may revoke and deliberately restore access to re-enroll an account. An environment-variable edit cannot silently transfer ownership of an existing library: a mismatch fails startup. Plan owner migration with IT and a verified backup.
 
-Use the deploy button and steps in [Quickstart](studio/QUICKSTART.md). `render.yaml` creates a Docker web service with a health check and automatic deployment of `main`. The service needs **no OpenAI secret** in Render; visitors paste their own keys in Studio. `PORT=10000` is set for Render. HTTPS is supplied by the platform.
+## 2. Run the container on company-controlled hosting
 
-Hosting provision/account access and any provider billing confirmation belong to the owner. Committing this file does not create a live service by itself. Free-service availability and cold starts depend on Render. This workflow is suitable for GitHub or GitLab.com repositories the provider can access; a private internal GitLab needs the corporate route below or an approved reachable mirror.
+Use the repository's Dockerfile. Configure one replica with a persistent POSIX filesystem at `/var/lib/creative-studio`, writable by UID/GID `10001:10001`. The service sets directories to `0700`. No public object bucket or download directory is used. Multi-replica use, network filesystems lacking atomic moves, and distributed session storage are outside this MVP.
 
-## GitHub Container Registry
+Expose one stable HTTPS origin; proxy **all** paths to port `8080` (or `PORT`). Restrict direct access to the container port and trust forwarded headers only from the controlled ingress. Set request and response timeouts to at least 150 seconds. Enforce upload limits at the ingress; the server streams ZIP uploads with 160 MiB aggregate, 25 MiB/image and 512 KiB metadata limits. Health checks use `/healthz`, returning only `{"status":"UP"}`. Do not publish Spring Actuator, debug endpoints or request/body/header logs.
 
-`.github/workflows/container.yml` builds and tests the image on pull requests. On `main`, after the container smoke test passes, it also publishes:
+Set these in the hosting secret manager/environment:
 
-```text
-ghcr.io/valeriiakosharna-ops/creative-automation-students-project:latest
-ghcr.io/valeriiakosharna-ops/creative-automation-students-project:<full-commit-sha>
-```
+| Variable                       | Value / purpose                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SPRING_PROFILES_ACTIVE`       | `corporate` (image default). Do not enable `hosted` for company use.                                                                              |
+| `STUDIO_REQUIRE_PRIVATE`       | `true` (image default). Refuses startup if the corporate profile is removed.                                                                      |
+| `STUDIO_EMAIL_DOMAIN`          | Exact Workspace domain, private.                                                                                                                  |
+| `STUDIO_OWNER_EMAIL`           | Initial owner's exact primary address, private.                                                                                                   |
+| `STUDIO_PUBLIC_URL`            | Final HTTPS origin, no path.                                                                                                                      |
+| `GOOGLE_CLIENT_ID`             | Google web client ID.                                                                                                                             |
+| `GOOGLE_CLIENT_SECRET`         | Google web client secret.                                                                                                                         |
+| `CREATIVE_OPENAI_API_KEY`      | Company OpenAI project key; server only.                                                                                                          |
+| `STUDIO_STORAGE_KEY`           | Cryptographically random secret of at least 32 characters, generated using the hosting secret generator. Keep its original value with the backup. |
+| `STUDIO_DATA_DIR`              | `/var/lib/creative-studio`; persistent mounted directory.                                                                                         |
+| `STUDIO_STORAGE_QUOTA_BYTES`   | `5368709120` (5 GiB application quota). Provision extra disk headroom for uploads/staging/backups.                                                |
+| `STUDIO_DAILY_USER_ATTEMPTS`   | `20`, persistent AI attempts per account per Kyiv day.                                                                                            |
+| `STUDIO_DAILY_TEAM_ATTEMPTS`   | `100`, persistent team attempts per Kyiv day.                                                                                                     |
+| `CREATIVE_OPENAI_MODEL`        | `gpt-4.1-mini`; must support Chat Completions structured JSON.                                                                                    |
+| `PORT` / `STUDIO_BIND_ADDRESS` | `8080` / `0.0.0.0`, adjust target port to host.                                                                                                   |
+| `JAVA_TOOL_OPTIONS`            | Preserve `-XX:MaxRAMPercentage=75.0`; add approved truststore options if required.                                                                |
+| `HTTPS_PROXY`                  | Optional approved outbound HTTP CONNECT proxy.                                                                                                    |
 
-Publishing uses the built-in `GITHUB_TOKEN`; no manually configured registry secret is required. Enable Actions package publishing if organization policy blocks it. Package visibility/access controls are managed separately in GitHub; a private package needs pull access at the hosting platform. Point company hosting to the tested commit tag for a fixed release. Publishing a new image does not itself update an existing company deployment; configure that platform's rollout automation.
+The library encrypts project metadata, images, outputs, access directory, audit and quotas using AES-256-GCM. The key is required on every restart. A wrong key fails startup without replacing existing data. Losing/changing it makes prior data unreadable; this MVP has no key-rotation UI. Keep encrypted disk backups and the original key separately in company-controlled backup/secret systems; test restoration on isolated hosting. Back up before upgrades and preserve the stable URL. Use platform disk encryption too.
 
-## Internal GitLab: one-time IT setup
+Allow outbound HTTPS to `accounts.google.com`, `oauth2.googleapis.com`, `www.googleapis.com` and `api.openai.com`. For TLS-inspecting proxies mount an approved Java truststore read-only and configure it without disabling certificate validation. Google sign-in also requires the browser to reach Google. Set provider budget alerts/caps in the company OpenAI project; application attempt limits are not a financial spend cap.
 
-1. Import/mirror this repository, including its root `Dockerfile`, `.dockerignore` and `.gitlab-ci.yml`.
-2. Enable GitLab Container Registry and provide a runner that can use **TLS-enabled Docker-in-Docker**. The runner administrator enables privileged services and shares `/certs/client` between the job and Docker service. Do not disable TLS to fix runner setup. If company policy uses a different builder, adapt the build job; the application image contract stays the same.
-3. Merge to the project's default branch. The pipeline builds the container (including Node/Java tests), starts it, and runs `scripts/check_hosted.py` without credentials or AI spend. Merge-request pipelines test without publishing. Successful default-branch pipelines publish `$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA` and `:latest` with GitLab's built-in registry credentials.
-4. Configure the company's container platform (Kubernetes, OpenShift, Docker host, etc.) to pull the commit image using approved registry pull credentials. Run one replica for the MVP. Configure the platform's rollout trigger after a successful default-branch image push; this repository cannot infer a company's cluster credentials or deployment target.
-5. Expose one stable HTTPS domain, proxy all paths, trust forwarded scheme/host headers only from the platform ingress, and allow a request/response timeout of at least 150 seconds. The hosted profile understands the proxy's forwarded HTTPS headers for same-origin checks. Health-check `/api/health`; it returns `clientKeysEnabled: true`, `aiConfigured: false`, and the style-guide version.
-6. Allow outbound HTTPS to `api.openai.com`. Set the approved `HTTPS_PROXY` if required. For a corporate TLS-inspecting proxy, mount the approved Java truststore read-only and set `JAVA_TOOL_OPTIONS` with its path; preserve memory options and normal trusted roots. Never disable TLS verification. Configure access policy/VPN/SSO at the ingress if needed.
-7. Share that one URL with users. They open Studio, paste their own key for the visit, and generate/download ZIPs. No workstation installation is involved.
+### Render option
 
-Server variables (set in the hosting UI/secret manager, not committed with real values):
+`render.yaml` defines a paid **Starter** Docker service with a 10 GiB persistent disk. Review current hosting/storage charges before provisioning. Use a company-controlled Render account; fill private values in its protected settings, not YAML. `STUDIO_STORAGE_KEY` is generated by Render: preserve it securely before relying on the library. Reserve the final service/custom domain and configure Google's callback and `STUDIO_PUBLIC_URL` to match it. A first deployment with missing values should fail closed until configuration is complete. Merges to `main` trigger rebuilds. Persistent disks require a single service instance and may cause downtime during deployments; plan company backups.
 
-| Variable | Default / purpose |
-| --- | --- |
-| `SPRING_PROFILES_ACTIVE` | `hosted` in the image; keep this profile enabled. |
-| `PORT` | `8080`; match the platform's target port. |
-| `STUDIO_BIND_ADDRESS` | `0.0.0.0`; container interface, not loopback. |
-| `CREATIVE_OPENAI_MODEL` | `gpt-4.1-mini`; model must support Chat Completions structured JSON. |
-| `JAVA_TOOL_OPTIONS` | `-XX:MaxRAMPercentage=75.0`; preserve/add approved truststore options if needed. |
-| `HTTPS_PROXY` | Optional approved outbound HTTP CONNECT proxy. |
+The HTTPS sign-in page is reachable publicly, but Studio pages, APIs and materials require an approved account. If company policy also requires the whole site to be inaccessible from the Internet, use company private hosting/VPN or an approved access gateway in addition to application authentication.
 
-Do **not** set `CREATIVE_OPENAI_API_KEY`, `VITE_*` secrets or an API key as a Docker build argument. Hosted mode requires the visitor's key even if an owner key was accidentally supplied. Original uploads stay in the browser; only text and output specifications go to OpenAI.
+### Internal GitLab option
 
-## Optional operator checks
+1. Import the repository with `Dockerfile` and `.gitlab-ci.yml`; restrict repository/registry access as required by the company.
+2. Provide a runner supporting TLS-enabled Docker-in-Docker, including the shared `/certs/client` volume, or adapt to the company's approved builder. Do not disable TLS.
+3. Merge-request pipelines build/test without publishing. Successful default-branch pipelines publish commit and `latest` images to the project registry using GitLab's built-in credentials. They run a private-mode smoke test with deliberately fake settings and no AI spend.
+4. Company Kubernetes/OpenShift/container hosting pulls the commit image with approved registry credentials. Configure one replica, persistent storage, HTTPS, the secret settings above and a health-checked rollout trigger. CI cannot infer the company's cluster credentials or hosting target.
+5. Share only the private Studio URL. Colleagues sign in with Google; no local setup or API key entry is involved.
 
-These are commands for the hosting/CI team, not steps for ordinary users:
+GitHub builds the same image and publishes it on default-branch pushes. GitHub Pages serves documentation and a static landing page, not a working team Studio. No real colleague addresses or private configuration belong in CI variables used for builds/artifacts.
+
+## 3. Verify before inviting the team
+
+- Signed out: the root redirects to sign-in; API/session/library/file requests are denied. An unapproved corporate account, personal Gmail account and wrong-domain account cannot enter.
+- Sign in as owner: open Team access, add one exact test colleague and copy the link. Sign in as that colleague in a separate browser profile; they see the shared project but cannot list or manage colleagues.
+- Generate one small AI pack to verify the privately configured key, model and billing. CI tests use stubs and cannot prove production provider access.
+- Revoke the test colleague and verify their next API/file request fails. Already downloaded copies remain with the colleague.
+- Restart/redeploy and confirm the owner's access list and project/images/history survive. Test the isolated backup restore procedure before treating the library as durable storage.
+
+If replacing an older public deployment, suspend it before private cutover. Old browser-only data is not automatically imported into the shared library; export important ZIPs first. Roll back only to a compatible **private** image. Never roll back to an unauthenticated public prototype with company data or a company key configured.
+
+## Operator build checks
+
+CI builds/tests the image, then starts it with fake private settings and runs `scripts/check_private.py`. Local operator equivalents (not user installation steps):
 
 ```sh
 docker build -t creative-studio .
-docker run --rm -p 8080:8080 creative-studio
-# In another operator terminal:
-python3 scripts/check_hosted.py http://127.0.0.1:8080
+sh scripts/run_private_smoke.sh creative-studio studio-private-smoke
+python3 scripts/check_private.py http://127.0.0.1:18080
+docker rm -f studio-private-smoke
 ```
 
-Use a health-checked rollout and keep the prior commit image for rollback. Browser data stays tied to the site's exact origin, so preserve its domain. Updating the server does not create cross-device project backups.
-
-In the Codex managed environment only, Docker builds can mount optional `proxy_ca`, `maven_settings` and `maven_truststore` BuildKit secrets. These preserve the provided proxy/CA route and verification; they are not needed on standard hosting and are never copied into the runtime image.
+In the Codex managed environment only, builds may mount optional `proxy_ca`, `maven_settings` and `maven_truststore` BuildKit secrets. These preserve its proxy/CA configuration and are never copied into the runtime image. Production private credentials are runtime values, never Docker build arguments.

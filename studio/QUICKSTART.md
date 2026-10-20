@@ -1,64 +1,49 @@
-# Use Studio online — no installation
+# Private Studio — browser-only use
 
-You do not need Java, Node.js, Docker, a terminal, or a local server on your computer. A hosting service runs the complete app. You open its HTTPS address and paste your own OpenAI API key for the visit.
+Studio runs on company-controlled hosting. You and your colleagues need only a browser: no Java, Node.js, Docker or terminal on your computer.
 
-## First time: create your hosted site
+## One-time setup
 
-Do this after the hosting PR is merged into the repository's `main` branch.
+Ask the hosting/Google Workspace administrator to follow [Private deployment](../DEPLOYMENT.md). They connect a Google **Internal** OAuth application, set the initial owner's exact email privately, store the company OpenAI key in the hosting secret manager, and attach a persistent encrypted library disk. The repository contains no real domain, colleague addresses or keys. The Google connection and hosting still need this one-time configuration before a real team can sign in.
 
-1. Open **[Deploy to Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fvaleriiakosharna-ops%2Fcreative-automation-students-project)** in your browser.
-2. Sign in or create a Render account. Connect GitHub if prompted and give it access to this repository. Private repositories require access through the owning account/organization.
-3. Review the `creative-automation-studio` web service and confirm deployment. The committed `render.yaml` selects the Free plan and the Docker build. No OpenAI key or other secret is required in this form.
-4. Wait until the service is **Live**. The initial build takes several minutes.
-5. Open the **HTTPS service URL** shown by Render. Bookmark it. This is your complete Studio site, including its AI server.
+The application container is private by default and refuses to start without its required private settings. The public GitHub Pages site contains the student brief, style guide and a Studio landing page. It does not host your team workspace.
 
-If Render asks for a Blueprint rather than showing the deploy-button flow: Dashboard → **New → Blueprint** → connect this repository → select `main` and `render.yaml` → review → deploy.
+## Add a colleague
 
-Render controls account verification, plan availability and pricing. Review any billing prompt before accepting it. Free services can sleep when idle and take about a minute to wake. Your own OpenAI API usage is billed separately. For an always-on site, choose an appropriate hosted plan or use company infrastructure.
+1. Open the private Studio HTTPS address and choose **Continue with Google**. Sign in with the owner account configured by your administrator.
+2. Click **Team access** in the sidebar. Only the owner can open this panel.
+3. Enter the colleague's exact corporate Google Workspace email and click **Add colleague**. No source change, deployment or restart is needed. Knowing the domain alone does not grant access.
+4. Click **Copy Studio link** and send the link through your approved company channel. Studio does not send invitation emails.
+5. The colleague opens the link and signs in with that exact Google account. All approved colleagues see the same projects, uploads, drafts, captions and completed visuals across devices.
 
-## Every visit: paste your key and create a pack
+Use **Revoke** to block a colleague's future requests, including requests from an existing signed-in session. Use **Restore access** to approve them again. The owner cannot remove or reassign their own account through this panel; ownership changes need an administrator-assisted migration. A colleague cannot manage the access list or view other colleagues' email addresses through the access API.
 
-1. Open your bookmarked Studio HTTPS URL.
-2. Click **Connect OpenAI** at the top.
-3. Paste your OpenAI API key and click **Use key for this visit**.
-4. Create a project or click **Use example brief**. Upload your logos and event photos, enter event details, and choose formats, quantity and **English, Ukrainian, or both**.
-5. Keep **AI · your OpenAI key** selected and generate the pack. Start with one format/language/variant for your first test.
-6. Review the visuals and channel-specific captions, then download the ZIP.
+Revocation cannot erase copies someone has already downloaded or data already displayed in their browser. Approve only people who may view, edit, delete and export the shared library. The MVP has owner/member roles, without per-project permissions or read-only members.
 
-No backend address, local configuration file or server restart is needed. **Check server** checks availability only; OpenAI verifies your key/model access during your first generation. A ChatGPT subscription does not include OpenAI API credits.
+## Create a content pack
 
-To try the whole image/ZIP workflow without spending API credits, choose **Template · no API key needed**. It uses supplied English/Ukrainian wording and does not translate text automatically.
+1. Create a project, or choose **Use example brief**.
+2. Upload your original logos and event photos (PNG/JPEG/WebP). Enter event details, dates, location, call to action, palette and visual direction.
+3. Select the social formats, quantity, and **English, Ukrainian, or both**. Choosing a language is mandatory.
+4. Select AI copy and generate. The company connection is already configured: colleagues do not enter or see the API key. Start with one format/language/variant to check copy quality and API billing.
+5. Review the visuals and captions, then download the ZIP. History and original uploads are saved to the protected shared server library. Sign out when finished, especially on a shared computer.
 
-## Where the key and work live
+Every uploaded logo appears on every visual. Photos are used at most once per social network/run across languages and variants; Instagram posts and stories share a pool. Extra visuals use information-only layouts. The same brand policy governs the renderer and AI instructions. ZIPs contain PNG/caption pairs, brief, manifest and `style-guide.json`.
 
-- Your key stays in the open page's memory. **Forget key**, refreshing or closing that page clears it. Paste it again on a new visit. Studio does not save it in browser storage, projects, history, exports or application logs.
-- The key is sent over HTTPS to **this site's server**, which forwards it in the OpenAI request header. It is not sent to a separately entered backend URL. Only enter a key on a Studio deployment you trust. Hosting administrators control that server.
-- Each visitor supplies their own key. Hosted mode never falls back to an owner's shared key, even if one was accidentally set in the hosting environment. There is no shared account or sign-in in this MVP.
-- Projects, uploads and history remain in IndexedDB in your browser, at this site's origin. They survive a normal server restart, but are not synced across browsers/devices. Clearing browser data or changing the domain separates/removes the workspace. Keep important ZIPs.
+Template mode uses no OpenAI request and does not translate your input. AI mode sends text and output requirements to OpenAI; uploaded logos/photos are not sent to the provider. Visuals are composed from your original assets, without generating synthetic photos. Keep the page open during generation; completed files survive interruption.
 
-Every visual contains every uploaded logo. A photo is used at most once per social network/run across variants and languages; Instagram post and Story share a pool. Extra outputs use information-only layouts. The shared brand policy applies to visuals and AI copy; ZIPs contain PNG/caption pairs, the brief, manifest and `style-guide.json`.
+## Troubleshooting
 
-## Future changes build online
+| What you see                          | What to do                                                                                                                                                           |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google access denied                  | Use the exact approved corporate account. Ask the owner to check Team access; the Workspace administrator may also need to allow the Google application.             |
+| Corporate session unavailable/expired | Reload and sign in again. Idle sessions expire after 30 minutes; Google token expiry can require an earlier fresh login than the maximum 8-hour session.             |
+| No Team access button                 | Only the configured owner manages colleagues.                                                                                                                        |
+| A colleague updated this record       | Reload before editing; concurrent changes are rejected instead of overwriting another person's work.                                                                 |
+| AI unavailable / provider error       | Ask the administrator to check the server key, model access and OpenAI API billing. Never send the key in chat. A ChatGPT subscription does not include API credits. |
+| Daily AI limit reached                | Defaults are 20 attempts per person and 100 per team per Kyiv calendar day. Failed provider attempts count too. The administrator can adjust the limits.             |
+| Private library is full               | Export/remove old projects or ask the administrator to increase disk capacity and the configured quota.                                                              |
+| History shows an interrupted run      | After 15 minutes without saved progress, an abandoned run is marked interrupted. Completed files remain; reuse its brief to generate a new run.                      |
+| Missing projects                      | Check you opened the private company Studio, rather than an older public prototype. Old browser-only projects are not automatically migrated.                        |
 
-On GitHub, pushes to `main` build/test the site and the complete container. Render is configured to redeploy from `main` automatically. A PR builds without publishing a container. GitHub Pages still serves the student brief and static Template demo; its URL is different from your full hosted Studio URL.
-
-For an **internal GitLab**, ask IT to follow `DEPLOYMENT.md` in the repository: the same Dockerfile builds the app, the included GitLab pipeline tests/publishes it to the project registry, and the company's container platform runs it behind HTTPS. Users then get one internal URL and enter their own key. IT needs to configure the runner/hosting once; users need no local tools. Internal hosting must allow outbound `api.openai.com`.
-
-Do not deploy this as a Pages-only site and expect it to execute Java. GitHub/GitLab repositories and registries store code/images; they do not by themselves run an always-on application server.
-
-## If something does not work
-
-| What you see | What to do |
-| --- | --- |
-| Site is waking up | Wait for the free hosted service to start, then reload. |
-| No Connect OpenAI button | Open the full hosted Studio URL, not its GitHub/GitLab Pages demo. |
-| Add your key for this visit | Paste it through Connect OpenAI; refresh/new tabs intentionally forget it. |
-| Provider HTTP 401 | Check that the complete API key was pasted without quotes/spaces and has not been revoked. |
-| Provider HTTP 403/404 | Check OpenAI project/model access. Hosting defaults to `gpt-4.1-mini`. |
-| Provider HTTP 429 | Check API credits/billing or wait for a provider rate limit. ChatGPT billing is separate. |
-| Server is handling another run | Wait for that run to finish. The MVP processes one AI request at a time. |
-| Network/timeout error | Check hosting logs/provider status; IT should check outbound HTTPS, proxy and trusted CA. |
-| Text does not fit | Shorten the visual title, optional summary or location. Minimum brand type sizes are preserved. |
-| Projects are missing | Use the same browser/profile and exactly the same bookmarked domain. There is no cloud workspace sync. |
-
-For optional contributor-only local development, see `studio/LOCAL_DEVELOPMENT.md` in the repository. Local setup is not required for hosted use.
+Important ZIPs are deliverables, not full workspace backups. Hosting administrators must back up the encrypted disk and the original storage key separately. See [Security boundaries](../SECURITY.md).

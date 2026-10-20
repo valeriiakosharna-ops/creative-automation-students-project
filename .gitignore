@@ -6,6 +6,10 @@ studio/server/target/
 studio/server/application-local.properties
 .env
 .env.local
+.env.*
+!.env.example
+private-config/
+studio/server/private-data/
 studio/test-results/
 studio/playwright-report/
 studio/public/brief/

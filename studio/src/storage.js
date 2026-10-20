@@ -1,22 +1,31 @@
-const dbPromise = new Promise((resolve, reject) => {
-  const r = indexedDB.open("creative-automation-studio", 1);
-  r.onupgradeneeded = () => {
-    const db = r.result;
-    db.createObjectStore("projects", { keyPath: "id" });
-    db.createObjectStore("drafts", { keyPath: "projectId" });
-    db.createObjectStore("runs", { keyPath: "id" }).createIndex(
-      "projectId",
-      "projectId",
-    );
-  };
-  r.onsuccess = () => resolve(r.result);
-  r.onerror = () =>
-    reject(
-      Error(
-        "Browser storage is unavailable. Allow IndexedDB to save your projects.",
-      ),
-    );
-});
+import {
+  allServer,
+  getServer,
+  putServer,
+  deleteServerProject,
+} from "./server-storage.js";
+const serverStorage = window.STUDIO_RUNTIME?.workspaceStorage === "server";
+const dbPromise = serverStorage
+  ? null
+  : new Promise((resolve, reject) => {
+      const r = indexedDB.open("creative-automation-studio", 1);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        db.createObjectStore("projects", { keyPath: "id" });
+        db.createObjectStore("drafts", { keyPath: "projectId" });
+        db.createObjectStore("runs", { keyPath: "id" }).createIndex(
+          "projectId",
+          "projectId",
+        );
+      };
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () =>
+        reject(
+          Error(
+            "Browser storage is unavailable. Allow IndexedDB to save your projects.",
+          ),
+        );
+    });
 export async function transaction(store, mode, operation) {
   const db = await dbPromise;
   return new Promise((resolve, reject) => {
@@ -39,16 +48,24 @@ export async function transaction(store, mode, operation) {
   });
 }
 export const put = (store, value) =>
-  transaction(store, "readwrite", (s) => s.put(value));
+  serverStorage
+    ? putServer(store, value)
+    : transaction(store, "readwrite", (s) => s.put(value));
 export const get = (store, id) =>
-  transaction(store, "readonly", (s) => s.get(id));
-export const all = (store) => transaction(store, "readonly", (s) => s.getAll());
+  serverStorage
+    ? getServer(store, id)
+    : transaction(store, "readonly", (s) => s.get(id));
+export const all = (store) =>
+  serverStorage
+    ? allServer(store)
+    : transaction(store, "readonly", (s) => s.getAll());
 export async function runsFor(id) {
   return (await all("runs"))
     .filter((r) => r.projectId === id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 export async function deleteProject(id) {
+  if (serverStorage) return deleteServerProject(id);
   const db = await dbPromise;
   return new Promise((resolve, reject) => {
     const tx = db.transaction(["projects", "drafts", "runs"], "readwrite");

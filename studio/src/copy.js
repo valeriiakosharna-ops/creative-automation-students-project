@@ -1,4 +1,5 @@
 import { BRAND_POLICY } from "./brand.js";
+import { csrfHeaders } from "./private-api.js";
 export const PROMPT_VERSION = "studio-copy-v2";
 export function eventDate(b, lang) {
   const [y, m, d] = b.date.split("-").map(Number);
@@ -109,6 +110,7 @@ export async function requestCopy(
     ...(apiKey ? { mode: "same-origin", redirect: "error" } : {}),
     headers: {
       "Content-Type": "application/json",
+      ...(await csrfHeaders()),
       ...(apiKey ? { "X-OpenAI-Key": apiKey } : {}),
     },
     body: JSON.stringify({

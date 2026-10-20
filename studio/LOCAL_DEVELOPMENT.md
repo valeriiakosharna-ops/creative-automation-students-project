@@ -93,7 +93,11 @@ The full JAR includes the app, the student brief, the social style guide, and th
 Open `http://127.0.0.1:8080/api/health`. You should see:
 
 ```json
-{"service":"creative-automation-studio","aiConfigured":true,"styleGuideVersion":"1.0.0"}
+{
+  "service": "creative-automation-studio",
+  "aiConfigured": true,
+  "styleGuideVersion": "1.0.0"
+}
 ```
 
 JSON field order may differ. `aiConfigured: true` means a nonempty key was loaded; it does not prove billing or model access. Confirm those with the following small generation:
@@ -120,34 +124,26 @@ npm run dev
 
 Use Vite's printed address, normally `http://127.0.0.1:5173`. Requests to `/api` are proxied to the Java server on port 8080. Leave the Studio backend address empty in this setup. The UI served at port 5173 and the UI served at port 8080 have different browser storage: projects do not automatically appear across those origins. Use one address consistently for real work.
 
-## 7. If you use the GitHub Pages frontend
+## 7. Private production is separate
 
-GitHub Pages serves the browser UI at `/creative-automation-students-project/studio/`; it does not execute Java. To use AI there:
+The preceding instructions intentionally use an unauthenticated contributor profile and browser-local storage. Never expose that setup to colleagues or use it for confidential company material. The default Docker image instead requires corporate mode; follow [Deployment](../DEPLOYMENT.md) for Google login, the owner access panel, a shared encrypted disk and private server key configuration.
 
-1. Host the Java server separately behind HTTPS and authenticated access. The current MVP is a local single-user tool and does not provide accounts/public API authentication.
-2. Set `STUDIO_BIND_ADDRESS` and `PORT` as needed by that hosting platform.
-3. Set `STUDIO_ALLOWED_ORIGINS=https://valeriiakosharna-ops.github.io` on the Java server. An origin includes the scheme/host, **not** `/creative-automation-students-project` or `/studio/`.
-4. In Studio → **Connection settings**, enter the Java server's HTTPS base URL (no `/api` suffix), save it, and use **Test connection**.
-5. Select AI mode and make a small generation.
-
-A public Pages page cannot normally call your computer's loopback server across origins; use the locally served app for the simplest first setup. Template mode needs no key/server and works on Pages immediately.
-
-For this managed cloud environment, allow outbound `api.openai.com` in Environment settings, save the configuration and publish the environment before testing live AI. This affects the managed server's network, not the Pages build. Keep the provided HTTPS proxy and trusted CA configuration; never disable TLS verification.
+GitHub Pages now contains only a Studio landing page. It cannot run the private Java API and must not be used for company uploads or API keys. Real Google/OpenAI integration needs approved outbound access and trusted CA configuration; never disable TLS verification.
 
 ## Troubleshooting
 
-| What you see | What to check |
-| --- | --- |
-| `aiConfigured: false` / 503 | Key is in the real local file, not only `.example`; server started from `studio/server/`; no blank local override; restart Java. |
-| Provider HTTP 401 | Actual API key is valid, unrevoked and loaded by the server. Never paste it into logs or chat. |
-| Provider HTTP 403 / 404 | Project/model access and model name. Keep a model that supports Chat Completions structured JSON output. |
-| Provider HTTP 429 | API billing/credits or provider rate limit. Check the API account; a ChatGPT subscription is separate. |
-| Provider timeout / network error | Outbound access to `api.openai.com`, proxy/CA configuration, and provider status. No automatic retry is made. |
-| 409 / style-guide mismatch | Rebuild both frontend and Java JAR from the same checkout and reload the browser. |
-| Style text cannot fit | Shorten the visual headline, summary, location or link; the renderer preserves minimum font sizes instead of clipping. |
-| Browser CORS / connection error | Exact frontend origin allowed on the Java server, HTTPS URL, and no `/api` suffix in the saved backend address. |
-| Java release 21 unsupported / missing compiler | Install the full JDK 21 and check `JAVA_HOME`, `PATH`, `java` and `javac`. |
-| Port 8080 already in use | Stop the other local server or set `PORT`. Update the Vite proxy or backend address if changing the port. |
-| Projects seem missing | Use the same browser/profile/origin/port. Data is in IndexedDB; clearing browser data removes it. |
+| What you see                                   | What to check                                                                                                                    |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `aiConfigured: false` / 503                    | Key is in the real local file, not only `.example`; server started from `studio/server/`; no blank local override; restart Java. |
+| Provider HTTP 401                              | Actual API key is valid, unrevoked and loaded by the server. Never paste it into logs or chat.                                   |
+| Provider HTTP 403 / 404                        | Project/model access and model name. Keep a model that supports Chat Completions structured JSON output.                         |
+| Provider HTTP 429                              | API billing/credits or provider rate limit. Check the API account; a ChatGPT subscription is separate.                           |
+| Provider timeout / network error               | Outbound access to `api.openai.com`, proxy/CA configuration, and provider status. No automatic retry is made.                    |
+| 409 / style-guide mismatch                     | Rebuild both frontend and Java JAR from the same checkout and reload the browser.                                                |
+| Style text cannot fit                          | Shorten the visual headline, summary, location or link; the renderer preserves minimum font sizes instead of clipping.           |
+| Browser CORS / connection error                | Exact frontend origin allowed on the Java server, HTTPS URL, and no `/api` suffix in the saved backend address.                  |
+| Java release 21 unsupported / missing compiler | Install the full JDK 21 and check `JAVA_HOME`, `PATH`, `java` and `javac`.                                                       |
+| Port 8080 already in use                       | Stop the other local server or set `PORT`. Update the Vite proxy or backend address if changing the port.                        |
+| Projects seem missing                          | Use the same browser/profile/origin/port. Data is in IndexedDB; clearing browser data removes it.                                |
 
 No real key is needed for local tests. Live AI generation remains a separate check after you configure your own key and billing.

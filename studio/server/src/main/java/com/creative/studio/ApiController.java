@@ -18,12 +18,15 @@ import static com.creative.studio.CopyModels.*;
 public class ApiController {
     private final OpenAiCopyService copy;
     private final boolean clientKeysEnabled;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private EncryptedWorkspace workspace;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private CorporatePolicy corporate;
     public ApiController(OpenAiCopyService copy,@Value("${creative.openai.client-keys-enabled:false}") boolean clientKeysEnabled) { this.copy=copy;this.clientKeysEnabled=clientKeysEnabled; }
     @GetMapping("/health") public Map<String,Object> health() {
         return Map.of("service","creative-automation-studio","aiConfigured",!clientKeysEnabled&&copy.configured(),"clientKeysEnabled",clientKeysEnabled,"styleGuideVersion",copy.policyVersion());
     }
     @PostMapping("/copy") public CopyResponse generate(@Valid @RequestBody CopyRequest request,
-            @RequestHeader(value="X-OpenAI-Key",required=false) String clientKey) {
+            @RequestHeader(value="X-OpenAI-Key",required=false) String clientKey,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.core.oidc.user.OidcUser user) throws Exception {
         validatePlan(request);
         if(request.styleGuideVersion()!=null && !request.styleGuideVersion().equals(copy.policyVersion()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Browser and server style guide versions differ. Rebuild/restart the server and reload Studio.");
         if(clientKeysEnabled) {
@@ -31,6 +34,7 @@ public class ApiController {
             if(clientKey.length()>512||clientKey.chars().anyMatch(c->c<=32||c>=127))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The API key contains unexpected characters. Paste the key without spaces or quotes.");
             return copy.generate(request,clientKey);
         }
+        if(workspace!=null&&copy.configured())workspace.consumeAttempt(corporate.identity(user));
         return copy.generate(request);
     }
     static void validatePlan(CopyRequest request) {

@@ -450,3 +450,175 @@ test("hosted Studio needs only a visit key, ignores old backend settings, and ne
   await expect(page.locator("#key-status")).toContainText("No key connected");
   await expect(page.locator("#connect-key")).toHaveText("Connect OpenAI");
 });
+
+test("corporate owner grants/revokes access; colleagues share server projects without local storage or API keys", async ({
+  browser,
+}, testInfo) => {
+  const library = new Map(),
+    binaries = new Map();
+  const members = new Map([
+    [
+      "owner@team.example",
+      { email: "owner@team.example", owner: true, active: true },
+    ],
+  ]);
+  async function corporatePage(context, owner) {
+    const page = await context.newPage();
+    const email = owner ? "owner@team.example" : "member@team.example";
+    await page.route("**/runtime.js", (route) =>
+      route.fulfill({
+        contentType: "application/javascript",
+        body: 'window.STUDIO_RUNTIME={serverManaged:true,clientKeysEnabled:false,aiConfigured:true,corporate:true,workspaceStorage:"server"};',
+      }),
+    );
+    await page.route("**/api/**", async (route) => {
+      const request = route.request(),
+        url = new URL(request.url()),
+        method = request.method();
+      const send = (status, json) => route.fulfill({ status, json });
+      if (!members.get(email)?.active)
+        return send(403, { message: "Corporate access is not available." });
+      if (method !== "GET")
+        expect(request.headers()["x-csrf-token"]).toBe("test-corporate-csrf");
+      expect(request.headers()["x-openai-key"]).toBeUndefined();
+      if (url.pathname === "/api/session")
+        return send(200, {
+          email,
+          csrfToken: "test-corporate-csrf",
+          csrfHeader: "X-CSRF-TOKEN",
+          workspace: "shared",
+          canManageAccess: owner,
+        });
+      if (url.pathname.startsWith("/api/access")) {
+        if (!owner) return send(403, { message: "Owner only" });
+        if (method === "POST") {
+          const value = request.postDataJSON().email;
+          members.set(value, {
+            email: value,
+            owner: false,
+            active: !url.pathname.endsWith("/revoke"),
+          });
+        }
+        return send(200, [...members.values()]);
+      }
+      const pieces = url.pathname.split("/").slice(3),
+        [store, id, kind, blob] = pieces;
+      if (!["projects", "drafts", "runs"].includes(store)) return send(404, {});
+      const key = store + "/" + id;
+      if (method === "GET") {
+        if (!id)
+          return send(
+            200,
+            [...library.entries()]
+              .filter(([key]) => key.startsWith(store + "/"))
+              .map(([, value]) => value),
+          );
+        if (kind === "blobs")
+          return route.fulfill({
+            status: 200,
+            contentType: "image/png",
+            body: Buffer.from(binaries.get(key + "/" + blob)),
+          });
+        return library.has(key) ? send(200, library.get(key)) : send(404, {});
+      }
+      if (method === "POST") {
+        const previous = library.get(key),
+          expected = Number(request.headers()["if-match"].replaceAll('"', ""));
+        if (expected !== (previous?.version || 0))
+          return send(409, {
+            message: "A colleague updated this record. Reload the project.",
+          });
+        const files = unzipSync(new Uint8Array(request.postDataBuffer())),
+          record = JSON.parse(strFromU8(files["record.json"]));
+        for (const [name, data] of Object.entries(files))
+          if (name.startsWith("blobs/"))
+            binaries.set(key + "/" + name.slice(6), data);
+        const saved = { version: expected + 1, record };
+        library.set(key, saved);
+        return send(200, saved);
+      }
+      return send(404, {});
+    });
+    return page;
+  }
+  const ownerContext = await browser.newContext(),
+    memberContext = await browser.newContext();
+  try {
+    const owner = await corporatePage(ownerContext, true);
+    await example(owner);
+    await expect(owner.locator("#connect-key")).toBeHidden();
+    await expect(owner.locator("#sign-out")).toBeVisible();
+    await owner.setViewportSize({ width: 320, height: 900 });
+    await owner.locator("#toggle-sidebar").click();
+    await owner.locator("#manage-access").click();
+    expect(
+      await owner.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await owner.screenshot({
+      path: testInfo.outputPath("team-access-mobile.png"),
+    });
+    await owner.locator("#colleague-email").fill("member@team.example");
+    await owner.locator('#access-form button[type="submit"]').click();
+    await expect(owner.locator("#access-status")).toContainText(
+      "Access enabled",
+    );
+    await expect(owner.locator(".access-member")).toHaveCount(2);
+    await owner.locator("#access-dialog .close-dialog").click();
+    await owner.setViewportSize({ width: 1280, height: 900 });
+    await owner.locator("#generation-mode").selectOption("template");
+    await generate(owner);
+    const member = await corporatePage(memberContext, false);
+    await member.goto("/");
+    await expect(member.locator("#current-project-name")).toHaveText(
+      "My first campaign",
+    );
+    await expect(member.locator("#title")).toHaveValue(
+      "Creative Automation Lab",
+    );
+    await expect(member.locator("#manage-access")).toBeHidden();
+    await expect(member.locator("#connect-key")).toBeHidden();
+    await member.locator("#history-list button").click();
+    await expect(member.locator(".output-image")).toHaveCount(4);
+    const pending = member.waitForEvent("download");
+    await member.locator("#download-zip").click();
+    const dl = await pending,
+      path = testInfo.outputPath("shared-private.zip");
+    await dl.saveAs(path);
+    const files = unzipSync(new Uint8Array(await readFile(path)));
+    expect(JSON.parse(strFromU8(files["manifest.json"])).outputs).toHaveLength(
+      4,
+    );
+    expect(
+      await owner.evaluate(async () => await indexedDB.databases()),
+    ).toHaveLength(0);
+    expect(
+      await member.evaluate(async () => await indexedDB.databases()),
+    ).toHaveLength(0);
+    expect(
+      await member.evaluate(() => JSON.stringify({ ...localStorage })),
+    ).not.toContain("Creative Automation Lab");
+    await owner.locator("#manage-access").click();
+    await owner
+      .locator(".access-member")
+      .filter({ hasText: "member@team.example" })
+      .getByRole("button", { name: "Revoke access" })
+      .click();
+    await expect(owner.locator("#access-status")).toContainText(
+      "Access revoked",
+    );
+    expect(
+      await member.evaluate(
+        async () => (await fetch("/api/workspace/projects")).status,
+      ),
+    ).toBe(403);
+    await member.reload();
+    await expect(member.locator("#notice")).toContainText(
+      "corporate session is unavailable",
+    );
+  } finally {
+    await ownerContext.close();
+    await memberContext.close();
+  }
+});

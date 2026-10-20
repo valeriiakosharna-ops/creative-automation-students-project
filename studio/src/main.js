@@ -1,4 +1,5 @@
 import { BRAND_POLICY, snapshotPolicy } from "./brand.js";
+import { session, privateFetch, jsonResponse } from "./private-api.js";
 import "./style.css";
 import { FORMATS, LANGUAGES, validateBrief, planOutputs } from "./planner.js";
 import { templateCopy, requestCopy, PROMPT_VERSION } from "./copy.js";
@@ -166,7 +167,15 @@ async function renderSidebar() {
         `${new Date(run.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} · ${run.status}`,
       ),
     );
-    button.addEventListener("click", () => showRun(run));
+    button.addEventListener("click", () => {
+      if (runtime.corporate)
+        get("runs", run.id)
+          .then((full) => {
+            if (full) showRun(full);
+          })
+          .catch(handleError);
+      else showRun(run);
+    });
     history.append(button);
   }
 }
@@ -574,6 +583,7 @@ function renderResults() {
   $("#run-summary").textContent =
     `${run.brief.title} · ${completed} of ${run.outputs.length} outputs ready · ${run.brief.languages.map((l) => LANGUAGES[l]).join(" + ")}`;
   $("#generation-progress").hidden = run.status !== "running";
+  $("#cancel-generation").disabled = !state.busy;
   $("#run-error").hidden =
     !run.error && !["partial", "interrupted"].includes(run.status);
   $("#run-error").textContent =
@@ -791,7 +801,11 @@ $("#confirm-delete").addEventListener("click", async () => {
     }
     await switchProject(state.projects[0].id);
     $("#delete-dialog").close();
-    notice("Project and its local history deleted.");
+    notice(
+      runtime.corporate
+        ? "Shared project and its history deleted."
+        : "Project and its local history deleted.",
+    );
   } catch (error) {
     handleError(error);
   }
@@ -845,6 +859,47 @@ function openConnection() {
   updateKeyStatus();
   $("#settings-dialog").showModal();
 }
+if (runtime.corporate) {
+  document.body.classList.add("corporate-mode");
+  form.autocomplete = "off";
+  $("#sign-out").hidden = false;
+  $("#open-settings").textContent = "Account & shared library →";
+  $("#connection-description").textContent =
+    "Your company manages the OpenAI connection. The key stays on the server and is never sent to this browser. Approved colleagues share one protected project library.";
+  $("#generation-mode option[value=ai]").textContent =
+    "AI · company connection";
+  $(".local-indicator").textContent = "Private team library";
+  $(".sidebar-bottom p").textContent =
+    "Projects and materials are stored in your team's encrypted server library. Access requires your approved corporate account.";
+  $(".settings-note strong").textContent = "Protected shared library";
+  $(".settings-note p").textContent =
+    "Projects, assets and results are shared with approved colleagues and encrypted in server storage. You can access them after signing in on another device.";
+  $("#delete-dialog p").textContent =
+    "This removes the shared project, uploads and generation history for all approved colleagues. Export any ZIP archives you need first.";
+  $("#save-connection").hidden = true;
+  $("#sign-out").addEventListener("click", async () => {
+    if (
+      state.busy &&
+      !window.confirm(
+        "A generation is in progress. Sign out and leave the page?",
+      )
+    )
+      return;
+    try {
+      const response = await privateFetch("/api/logout", { method: "POST" });
+      if (!response.ok && response.status !== 401) await jsonResponse(response);
+      state.busy = false;
+      revoke(assetUrls);
+      revoke(outputUrls);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (dialogUrl) URL.revokeObjectURL(dialogUrl);
+      memoryRuns.clear();
+      window.location.replace("/signin.html");
+    } catch (error) {
+      handleError(error);
+    }
+  });
+}
 $("#open-settings").addEventListener("click", openConnection);
 $("#connect-key").addEventListener("click", openConnection);
 $("#forget-key").addEventListener("click", () => {
@@ -868,7 +923,7 @@ if (browserKeyMode) {
   $("#generation-mode option[value=ai]").textContent = "AI · your OpenAI key";
   $("#connection-description").textContent =
     "Paste your OpenAI API key once for this visit. No installation or server address is needed. Your API account pays for your generation requests.";
-} else if (runtime.serverManaged) {
+} else if (runtime.serverManaged && !runtime.corporate) {
   $("#connection-description").textContent =
     "This site is already connected to its own server. The owner manages the OpenAI key in the server settings.";
 }
@@ -1008,11 +1063,115 @@ $("#example-button").addEventListener("click", async () => {
     handleError(error);
   }
 });
+async function renderAccess() {
+  const members = await jsonResponse(await privateFetch("/api/access"));
+  const list = $("#access-list");
+  list.replaceChildren();
+  for (const member of members) {
+    const row = element("div", "access-member"),
+      info = element("div");
+    info.append(
+      element("strong", "", member.email),
+      element(
+        "small",
+        "",
+        member.owner
+          ? "Owner · always approved"
+          : member.active
+            ? "Access approved"
+            : "Access revoked",
+      ),
+    );
+    row.append(info);
+    if (!member.owner) {
+      const button = element(
+        "button",
+        "button secondary",
+        member.active ? "Revoke access" : "Restore access",
+      );
+      button.type = "button";
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          await jsonResponse(
+            await privateFetch(
+              member.active ? "/api/access/revoke" : "/api/access",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: member.email }),
+              },
+            ),
+          );
+          $("#access-status").textContent = member.active
+            ? "Access revoked. This account's next request will be blocked."
+            : "Access restored. Share this Studio link with your colleague.";
+          await renderAccess();
+        } catch (error) {
+          $("#access-status").textContent = error.message;
+          button.disabled = false;
+        }
+      });
+      row.append(button);
+    }
+    list.append(row);
+  }
+}
+$("#manage-access").addEventListener("click", () => {
+  $("#access-status").textContent = "Loading the private access list…";
+  $("#access-dialog").showModal();
+  renderAccess()
+    .then(() => {
+      $("#access-status").textContent = "";
+    })
+    .catch((error) => {
+      $("#access-status").textContent = error.message;
+    });
+});
+$("#access-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = $("#access-form button");
+  button.disabled = true;
+  try {
+    await jsonResponse(
+      await privateFetch("/api/access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: $("#colleague-email").value.trim() }),
+      }),
+    );
+    $("#colleague-email").value = "";
+    $("#access-status").textContent =
+      "Access enabled. Copy this Studio link and share it with your colleague. No invitation email was sent.";
+    await renderAccess();
+  } catch (error) {
+    $("#access-status").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+$("#copy-team-link").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(window.location.origin + "/");
+    $("#access-status").textContent =
+      "Studio link copied. Only approved corporate accounts can open the library.";
+  } catch {
+    $("#access-status").textContent =
+      "Share this site's address from your browser's address bar.";
+  }
+});
 async function init() {
   try {
+    if (runtime.corporate) {
+      const account = await session();
+      $("#connection-status").textContent =
+        "Signed in to the protected team library.";
+      $("#sign-out").title = "Sign out of this corporate session";
+      $("#manage-access").hidden = !account.canManageAccess;
+    }
     state.projects = await all("projects");
     for (const run of await all("runs"))
-      if (run.status === "running") {
+      if (!runtime.corporate && run.status === "running") {
         run.status = "interrupted";
         run.outputs
           .filter((o) => o.status === "pending")
@@ -1043,6 +1202,25 @@ window.addEventListener("pagehide", () => {
   requestApiKey = "";
   $("#openai-key").value = "";
   updateKeyStatus();
+  if (runtime.corporate) {
+    revoke(assetUrls);
+    revoke(outputUrls);
+    memoryRuns.clear();
+    state.assets = { logos: [], photos: [] };
+    state.run = null;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (dialogUrl) URL.revokeObjectURL(dialogUrl);
+    document.body.replaceChildren(
+      element(
+        "main",
+        "",
+        "Corporate session required. Reload Studio to continue.",
+      ),
+    );
+  }
+});
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted && runtime.corporate) window.location.reload();
 });
 window.addEventListener("beforeunload", (event) => {
   if (state.busy) {
