@@ -1,2 +1,13 @@
 _site/
 __pycache__/
+node_modules/
+studio/dist/
+studio/server/target/
+studio/server/application-local.properties
+.env
+.env.local
+studio/test-results/
+studio/playwright-report/
+studio/public/brief/
+studio/public/logo.svg
+studio/public/favicon.svg

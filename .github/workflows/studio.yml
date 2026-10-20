@@ -1,0 +1,61 @@
+name: Studio MVP builds and tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-web
+          path: studio/dist
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: studio-test-results
+          path: studio/test-results
+  java-server:
+    needs: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: studio/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: studio/server/pom.xml
+      - uses: actions/download-artifact@v4
+        with:
+          name: studio-web
+          path: studio/dist
+      - run: ./mvnw --batch-mode --no-transfer-progress verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-java-server
+          path: studio/server/target/studio-server-0.1.0.jar

@@ -56,10 +56,11 @@ briefForm.addEventListener('submit', (event) => {
   event.preventDefault();
   const data = new FormData(briefForm);
   const formats = data.getAll('channel');
-  if (!formats.length) {
-    briefError.textContent = 'Select at least one format to preview your request.';
+  const languages = data.getAll('languages');
+  if (!formats.length || !languages.length) {
+    briefError.textContent = !languages.length ? 'Choose English, Ukrainian, or both.' : 'Select at least one format to preview your request.';
     briefError.hidden = false;
-    briefForm.querySelector('input[name="channel"]').focus();
+    briefForm.querySelector(!languages.length ? 'input[name="languages"]' : 'input[name="channel"]').focus();
     return;
   }
   const title = data.get('eventTitle').trim();
@@ -73,16 +74,17 @@ briefForm.addEventListener('submit', (event) => {
   briefError.hidden = true;
   briefError.textContent = 'Select at least one format to preview your request.';
   const variants = Number(data.get('variants'));
-  const count = formats.length * variants;
+  const count = formats.length * variants * languages.length;
   const payload = {
     event: { title, description, date: data.get('eventDate') },
     palette: [data.get('brandColor').toUpperCase(), '#E60036'],
     formats,
+    languages,
     variantsPerFormat: variants,
     export: { type: 'ZIP' }
   };
   document.getElementById('result-title').textContent = `One brief. ${count} output${count === 1 ? '' : 's'}.`;
-  document.getElementById('result-detail').textContent = `${formats.length} format${formats.length === 1 ? '' : 's'} × ${variants} variant${variants === 1 ? '' : 's'} · Target: ZIP + project history`;
+  document.getElementById('result-detail').textContent = `${formats.length} format${formats.length === 1 ? '' : 's'} × ${variants} variant${variants === 1 ? '' : 's'} × ${languages.length} language${languages.length === 1 ? '' : 's'} · Target: ZIP + project history`;
   const context = document.getElementById('result-context');
   context.hidden = false;
   context.textContent = `${title} · ${payload.event.date} · ${formats.join(', ')} · ${payload.palette.join(' / ')}`;

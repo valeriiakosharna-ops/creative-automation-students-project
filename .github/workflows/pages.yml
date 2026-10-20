@@ -20,15 +20,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
       - name: Validate site
         run: |
           node --check script.js
           python3 scripts/check_site.py
+      - name: Build Studio MVP
+        run: |
+          npm ci --prefix studio
+          npm --prefix studio test
+          npm --prefix studio run build
       - name: Build static site
         run: |
           mkdir -p _site
           cp index.html styles.css script.js _site/
           cp -R assets _site/assets
+          cp -R studio/dist _site/studio
           touch _site/.nojekyll
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

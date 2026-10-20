@@ -1,0 +1,128 @@
+export const PROMPT_VERSION = "studio-copy-v1";
+export function eventDate(b, lang) {
+  const [y, m, d] = b.date.split("-").map(Number);
+  return new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+export function templateCopy(b, o) {
+  const uk = o.language === "uk";
+  const title = (b[uk ? "titleUk" : "titleEn"] || b.title).trim();
+  const description = (
+    b[uk ? "descriptionUk" : "descriptionEn"] ||
+    (b.sourceLanguage === o.language ? b.description : "")
+  ).trim();
+  const details = [
+    eventDate(b, o.language),
+    b.time ? `${b.time} (${b.timeZone})` : "",
+    b.location,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const cta = uk ? "Дізнайтеся більше" : "Find out more",
+    link = b.url ? `\n${b.url}` : "";
+  const opening = uk
+    ? ["Долучайтеся до нас!", "Збережіть дату!", "Зустрінемося на події!"][
+        o.variant - 1
+      ]
+    : ["Join us!", "Save the date!", "See you there!"][o.variant - 1];
+  let caption;
+  if (o.format === "instagram_story")
+    caption = [title, details, b.url ? `${cta}${link}` : opening]
+      .filter(Boolean)
+      .join("\n");
+  else if (o.format === "google_chat")
+    caption = [`*${title}*`, details, description, `${cta}${link}`]
+      .filter(Boolean)
+      .join("\n\n");
+  else if (o.format === "facebook")
+    caption = [
+      `${opening} ${title}`,
+      description,
+      details,
+      b.url ? `${cta}:${link}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  else
+    caption = [
+      `${title} — ${opening}`,
+      description,
+      details,
+      b.url ? `${cta}${link}` : "",
+      uk ? "#Подія" : "#Event",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  return {
+    id: o.id,
+    headline: title,
+    subheading:
+      description.length > 160
+        ? description.slice(0, 157).replace(/\s+\S*$/, "") + "…"
+        : description,
+    cta,
+    caption,
+  };
+}
+export async function requestCopy(brief, outputs, baseUrl, signal) {
+  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/copy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      brief,
+      outputs: outputs.map(({ id, format, language, variant }) => ({
+        id,
+        format,
+        language,
+        variant,
+      })),
+    }),
+    signal,
+  });
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw Error(
+      "The AI server returned an unreadable response. Check the backend URL.",
+    );
+  }
+  if (!response.ok)
+    throw Error(
+      data.message || "AI copy generation failed. Your brief has been kept.",
+    );
+  if (!Array.isArray(data.outputs) || data.outputs.length !== outputs.length)
+    throw Error("AI response is incomplete. No template text was substituted.");
+  const ids = new Set();
+  for (const copy of data.outputs) {
+    if (
+      ids.has(copy.id) ||
+      !outputs.some((o) => o.id === copy.id) ||
+      !["headline", "subheading", "caption", "cta"].every(
+        (k) => typeof copy[k] === "string",
+      ) ||
+      !copy.headline.trim() ||
+      !copy.caption.trim() ||
+      copy.headline.length > 80 ||
+      copy.subheading.length > 160 ||
+      copy.cta.length > 40 ||
+      copy.caption.length > 3000
+    )
+      throw Error("AI response does not match this run.");
+    ids.add(copy.id);
+  }
+  return {
+    model: String(data.model || "configured-model"),
+    outputs: data.outputs.map(({ id, headline, subheading, cta, caption }) => ({
+      id,
+      headline,
+      subheading,
+      cta,
+      caption,
+    })),
+  };
+}
