@@ -181,6 +181,7 @@ export async function requestCopy(
   }
   return {
     model: String(data.model || "configured-model"),
+    promptVersion: data.promptVersion || PROMPT_VERSION,
     outputs: data.outputs.map(
       ({ id, headline, subheading, cta, caption, visualPlan, postId }) => {
         const copy = {

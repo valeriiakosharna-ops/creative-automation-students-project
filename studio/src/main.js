@@ -526,6 +526,7 @@ async function generate(event) {
       );
       copies = response.outputs;
       run.model = response.model;
+      run.promptVersion = response.promptVersion;
     } else copies = run.outputs.map((o) => templateCopy(brief, o));
     for (let index = 0; index < run.outputs.length; index++) {
       const output = run.outputs[index];
