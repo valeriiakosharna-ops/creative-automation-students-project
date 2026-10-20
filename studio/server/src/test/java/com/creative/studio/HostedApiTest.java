@@ -51,7 +51,7 @@ class HostedApiTest {
     @Test void suppliedKeyIsOnlyForwardedInTheProviderHeaderAndNeverEchoed() throws Exception {
         String testKey="visitor-test-key-not-a-real-secret";
         var response=mvc.perform(post("/api/copy").header("X-OpenAI-Key",testKey).contentType("application/json").content(mapper.writeValueAsBytes(ApiTest.request())))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.styleGuideVersion").value("1.0.0")).andReturn().getResponse().getContentAsString();
+            .andExpect(status().isOk()).andExpect(jsonPath("$.styleGuideVersion").value("1.1.0")).andReturn().getResponse().getContentAsString();
         assertEquals("Bearer "+testKey,authorization.get());
         assertFalse(body.get().contains(testKey));assertFalse(response.contains(testKey));
         assertFalse(body.get().contains("owner-key-must-not-be-used"));

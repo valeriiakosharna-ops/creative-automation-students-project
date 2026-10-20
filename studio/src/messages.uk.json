@@ -348,5 +348,12 @@
   "The visual prompt is too long. Shorten the event direction or revision instructions.": "Промпт візуалу задовгий. Скоротіть побажання до стилю або правки.",
   "Reference preview only. AI-generated artwork appears after generation and must be reviewed.": "Це лише попередній приклад. AI-візуали з’являться після генерації та потребуватимуть погодження.",
   "Template mode processes images locally. Pages AI mode sends event text, photos and logos to OpenAI.": "Режим шаблону обробляє зображення локально. Pages AI надсилає текст події, фото та логотипи в OpenAI.",
-  "AI visuals + posts": "AI-візуали та дописи"
+  "AI visuals + posts": "AI-візуали та дописи",
+  "Live writing research was unavailable. Baseline channel recommendations were used; no live trend claim is made.": "Пошук актуальних рекомендацій недоступний. Використано базові поради для каналу без тверджень про поточні тренди.",
+  "Enter the post text before approval.": "Введіть текст публікації перед погодженням.",
+  "AI will design the complete visual after generation.": "AI створить повний дизайн під час генерації.",
+  "One shared campaign style, with naturally varied compositions.": "Спільний стиль кампанії з природним різноманіттям композицій.",
+  "Logos are integrated into the AI design. Review every visual before publishing.": "Логотипи інтегруються в AI-дизайн. Перевірте кожен візуал перед публікацією.",
+  "Creative inspiration →": "Творче натхнення →",
+  "In Pages AI mode, OpenAI designs the full image with your logos, palette and shared campaign identity. Template mode stays local.": "У режимі Pages AI OpenAI створює повний дизайн із вашими логотипами, палітрою та спільним стилем кампанії. Режим шаблону працює локально."
 }

@@ -12,7 +12,7 @@ export async function openaiRequest(
   timeoutMs = 120000,
 ) {
   validateKey(apiKey);
-  if (!["chat/completions", "images/edits"].includes(path))
+  if (!["chat/completions", "images/edits", "responses"].includes(path))
     throw Error("Unsupported OpenAI endpoint.");
   const controller = new AbortController(),
     abort = () => controller.abort(signal?.reason);

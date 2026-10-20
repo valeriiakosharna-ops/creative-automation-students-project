@@ -5,7 +5,6 @@ export function copyLimits(format) {
     headline: 80,
     subheading: rule.subheading.maxCharacters,
     cta: 40,
-    caption: rule.caption.maxCharacters,
   };
 }
 export function copyError(copy, specification) {
@@ -19,5 +18,7 @@ export function copyError(copy, specification) {
     if (copy[field].length > maximum)
       return `${label}: ${field} has ${copy[field].length} characters; limit ${maximum}. Edit this output to render it without another AI request.`;
   }
+  if (typeof copy.caption !== "string" || !copy.caption.trim())
+    return `${label}: caption is required.`;
   return "";
 }

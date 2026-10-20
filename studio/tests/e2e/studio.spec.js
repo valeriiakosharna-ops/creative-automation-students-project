@@ -77,9 +77,9 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
   const files = unzipSync(new Uint8Array(await readFile(archivePath))),
     manifest = JSON.parse(strFromU8(files["manifest.json"]));
   expect(manifest.outputs).toHaveLength(16);
-  expect(manifest.styleGuideVersion).toBe("1.0.0");
+  expect(manifest.styleGuideVersion).toBe("1.1.0");
   expect(JSON.parse(strFromU8(files["style-guide.json"])).version).toBe(
-    "1.0.0",
+    "1.1.0",
   );
   expect(manifest.assets.logos).toHaveLength(2);
   for (const network of ["instagram", "facebook", "google_chat"]) {
@@ -93,7 +93,7 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
   for (const output of manifest.outputs) {
     expect(output.logoIds).toHaveLength(2);
     expect(output.status).toBe("completed");
-    expect(output.style.version).toBe("1.0.0");
+    expect(output.style.version).toBe("1.1.0");
     const content = output.style.contentRect,
       shelf = output.style.logoShelf;
     expect(shelf.y + shelf.height).toBeLessThanOrEqual(
@@ -259,7 +259,7 @@ test("AI response is used for visuals/captions, cancellation and interrupted-run
     await route.fulfill({
       json: {
         model: "mock-model",
-        styleGuideVersion: "1.0.0",
+        styleGuideVersion: "1.1.0",
         outputs: request.outputs.map((o) => ({
           id: o.id,
           headline:
@@ -380,7 +380,7 @@ test("hosted Studio needs only a visit key, ignores old backend settings, and ne
     await route.fulfill({
       json: {
         model: "mock-model",
-        styleGuideVersion: "1.0.0",
+        styleGuideVersion: "1.1.0",
         outputs: request.outputs.map((o) => ({
           id: o.id,
           headline:

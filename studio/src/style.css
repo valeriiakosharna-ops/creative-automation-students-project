@@ -2601,3 +2601,7 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+.research-note { grid-column: 1 / -1; padding: 16px 20px; background: #e8f6fe; border-radius: 12px; }
+.research-source { display: inline-block; margin: 5px 18px 5px 0; overflow-wrap: anywhere; }
+.caption-count { margin: 8px 0 16px; }

@@ -1,5 +1,5 @@
 import { BRAND_POLICY } from "./brand.js";
-import { copyLimits } from "./copy-limits.js";
+import { captionGuidance } from "./caption-guidance.js";
 import { structuredRequest } from "./openai.js";
 import plannerPrompt, { version as plannerVersion } from "./prompts/planner.js";
 import copyPrompt, { version as copyVersion } from "./prompts/social-copy.js";
@@ -23,7 +23,7 @@ const visualSchema = object({
       type: "string",
       enum: ["opening", "context", "benefit", "details", "closing"],
     },
-    layout: { type: "string", enum: ["split-right", "split-left", "poster"] },
+    layout: string,
     direction: string,
   }),
 });
@@ -44,17 +44,10 @@ export function outputRequirements(outputs) {
       width,
       height,
       visualStyle: CHANNEL_STYLES[format],
-      maximumCharacters: copyLimits(format),
-      targetCharacters: Object.fromEntries(
-        Object.entries(copyLimits(format)).map(([field, maximum]) => [
-          field,
-          Math.floor(maximum * 0.8),
-        ]),
-      ),
     }),
   );
 }
-export function postRequirements(outputs) {
+export function postRequirements(outputs, research) {
   const frames = outputRequirements(outputs);
   return [...new Set(frames.map((output) => output.postId))].map((id) => {
     const visuals = frames.filter((output) => output.postId === id),
@@ -67,13 +60,12 @@ export function postRequirements(outputs) {
       visualIds: visuals.map((output) => output.id),
       visualStyle: first.visualStyle,
       captionStyle: BRAND_POLICY.formats[first.format].caption.direction,
-      maximumCharacters: first.maximumCharacters.caption,
-      targetCharacters: first.targetCharacters.caption,
+      captionGuidance: captionGuidance(first.format, research),
     };
   });
 }
-function policy(brief) {
-  return `\nMandatory Creative Automation Social Style Guide:\n${JSON.stringify(BRAND_POLICY)}\nEffective palette: ${JSON.stringify(brief.colors || BRAND_POLICY.defaultColors)}`;
+function palette(brief) {
+  return `\nDesired palette: ${JSON.stringify(brief.colors || BRAND_POLICY.defaultColors)}`;
 }
 function validatePosts(content, expected) {
   if (
@@ -90,15 +82,15 @@ export async function browserStoryboard(brief, outputs, apiKey, signal) {
   const expected = postRequirements(outputs);
   const content = await structuredRequest(
     "visual_storyboard",
-    plannerPrompt + policy(brief),
+    plannerPrompt + palette(brief),
     { brief, posts: expected, outputs: outputRequirements(outputs) },
-    rootSchema(
-      object({ id: string, visuals: { type: "array", items: visualSchema } }),
-    ),
+    object({ campaignStyle: string, posts: { type: "array", items: object({ id: string, visuals: { type: "array", items: visualSchema } }) } }),
     apiKey,
     signal,
   );
   validatePosts(content, expected);
+  if (typeof content.campaignStyle !== "string" || !content.campaignStyle.trim())
+    throw Error("AI response does not match this run.");
   for (const post of content.posts) {
     const ids = expected.find((item) => item.id === post.id).visualIds;
     if (
@@ -118,9 +110,8 @@ export async function browserStoryboard(brief, outputs, apiKey, signal) {
         !["opening", "context", "benefit", "details", "closing"].includes(
           frame.visualPlan?.role,
         ) ||
-        !["split-right", "split-left", "poster"].includes(
-          frame.visualPlan?.layout,
-        ) ||
+        typeof frame.visualPlan?.layout !== "string" ||
+        !frame.visualPlan.layout.trim() ||
         typeof frame.visualPlan?.direction !== "string" ||
         !frame.visualPlan.direction.trim()
       )
@@ -131,6 +122,7 @@ export async function browserStoryboard(brief, outputs, apiKey, signal) {
   }
   return expected.map(({ id }) => ({
     id,
+    campaignStyle: content.campaignStyle,
     visuals: content.posts
       .find((post) => post.id === id)
       .visuals.map((frame) => ({
@@ -146,12 +138,12 @@ export async function browserStoryboard(brief, outputs, apiKey, signal) {
       })),
   }));
 }
-export async function browserPostCopy(brief, outputs, apiKey, signal) {
-  const expected = postRequirements(outputs);
+export async function browserPostCopy(brief, outputs, apiKey, signal, research) {
+  const expected = postRequirements(outputs, research);
   const content = await structuredRequest(
     "social_posts",
-    copyPrompt + policy(brief),
-    { brief, posts: expected },
+    copyPrompt,
+    { brief, posts: expected, researchCheckedAt: research?.checkedAt || null },
     rootSchema(object({ id: string, caption: string })),
     apiKey,
     signal,
@@ -161,17 +153,12 @@ export async function browserPostCopy(brief, outputs, apiKey, signal) {
     const post = content.posts.find((item) => item.id === spec.id);
     if (typeof post.caption !== "string" || !post.caption.trim())
       throw Error("AI response does not match this run.");
-    const error =
-      post.caption.length > spec.maximumCharacters
-        ? `${BRAND_POLICY.formats[spec.format].label} · ${spec.language}: caption has ${post.caption.length} characters; limit ${spec.maximumCharacters}. Edit this post without another AI request.`
-        : "";
     return {
       id: spec.id,
       format: spec.format,
       language: spec.language,
       caption: post.caption,
-      status: error ? "failed" : "completed",
-      ...(error ? { error } : {}),
+      status: "completed",
     };
   });
 }

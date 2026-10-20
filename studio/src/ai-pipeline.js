@@ -6,21 +6,20 @@ import {
 } from "./browser-copy.js";
 import { generateAIVisual, VISUAL_PROMPT_VERSION } from "./ai-visual.js";
 import { MODELS } from "./prompts/channel-styles.js";
+import { researchCaptions, RESEARCH_PROMPT_VERSION } from "./caption-research.js";
 
 export function refreshAIStatus(run) {
   for (const output of run.outputs) {
     const post = run.posts.find((item) => item.id === output.postId);
     output.caption = post?.caption || "";
-    output.captionError = post?.error || "";
+    delete output.captionError;
     output.status =
-      output.image && !output.imageError && post?.status === "completed"
+      output.image && !output.imageError
         ? "completed"
-        : output.imageError || post?.status === "failed"
+        : output.imageError
           ? "failed"
           : "pending";
-    output.error = [output.imageError, output.captionError]
-      .filter(Boolean)
-      .join(" ");
+    output.error = output.imageError || "";
   }
   const all =
     run.outputs.every((output) => output.status === "completed") &&
@@ -29,6 +28,25 @@ export function refreshAIStatus(run) {
     run.outputs.some((output) => output.image) ||
     run.posts.some((post) => post.status === "completed");
   run.status = all ? "completed" : any ? "partial" : "failed";
+}
+// Recover previously saved packs rejected solely by the retired caption budgets.
+// Actual API/image errors, cancellation and all approvals stay intact.
+export function recoverCaptionBudgets(run) {
+  if (!run.reviewRequired || !run.posts?.length || ["running", "cancelled", "interrupted"].includes(run.status)) return false;
+  let changed = false;
+  for (const post of run.posts) {
+    if (post.status === "failed" && post.caption?.trim() &&
+      /caption has \d+ characters; limit \d+/.test(post.error || "")) {
+      post.status = "completed";
+      delete post.error;
+      changed = true;
+    }
+  }
+  if (changed) {
+    if (/caption has \d+ characters; limit \d+/.test(run.error || "")) delete run.error;
+    refreshAIStatus(run);
+  }
+  return changed;
 }
 export function reviewReady(run) {
   return (
@@ -58,12 +76,12 @@ export async function generatePagesRun(
 ) {
   run.reviewRequired = true;
   run.pipeline = {
-    version: "openai-three-stage-v1",
-    prompts: { ...PROMPT_VERSIONS, visual: VISUAL_PROMPT_VERSION },
+    version: "openai-organic-v2",
+    prompts: { ...PROMPT_VERSIONS, visual: VISUAL_PROMPT_VERSION, research: RESEARCH_PROMPT_VERSION },
     planner: { status: "running" },
     copy: { status: "running" },
   };
-  run.promptVersion = "studio-ai-v4";
+  run.promptVersion = "studio-ai-v5";
   run.model = MODELS.text;
   run.imageModel = MODELS.image;
   run.posts = postRequirements(run.outputs).map(({ id, format, language }) => ({
@@ -83,7 +101,9 @@ export async function generatePagesRun(
     }));
   const copyTask = (async () => {
     try {
-      const posts = await browserPostCopy(run.brief, run.outputs, key, signal);
+      run.captionResearch = await researchCaptions(run.brief.formats, key, signal);
+      await publish();
+      const posts = await browserPostCopy(run.brief, run.outputs, key, signal, run.captionResearch);
       for (const post of posts)
         Object.assign(
           run.posts.find((item) => item.id === post.id),

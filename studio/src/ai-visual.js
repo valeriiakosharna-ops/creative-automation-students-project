@@ -1,127 +1,32 @@
-import { BRAND_POLICY } from "./brand.js";
 import { openaiRequest } from "./openai.js";
 import visualPrompt, { version } from "./prompts/visual.js";
 import { MODELS, CHANNEL_STYLES } from "./prompts/channel-styles.js";
 export const VISUAL_PROMPT_VERSION = version;
-export function artworkGeometry(output, logoCount) {
-  const spec = BRAND_POLICY.formats[output.format],
-    safe = spec.safeArea;
-  const cols = Math.min(BRAND_POLICY.logos.maxColumns, logoCount),
-    rows = Math.ceil(logoCount / cols);
-  const shelfHeight = rows * spec.logoRowHeight + 32;
-  return {
-    safeArea: { ...safe },
-    artworkRegion: {
-      x: safe.left,
-      y: safe.top,
-      width: output.width - safe.left - safe.right,
-      height:
-        output.height -
-        safe.top -
-        safe.bottom -
-        shelfHeight -
-        (output.format === "instagram_story" ? 30 : 22),
-    },
-    logoShelf: {
-      x: safe.left,
-      y: output.height - safe.bottom - shelfHeight,
-      width: output.width - safe.left - safe.right,
-      height: shelfHeight,
-    },
-    cols,
-    rows,
-  };
-}
-function contain(context, bitmap, rect) {
-  const scale = Math.min(
-      rect.width / bitmap.width,
-      rect.height / bitmap.height,
-    ),
-    width = bitmap.width * scale,
-    height = bitmap.height * scale;
-  const result = {
-    x: rect.x + (rect.width - width) / 2,
-    y: rect.y + (rect.height - height) / 2,
-    width,
-    height,
-  };
-  context.drawImage(bitmap, result.x, result.y, width, height);
-  return result;
-}
-export async function finalizeAIVisual(blob, output, logos) {
-  if (!logos.length || logos.length > 8)
-    throw Error("Every visual requires 1–8 original logos.");
-  const canvas = document.createElement("canvas");
-  canvas.width = output.width;
-  canvas.height = output.height;
-  const context = canvas.getContext("2d"),
-    bitmaps = [];
-  if (!context) throw Error("Canvas rendering is not available.");
+// Native supported sizes preserve the exact destination aspect ratios.
+export const imageSize = (format) => ({
+  instagram_post: "1024x1024",
+  instagram_story: "1152x2048",
+  facebook: "1280x672",
+  google_chat: "1280x720",
+})[format];
+export async function finalizeAIVisual(blob, output) {
+  const bitmap = await createImageBitmap(blob);
   try {
-    const image = await createImageBitmap(blob);
-    bitmaps.push(image);
-    if (image.width * image.height > 24e6)
-      throw Error("OpenAI returned an oversized image.");
-    const geometry = artworkGeometry(output, logos.length);
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, output.width, output.height);
-    const generatedRect = contain(context, image, geometry.artworkRegion);
-    const shelf = geometry.logoShelf,
-      cellWidth = (shelf.width - 24) / geometry.cols,
-      cellHeight = (shelf.height - 24) / geometry.rows;
-    const logoRects = [];
-    for (let index = 0; index < logos.length; index++) {
-      const logo = await createImageBitmap(logos[index].blob);
-      try {
-        const padY =
-            (cellHeight * BRAND_POLICY.logos.clearSpaceFraction) /
-            (1 + 2 * BRAND_POLICY.logos.clearSpaceFraction),
-          padX = Math.max(12, padY);
-        const rect = contain(context, logo, {
-          x: shelf.x + 12 + (index % geometry.cols) * cellWidth + padX,
-          y:
-            shelf.y +
-            12 +
-            Math.floor(index / geometry.cols) * cellHeight +
-            padY,
-          width: cellWidth - 2 * padX,
-          height: cellHeight - 2 * padY,
-        });
-        logoRects.push({ id: logos[index].id, ...rect });
-      } finally {
-        logo.close();
-      }
-    }
-    const result = await new Promise((resolve, reject) =>
-      canvas.toBlob(
-        (png) =>
-          png ? resolve(png) : reject(Error("Could not encode the PNG.")),
-        "image/png",
-      ),
-    );
-    return {
-      blob: result,
-      style: {
-        version: BRAND_POLICY.version,
-        source: "openai",
-        safeArea: geometry.safeArea,
-        contentRect: {
-          x: geometry.artworkRegion.x,
-          y: geometry.artworkRegion.y,
-          width: shelf.width,
-          height:
-            output.height - geometry.safeArea.top - geometry.safeArea.bottom,
-        },
-        generatedRect,
-        logoShelf: shelf,
-        logoRects,
-      },
-    };
-  } finally {
-    bitmaps.forEach((bitmap) => bitmap.close());
-    canvas.width = 1;
-    canvas.height = 1;
-  }
+    if (bitmap.width * bitmap.height > 24e6) throw Error("OpenAI returned an oversized image.");
+    const style = { source: "openai", composition: "model-designed", processing: "full-canvas-resize-only", generatedWidth: bitmap.width, generatedHeight: bitmap.height };
+    if (bitmap.width === output.width && bitmap.height === output.height) return { blob, style };
+    const canvas = document.createElement("canvas");
+    canvas.width = output.width; canvas.height = output.height;
+    try {
+      const context = canvas.getContext("2d");
+      if (!context) throw Error("Canvas rendering is not available.");
+      // No margins, crop, logo shelf, extra logos or font/layout processing.
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const png = await new Promise((resolve, reject) => canvas.toBlob(
+        (result) => result ? resolve(result) : reject(Error("Could not encode the PNG.")), "image/png"));
+      return { blob: png, style };
+    } finally { canvas.width = 1; canvas.height = 1; }
+  } finally { bitmap.close(); }
 }
 export async function generateAIVisual(
   brief,
@@ -168,10 +73,12 @@ export async function generateAIVisual(
   for (const logo of logos)
     append(
       logo.blob,
-      "ORIGINAL_LOGO: brand reference only, composited unchanged after image generation",
+      "ORIGINAL_LOGO: include this logo once, organically integrated into the design",
     );
   const context = {
-    event: brief,
+    event: Object.fromEntries(["title", "description", "dateMode", "date", "endDate", "dateText", "time", "timeZone", "location", "url", "sourceLanguage", "titleEn", "titleUk", "descriptionEn", "descriptionUk"].map((key) => [key, brief[key]])),
+    desiredStyle: brief.direction || "Contemporary, organic event storytelling",
+    campaignStyle: storyboardPost?.campaignStyle,
     frame: {
       id: output.id,
       format: output.format,
@@ -180,18 +87,16 @@ export async function generateAIVisual(
       headline: output.headline,
       subheading: output.subheading,
       cta: output.cta,
-      visualPlan: output.visualPlan,
+      visualPlan: storyboardPost?.campaignStyle ? output.visualPlan : { role: output.visualPlan?.role },
     },
-    storyboard: storyboardPost,
+    storyboard: storyboardPost?.campaignStyle ? storyboardPost : { visuals: (storyboardPost?.visuals || []).map(({ id, headline, subheading, cta }) => ({ id, headline, subheading, cta })) },
     visualStyle: CHANNEL_STYLES[output.format],
-    brandPolicy: BRAND_POLICY,
     effectiveColors: brief.colors,
     targetCanvas: { width: output.width, height: output.height },
-    ...artworkGeometry(output, logos.length),
     references,
     revisionInstructions: feedback.trim(),
   };
-  const prompt = `${visualPrompt}\n${previousImage ? "This is a revision. Apply revisionInstructions to the PREVIOUS_VISUAL, preserving campaign identity, assigned-photo identity and all event facts. Do not change the whole composition unless requested. The original logo shelf will be reapplied after generation.\n" : ""}DATA:\n${JSON.stringify(context)}`;
+  const prompt = `${visualPrompt}\n${previousImage ? "This is a revision. Apply revisionInstructions to the PREVIOUS_VISUAL, preserving campaign identity, assigned-photo identity and all event facts. Do not change the whole composition unless requested.\n" : ""}DATA:\n${JSON.stringify(context)}`;
   if (prompt.length > 32000)
     throw Error(
       "The visual prompt is too long. Shorten the event direction or revision instructions.",
@@ -200,16 +105,8 @@ export async function generateAIVisual(
   body.set("model", MODELS.image);
   body.set("n", "1");
   body.set("quality", MODELS.imageQuality);
-  body.set("input_fidelity", "high");
   body.set("output_format", "png");
-  body.set(
-    "size",
-    output.format === "instagram_story"
-      ? "1024x1536"
-      : output.format === "instagram_post"
-        ? "1024x1024"
-        : "1536x1024",
-  );
+  body.set("size", imageSize(output.format));
   const data = await openaiRequest(
     "images/edits",
     body,
@@ -250,7 +147,6 @@ export async function generateAIVisual(
     ...(await finalizeAIVisual(
       new Blob([bytes], { type: "image/png" }),
       output,
-      logos,
     )),
     imageModel: MODELS.image,
     imageSource: "openai",
