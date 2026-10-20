@@ -1,3 +1,5 @@
+import { hasReferencePlan } from "./frame-planner.js";
+import { visualReferences } from "./visual-references.js";
 import { openaiRequest } from "./openai.js";
 import visualPrompt, { version } from "./prompts/visual.js";
 import { MODELS, CHANNEL_STYLES } from "./prompts/channel-styles.js";
@@ -35,46 +37,15 @@ export async function generateAIVisual(
   assets,
   apiKey,
   signal,
-  { previousImage, feedback = "" } = {},
+  { feedback = "" } = {},
 ) {
-  const logos = output.logoIds.map((id) =>
-    assets.logos.find((asset) => asset.id === id),
-  );
-  if (!logos.length || logos.some((logo) => !logo?.blob))
-    throw Error("Every visual requires its original uploaded logos.");
-  const photo = output.photoId
-    ? assets.photos.find((asset) => asset.id === output.photoId)
-    : null;
-  if (output.photoId && !photo?.blob)
-    throw Error("The assigned original photo is missing.");
-  const references = [],
-    body = new FormData();
-  function append(blob, role) {
-    const index = references.length + 1,
-      extension =
-        blob.type === "image/jpeg"
-          ? "jpg"
-          : blob.type === "image/webp"
-            ? "webp"
-            : "png";
-    body.append("image[]", blob, `reference-${index}.${extension}`);
-    references.push({ index, role });
+  const { photo, items, references } = visualReferences(output, assets);
+  if (!hasReferencePlan(output)) throw Error("Plan this visual with its original references before generating it.");
+  const body = new FormData();
+  for (const [index, { asset }] of items.entries()) {
+    const extension = asset.blob.type === "image/jpeg" ? "jpg" : asset.blob.type === "image/webp" ? "webp" : "png";
+    body.append("image[]", asset.blob, `reference-${index + 1}.${extension}`);
   }
-  if (previousImage)
-    append(
-      previousImage,
-      "PREVIOUS_VISUAL: revise this image according to revisionInstructions, preserving everything else that remains correct",
-    );
-  if (photo)
-    append(
-      photo.blob,
-      "ASSIGNED_EVENT_PHOTO: the only event photograph permitted in this frame",
-    );
-  for (const logo of logos)
-    append(
-      logo.blob,
-      "ORIGINAL_LOGO: include this logo once, organically integrated into the design",
-    );
   const context = {
     event: Object.fromEntries(["title", "description", "dateMode", "date", "endDate", "dateText", "time", "timeZone", "location", "url", "sourceLanguage", "titleEn", "titleUk", "descriptionEn", "descriptionUk"].map((key) => [key, brief[key]])),
     desiredStyle: brief.direction || "Contemporary, organic event storytelling",
@@ -86,17 +57,23 @@ export async function generateAIVisual(
       position: output.variant,
       headline: output.headline,
       subheading: output.subheading,
-      cta: output.cta,
+      cta: "",
+      photoSummary: photo ? output.photoSummary : "",
       visualPlan: storyboardPost?.campaignStyle ? output.visualPlan : { role: output.visualPlan?.role },
     },
-    storyboard: storyboardPost?.campaignStyle ? storyboardPost : { visuals: (storyboardPost?.visuals || []).map(({ id, headline, subheading, cta }) => ({ id, headline, subheading, cta })) },
+    storyboard: { campaignStyle: storyboardPost?.campaignStyle,
+      visuals: (storyboardPost?.visuals || []).map(({ id, headline, subheading, visualPlan }) => ({ id, headline, subheading, narrativeRole: visualPlan?.role })) },
+    backgroundPreference: "light: white, warm white or pale brand tints",
+    peoplePolicy: photo ? "Only preserve people already present in the assigned original photo; never add or replace people" : "No people, faces, bodies, avatars, silhouettes, crowds or fictional event photography",
+    photoAvailable: Boolean(photo),
+    callToAction: false,
     visualStyle: CHANNEL_STYLES[output.format],
     effectiveColors: brief.colors,
     targetCanvas: { width: output.width, height: output.height },
     references,
     revisionInstructions: feedback.trim(),
   };
-  const prompt = `${visualPrompt}\n${previousImage ? "This is a revision. Apply revisionInstructions to the PREVIOUS_VISUAL, preserving campaign identity, assigned-photo identity and all event facts. Do not change the whole composition unless requested.\n" : ""}DATA:\n${JSON.stringify(context)}`;
+  const prompt = `${visualPrompt}\nDATA:\n${JSON.stringify(context)}`;
   if (prompt.length > 32000)
     throw Error(
       "The visual prompt is too long. Shorten the event direction or revision instructions.",
@@ -106,6 +83,7 @@ export async function generateAIVisual(
   body.set("n", "1");
   body.set("quality", MODELS.imageQuality);
   body.set("output_format", "png");
+  body.set("background", "opaque");
   body.set("size", imageSize(output.format));
   const data = await openaiRequest(
     "images/edits",

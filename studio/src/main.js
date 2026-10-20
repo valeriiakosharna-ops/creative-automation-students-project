@@ -19,6 +19,7 @@ import {
   reviewReady,
   recoverCaptionBudgets,
 } from "./ai-pipeline.js";
+import { planVisualFrame, hasReferencePlan } from "./frame-planner.js";
 import { generateAIVisual } from "./ai-visual.js";
 import { renderVisual, decodeImage } from "./renderer.js";
 import { all, get, put, runsFor, deleteProject } from "./storage.js";
@@ -395,12 +396,12 @@ function updateSummary() {
     : " Template mode";
   $("#mode-note").textContent = ai
     ? runtime.pages
-      ? "AI plans the visuals and writes social posts in parallel, then generates each visual from the plan and uploaded assets. Review and approve every visual and post before downloading ZIP."
+      ? "AI plans a light, coherent campaign, checks each frame against its original logos and assigned photo, and writes shared posts without a CTA. Review every result before ZIP."
       : "AI creates channel-specific copy. This optional Java mode uses local template visuals."
     : "Template mode uses your supplied wording, with channel-specific structure. It does not translate descriptions. Add localized copy below, or connect AI for translation.";
   $("#ai-cost-note").hidden = !runtime.pages || !ai;
   $("#ai-cost-note").textContent =
-    `AI requests: 3 text (including public web research) + ${outputs.length} images at high quality. Regenerating one visual makes 1 additional paid image request. No automatic retries.`;
+    `AI requests: 3 campaign text + ${outputs.length} reference plans + ${outputs.length} high-quality images. Public web research is included. A revision uses 1 image request; older packs may also need 1 reference plan.`;
   if (runtime.pages)
     $(".privacy-note").textContent = ai
       ? "AI mode sends event text, assigned photos, all logos and revision instructions directly to OpenAI. Projects and results are saved locally; your key is never saved."
@@ -564,13 +565,14 @@ async function generate(event) {
           $("#progress-message").textContent =
             run.pipeline.planner.status === "running"
               ? "Planning visuals and writing posts in parallel…"
-              : "Generating AI visuals; preparing posts for review…";
+              : "Checking original references and generating light visuals…";
           $("#run-progress").value = Math.round(
             (100 *
               (run.outputs.filter((output) => output.image).length +
+                run.outputs.filter((output) => output.referencePlanVersion).length +
                 (run.pipeline.planner.status !== "running" ? 1 : 0) +
                 (run.pipeline.copy.status !== "running" ? 1 : 0))) /
-              (run.outputs.length + 2),
+              (run.outputs.length * 2 + 2),
           );
           await persistRun(run);
           renderResults();
@@ -821,6 +823,12 @@ function visualReviewControls(run, output) {
   const controls = element("div", "visual-review");
   if (output.imageError)
     controls.append(element("p", "review-error", output.imageError));
+  if (run.pipeline) {
+    const assigned = run.assets.photos.find((photo) => photo.id === output.photoId);
+    controls.append(element("p", "input-help", assigned
+      ? `Assigned photo: ${assigned.name}. Check that no people were added or replaced.`
+      : "Information-only visual: no event photo is supplied; no people should appear."));
+  }
   const label = element("label", "", "Changes for this visual"),
     feedback = element("textarea", "visual-feedback"),
     id = `feedback-${output.id}`;
@@ -902,7 +910,7 @@ function visualReviewControls(run, output) {
     element(
       "p",
       "input-help",
-      "Regeneration makes one new paid image request. Apply the feedback or clear it before approval. Every new image needs approval again.",
+      "Regeneration uses only original logos and the assigned photo, never an old generated image. It costs 1 image request; an older pack may also need 1 reference-planning request. Every new image needs approval again.",
     ),
     element(
       "span",
@@ -931,8 +939,7 @@ async function regenerateVisual(source, original) {
   run.status = "running";
   delete run.error;
   delete run.finishedAt;
-  const previousImage = output.image,
-    feedback = output.feedback || "";
+  const feedback = output.feedback || "";
   output.approved = false;
   output.imageStatus = "running";
   output.status = "pending";
@@ -947,6 +954,13 @@ async function regenerateVisual(source, original) {
     "Regenerating the selected visual with your feedback…";
   try {
     await persistRun(run);
+    if (!hasReferencePlan(output)) {
+      Object.assign(output, await planVisualFrame(
+        run.brief, output, run.storyboard.find((post) => post.id === output.postId),
+        run.assets, requestApiKey, state.controller.signal,
+      ));
+      await persistRun(run);
+    }
     const rendered = await generateAIVisual(
       run.brief,
       output,
@@ -954,7 +968,7 @@ async function regenerateVisual(source, original) {
       run.assets,
       requestApiKey,
       state.controller.signal,
-      { previousImage, feedback },
+      { feedback },
     );
     if (state.controller.signal.aborted)
       throw new Error("Generation cancelled.");
@@ -995,7 +1009,7 @@ function renderResults() {
   const completed = run.outputs.filter((o) => o.status === "completed").length;
   $("#run-label").textContent = `RUN / ${run.id.slice(0, 8).toUpperCase()}`;
   $("#run-mode-label").textContent =
-    `${run.pipeline ? "AI VISUALS + POSTS" : run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()}${run.pipeline?.version === "openai-organic-v2" ? "" : ` / GUIDE ${run.styleGuideVersion || "LEGACY"}`}`;
+    `${run.pipeline ? "AI VISUALS + POSTS" : run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()}${["openai-organic-v2", "openai-reference-v3"].includes(run.pipeline?.version) ? "" : ` / GUIDE ${run.styleGuideVersion || "LEGACY"}`}`;
   $("#results-title").textContent =
     run.status === "running"
       ? "Making it yours."
@@ -1062,9 +1076,12 @@ function renderResults() {
       img.alt = output.headline;
       button.append(img);
       button.addEventListener("click", () => openOutput(output));
-      const caption = element("p", "output-copy", output.caption);
-      caption.lang = output.language;
-      card.append(button, caption);
+      card.append(button);
+      if (!run.reviewRequired) {
+        const caption = element("p", "output-copy", output.caption);
+        caption.lang = output.language;
+        card.append(caption);
+      }
       const footer = element("div", "output-card-footer");
       footer.append(
         element(

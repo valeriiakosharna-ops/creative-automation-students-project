@@ -17,7 +17,7 @@ const visualSchema = object({
   id: string,
   headline: string,
   subheading: string,
-  cta: string,
+  cta: { type: "string", enum: [""] },
   visualPlan: object({
     role: {
       type: "string",
@@ -129,7 +129,7 @@ export async function browserStoryboard(brief, outputs, apiKey, signal) {
         id: frame.id,
         headline: frame.headline,
         subheading: frame.subheading,
-        cta: frame.cta,
+        cta: "",
         visualPlan: {
           role: frame.visualPlan.role,
           layout: frame.visualPlan.layout,

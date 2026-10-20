@@ -71,6 +71,7 @@ export async function structuredRequest(
   schema,
   apiKey,
   signal,
+  images = [],
 ) {
   const data = await openaiRequest(
     "chat/completions",
@@ -79,7 +80,9 @@ export async function structuredRequest(
       store: false,
       messages: [
         { role: "system", content: prompt },
-        { role: "user", content: JSON.stringify(payload) },
+        { role: "user", content: images.length
+          ? [{ type: "text", text: JSON.stringify(payload) }, ...images]
+          : JSON.stringify(payload) },
       ],
       response_format: {
         type: "json_schema",

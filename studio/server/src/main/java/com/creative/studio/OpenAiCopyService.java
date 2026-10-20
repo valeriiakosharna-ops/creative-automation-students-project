@@ -56,6 +56,7 @@ public class OpenAiCopyService {
         try {
             var properties=new LinkedHashMap<String,Object>();
             for(var name:List.of("id","headline","subheading","cta","caption"))properties.put(name,Map.of("type","string"));
+            properties.put("cta",Map.of("type","string","enum",List.of("")));
             var item=Map.of("type","object","additionalProperties",false,"properties",properties,"required",List.copyOf(properties.keySet()));
             var schema=Map.of("type","object","additionalProperties",false,"properties",Map.of("outputs",Map.of("type","array","items",item)),"required",List.of("outputs"));
             String system="""
@@ -64,10 +65,10 @@ public class OpenAiCopyService {
                 Translate copy into each output language: uk = Ukrainian, en = English. Respect provided localized titles and
                 descriptions. Keep proper names as supplied unless a translation is given. Use the exact local date/time/zone.
                 Mandatory character limits: headline 80, subheading 160, cta 40, caption 3000. Headline/subheading have no markdown.
-                Instagram post: hook, paragraphs, 1–3 relevant hashtags. Story: very short copy and CTA.
+                Instagram post: hook, paragraphs, 1–3 relevant hashtags. Story: very short informative copy, without a CTA.
                 Facebook: welcoming announcement, context and practical details. Google Chat: concise team message, optional
                 *bold* title, no hashtag clutter. Each variant has a different hook without changing facts. Use visual direction
-                for tone only. Return only structured JSON.
+                for tone only. Do not add a call to action, invitation or promotional ending. Keep cta empty; show supplied URLs neutrally. Return only structured JSON.
                 """;
             system += "\nMandatory brand style guide (visuals are composited by the renderer; follow its channel copy rules, language rules, tone and format-specific character maxima):\n"+mapper.writeValueAsString(brandPolicy);
             var body=Map.of("model",model,"messages",List.of(Map.of("role","system","content",system),Map.of("role","user","content",mapper.writeValueAsString(request))),

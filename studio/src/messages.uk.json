@@ -355,5 +355,9 @@
   "One shared campaign style, with naturally varied compositions.": "Спільний стиль кампанії з природним різноманіттям композицій.",
   "Logos are integrated into the AI design. Review every visual before publishing.": "Логотипи інтегруються в AI-дизайн. Перевірте кожен візуал перед публікацією.",
   "Creative inspiration →": "Творче натхнення →",
-  "In Pages AI mode, OpenAI designs the full image with your logos, palette and shared campaign identity. Template mode stays local.": "У режимі Pages AI OpenAI створює повний дизайн із вашими логотипами, палітрою та спільним стилем кампанії. Режим шаблону працює локально."
+  "In Pages AI mode, OpenAI designs the full image with your logos, palette and shared campaign identity. Template mode stays local.": "У режимі Pages AI OpenAI створює повний дизайн із вашими логотипами, палітрою та спільним стилем кампанії. Режим шаблону працює локально.",
+  "AI plans a light, coherent campaign, checks each frame against its original logos and assigned photo, and writes shared posts without a CTA. Review every result before ZIP.": "AI планує світлу цілісну кампанію, перевіряє кожен кадр за його оригінальними логотипами й призначеним фото та пише спільні дописи без заклику до дії. Перевірте результати перед ZIP.",
+  "Regeneration uses only original logos and the assigned photo, never an old generated image. It costs 1 image request; an older pack may also need 1 reference-planning request. Every new image needs approval again.": "Перегенерація використовує лише оригінальні логотипи й призначене фото, без старого AI-зображення. Вартість — 1 запит на зображення; для старого набору може знадобитися ще 1 план за референсами. Новий візуал потрібно погодити знову.",
+  "Information-only visual: no event photo is supplied; no people should appear.": "Інформаційний візуал: фото події не передається; людей на ньому бути не повинно.",
+  "Checking original references and generating light visuals…": "Перевіряємо оригінальні референси та створюємо світлі візуали…"
 }
