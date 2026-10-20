@@ -1,0 +1,121 @@
+{
+  "version": "1.0.0",
+  "name": "Creative Automation Social Style Guide",
+  "palette": {
+    "cyan": "#00A6EB",
+    "red": "#E60036",
+    "sky": "#81D0F4",
+    "peach": "#EF958C",
+    "ocean": "#2A668E",
+    "mauve": "#937C8A",
+    "ink": "#302A40",
+    "wine": "#951B3C"
+  },
+  "defaultColors": ["#00A6EB", "#E60036", "#302A40"],
+  "typography": {
+    "family": "Arial, sans-serif",
+    "headlineWeight": 800,
+    "bodyWeight": 500,
+    "minimumTextContrast": 4.5,
+    "minimumLargeTextContrast": 3
+  },
+  "logos": {
+    "placement": "white shelf inside the safe area",
+    "includeEveryUploadedLogo": true,
+    "fit": "contain",
+    "clearSpaceFraction": 0.25,
+    "maxColumns": 4,
+    "maxCount": 8,
+    "faviconReplacesLogo": false
+  },
+  "photos": {
+    "maxUsesPerNetworkPerRun": 1,
+    "instagramFormatsSharePool": true,
+    "languagesSharePool": true,
+    "overflow": "information-only",
+    "crossNetworkReuse": true
+  },
+  "languages": ["en", "uk"],
+  "copy": {
+    "voice": "Clear, confident, welcoming and practical. Invite participation without hype.",
+    "facts": "Preserve dates, time zones, venues, proper names and real URLs. Invent no facts, speakers, price, deadline or registration link.",
+    "localization": "One complete visual and caption per selected language. Translate naturally, respect supplied translations, and preserve exact event facts.",
+    "cta": "Use one clear next step. Keep CTA text at most 40 characters.",
+    "headlineMaxCharacters": 80
+  },
+  "formats": {
+    "instagram_post": {
+      "label": "Instagram post",
+      "network": "instagram",
+      "width": 1080,
+      "height": 1080,
+      "ratio": "1:1",
+      "safeArea": { "left": 65, "right": 65, "top": 65, "bottom": 65 },
+      "headline": { "preferred": 76, "min": 48 },
+      "subheading": { "preferred": 32, "min": 24, "maxCharacters": 100 },
+      "details": { "preferred": 28, "min": 22 },
+      "logoRowHeight": 100,
+      "caption": {
+        "targetMin": 250,
+        "maxCharacters": 650,
+        "direction": "Open with a benefit or question. Use short paragraphs, event details, one CTA and 1–3 relevant hashtags."
+      }
+    },
+    "instagram_story": {
+      "label": "Instagram story",
+      "network": "instagram",
+      "width": 1080,
+      "height": 1920,
+      "ratio": "9:16",
+      "safeArea": { "left": 90, "right": 90, "top": 250, "bottom": 320 },
+      "headline": { "preferred": 88, "min": 60 },
+      "subheading": { "preferred": 36, "min": 28, "maxCharacters": 100 },
+      "details": { "preferred": 30, "min": 26 },
+      "logoRowHeight": 110,
+      "caption": {
+        "targetMin": 40,
+        "maxCharacters": 180,
+        "direction": "Use a very short event message and one CTA. No hashtag block. A native link sticker is added manually during publication."
+      }
+    },
+    "facebook": {
+      "label": "Facebook post",
+      "network": "facebook",
+      "width": 1200,
+      "height": 630,
+      "ratio": "1.91:1",
+      "safeArea": { "left": 72, "right": 72, "top": 72, "bottom": 72 },
+      "headline": { "preferred": 56, "min": 34 },
+      "subheading": { "preferred": 26, "min": 24, "maxCharacters": 70 },
+      "details": { "preferred": 24, "min": 20 },
+      "logoRowHeight": 64,
+      "caption": {
+        "targetMin": 350,
+        "maxCharacters": 900,
+        "direction": "Write a welcoming community announcement: who it is for, value, practical details and one direct next step. Use complete sentences and no hashtag block."
+      }
+    },
+    "google_chat": {
+      "label": "Google Chat",
+      "network": "google_chat",
+      "width": 1200,
+      "height": 675,
+      "ratio": "16:9",
+      "safeArea": { "left": 72, "right": 72, "top": 72, "bottom": 72 },
+      "headline": { "preferred": 58, "min": 36 },
+      "subheading": { "preferred": 26, "min": 24, "maxCharacters": 60 },
+      "details": { "preferred": 24, "min": 20 },
+      "logoRowHeight": 64,
+      "caption": {
+        "targetMin": 180,
+        "maxCharacters": 450,
+        "direction": "Write a concise team announcement with an optional *bold* title, essential details and one event link. No hashtag block."
+      }
+    }
+  },
+  "implementation": {
+    "visuals": "Deterministic branded composition of original assets; no synthetic photos or AI redrawing of logos.",
+    "paletteOverrides": "Project palette overrides the default three colors. Adjust text tones to maintain contrast; preserve original logo colors.",
+    "longText": "Shorten the optional visual summary and caption description to fit channel limits. Keep the full input description in the saved brief. Preserve factual essentials; report an output error if essential copy cannot fit at the minimum size or caption maximum."
+  }
+}

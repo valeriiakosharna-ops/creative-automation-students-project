@@ -50,13 +50,11 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
   await expect(page.locator("#photo-list .asset-item")).toHaveCount(2);
   await page.locator("#photo-upload").setInputFiles(photo1);
   await expect(page.locator("#notice")).toContainText("already in your photos");
-  await page
-    .locator("#photo-upload")
-    .setInputFiles({
-      name: "unsafe.svg",
-      mimeType: "image/svg+xml",
-      buffer: Buffer.from("<svg/>"),
-    });
+  await page.locator("#photo-upload").setInputFiles({
+    name: "unsafe.svg",
+    mimeType: "image/svg+xml",
+    buffer: Buffer.from("<svg/>"),
+  });
   await expect(page.locator("#notice")).toContainText("genuine PNG");
   for (const checkbox of await page.locator('[name="languages"]').all())
     await checkbox.uncheck();
@@ -79,6 +77,10 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
   const files = unzipSync(new Uint8Array(await readFile(archivePath))),
     manifest = JSON.parse(strFromU8(files["manifest.json"]));
   expect(manifest.outputs).toHaveLength(16);
+  expect(manifest.styleGuideVersion).toBe("1.0.0");
+  expect(JSON.parse(strFromU8(files["style-guide.json"])).version).toBe(
+    "1.0.0",
+  );
   expect(manifest.assets.logos).toHaveLength(2);
   for (const network of ["instagram", "facebook", "google_chat"]) {
     const used = manifest.outputs
@@ -91,6 +93,26 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
   for (const output of manifest.outputs) {
     expect(output.logoIds).toHaveLength(2);
     expect(output.status).toBe("completed");
+    expect(output.style.version).toBe("1.0.0");
+    const content = output.style.contentRect,
+      shelf = output.style.logoShelf;
+    expect(shelf.y + shelf.height).toBeLessThanOrEqual(
+      output.height - output.style.safeArea.bottom,
+    );
+    expect(shelf.x).toBeGreaterThanOrEqual(output.style.safeArea.left);
+    for (const rect of output.style.logoRects) {
+      expect(rect.y).toBeGreaterThanOrEqual(content.y);
+      expect(rect.y + rect.height).toBeLessThanOrEqual(
+        content.y + content.height + 1,
+      );
+    }
+    if (output.format === "instagram_story")
+      expect(output.style.safeArea).toEqual({
+        left: 90,
+        right: 90,
+        top: 250,
+        bottom: 320,
+      });
     const png = files[output.imageFile],
       header = new DataView(png.buffer, png.byteOffset, png.byteLength);
     expect(header.getUint32(16)).toBe(output.width);
@@ -237,6 +259,7 @@ test("AI response is used for visuals/captions, cancellation and interrupted-run
     await route.fulfill({
       json: {
         model: "mock-model",
+        styleGuideVersion: "1.0.0",
         outputs: request.outputs.map((o) => ({
           id: o.id,
           headline:
@@ -266,7 +289,10 @@ test("AI response is used for visuals/captions, cancellation and interrupted-run
   await page.locator("#generate-button").click();
   await expect(page.locator("#generation-progress")).toBeVisible();
   await page.locator("#cancel-generation").click();
-  await expect(page.locator("#run-mode-label")).toContainText("CANCELLED");
+  // Cancellation finishes an in-flight PNG encode before saving the final run.
+  await expect(page.locator("#run-mode-label")).toContainText("CANCELLED", {
+    timeout: 45000,
+  });
   await page.evaluate(async () => {
     await new Promise((resolve, reject) => {
       const r = indexedDB.open("creative-automation-studio");
@@ -287,4 +313,46 @@ test("AI response is used for visuals/captions, cancellation and interrupted-run
   });
   await page.reload();
   await expect(page.locator("#history-list")).toContainText("interrupted");
+});
+
+test("a Story photo and every logo stay inside the guide; too-long text fails at the font floor", async ({
+  page,
+}, testInfo) => {
+  await example(page);
+  for (const cb of await page.locator('[name="formats"]').all())
+    await cb.uncheck();
+  await page.locator('[name="formats"][value="instagram_story"]').check();
+  await page.locator('[name="languages"][value="uk"]').uncheck();
+  await page
+    .locator("#photo-upload")
+    .setInputFiles(await fixture(page, "story-photo.png", "#2d9d44"));
+  await expect(page.locator("#photo-list .asset-item")).toHaveCount(1);
+  await generate(page);
+  const pending = page.waitForEvent("download");
+  await page.locator("#download-zip").click();
+  const dl = await pending;
+  const path = testInfo.outputPath("story.zip");
+  await dl.saveAs(path);
+  const files = unzipSync(new Uint8Array(await readFile(path))),
+    manifest = JSON.parse(strFromU8(files["manifest.json"])),
+    output = manifest.outputs[0];
+  expect(output.photoId).toBeTruthy();
+  expect(output.style.photoRect.y).toBeGreaterThanOrEqual(250);
+  expect(
+    output.style.photoRect.y + output.style.photoRect.height,
+  ).toBeLessThanOrEqual(output.style.logoShelf.y);
+  expect(
+    output.style.logoShelf.y + output.style.logoShelf.height,
+  ).toBeLessThanOrEqual(1600);
+  expect(output.style.text.headline.fontSize).toBeGreaterThanOrEqual(60);
+  expect(output.style.text.headline.family).toBe("Arial, sans-serif");
+  await page.locator("#reuse-brief").click();
+  await page.locator(".localized-copy summary").click();
+  await page.locator("#titleEn").fill("W".repeat(80));
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#run-mode-label")).toContainText("FAILED");
+  await expect(page.locator(".output-pending.failed")).toContainText(
+    "minimum 60px",
+  );
+  await expect(page.locator("#download-zip")).toBeDisabled();
 });

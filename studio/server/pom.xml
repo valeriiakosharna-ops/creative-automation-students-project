@@ -8,5 +8,5 @@
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
   </dependencies>
-  <build><resources><resource><directory>src/main/resources</directory></resource><resource><directory>../dist</directory><targetPath>static</targetPath></resource></resources><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin></plugins></build>
+  <build><resources><resource><directory>..</directory><includes><include>brand-policy.json</include></includes></resource><resource><directory>src/main/resources</directory></resource><resource><directory>../dist</directory><targetPath>static</targetPath></resource></resources><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin></plugins></build>
 </project>

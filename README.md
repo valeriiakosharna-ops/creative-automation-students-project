@@ -2,6 +2,10 @@
 
 A responsive, English-language project brief for students learning Java and JavaScript. It covers the product, user journey, MVP, architecture, implementation milestones, and acceptance criteria. The interactive brief explorer is an educational example; it does not call AI services or store uploads.
 
+## Social style guide and launch instructions
+
+The separate [social style guide](style-guide/README.md) covers our palette, original logo/icon, format-specific composition and English/Ukrainian copy. Its shared [generation policy](studio/brand-policy.json) drives visual rendering and Java AI instructions. Follow [MVP Quickstart](studio/QUICKSTART.md) for safe key setup and complete local launch commands.
+
 ## Working MVP
 
 The separate application is in [`studio/`](studio/README.md): project folders, local history, original-logo composition, unique photo allocation per social network, English/Ukrainian output, channel-specific captions, and ZIP export. It builds independently and is published under `studio/` alongside this brief. An optional Java server handles AI copy with a deliberately empty server-side key placeholder. See the Studio README for setup.

@@ -18,10 +18,11 @@ public class ApiController {
     private final OpenAiCopyService copy;
     public ApiController(OpenAiCopyService copy) { this.copy=copy; }
     @GetMapping("/health") public Map<String,Object> health() {
-        return Map.of("service","creative-automation-studio","aiConfigured",copy.configured());
+        return Map.of("service","creative-automation-studio","aiConfigured",copy.configured(),"styleGuideVersion",copy.policyVersion());
     }
     @PostMapping("/copy") public CopyResponse generate(@Valid @RequestBody CopyRequest request) {
         validatePlan(request);
+        if(request.styleGuideVersion()!=null && !request.styleGuideVersion().equals(copy.policyVersion()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Browser and server style guide versions differ. Rebuild/restart the server and reload Studio.");
         return copy.generate(request);
     }
     static void validatePlan(CopyRequest request) {

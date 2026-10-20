@@ -1992,3 +1992,6 @@ body:has(dialog[open]) {
   text-align: center;
   color: var(--ocean);
 }
+
+.applied-guide{display:block;padding:12px 18px;border-bottom:1px solid var(--line);background:#edf7fc;color:var(--ocean);font-size:10px;font-weight:600;}
+@media(max-width:950px) and (min-width:421px){.applied-guide{grid-column:1;grid-row:4;padding:10px 0 0;background:none;border:0;}}
