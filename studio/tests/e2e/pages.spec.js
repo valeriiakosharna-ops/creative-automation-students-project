@@ -93,21 +93,37 @@ test("Pages Google workflow, private owner controls, direct AI, ZIP, visit key c
     expect(body.messages[0].content).toContain(
       "Creative Automation Social Style Guide",
     );
-    const plan = JSON.parse(body.messages[1].content);
+    const plan = JSON.parse(
+      body.messages.find((message) => message.role === "user").content,
+    );
     expect(plan).not.toHaveProperty("assets");
     const outputs = plan.outputs.map((o) => ({
       id: o.id,
       headline: o.language === "uk" ? "Творча лабораторія" : "Creative Lab",
       subheading: "",
       cta: o.language === "uk" ? "Долучайтеся" : "Join us",
-      caption: `${o.format} ${o.language} — Creative Lab`,
+      visualPlan: {
+        role: "opening",
+        layout: "split-right",
+        direction: "Original logos, short event hook.",
+      },
     }));
     return route.fulfill({
       json: {
         choices: [
           {
             finish_reason: "stop",
-            message: { content: JSON.stringify({ outputs }) },
+            message: {
+              content: JSON.stringify({
+                posts: plan.posts.map((post) => ({
+                  id: post.id,
+                  caption: `${post.id} — Creative Lab`,
+                  visuals: outputs.filter((output) =>
+                    post.visualIds.includes(output.id),
+                  ),
+                })),
+              }),
+            },
           },
         ],
       },
@@ -185,4 +201,145 @@ test("a Pages build refuses to open when runtime settings fail to load", async (
   await expect(page.locator("#signin-status")).toContainText(
     "configuration could not be loaded",
   );
+});
+
+test("bilingual editor, per-format counts, flexible schedules and copy repair keep one carousel caption without another AI call", async ({
+  page,
+}, testInfo) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await pagesFixture(page);
+  await login(page);
+  await page.locator("#example-button").click();
+  const language = page.locator(".topbar [data-ui-language]");
+  await language.selectOption("uk");
+  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+  await expect(page.locator("#generate-button")).toContainText("Створити");
+  await expect(page.locator(".quantity-options legend")).toHaveText(
+    "Скільки візуалів потрібно для кожного формату?",
+  );
+  await expect(page.locator("#title")).toHaveValue("Creative Automation Lab");
+  await language.selectOption("en");
+  await expect(page.locator(".quantity-options legend")).toHaveText(
+    "How many visuals for each format?",
+  );
+  for (const input of await page
+    .locator('[name="formats"], [name="languages"]')
+    .all())
+    await input.uncheck();
+  await page.locator('[name="formats"][value="instagram_post"]').check();
+  await page.locator('[name="formats"][value="instagram_story"]').check();
+  await page.locator('[name="languages"][value="en"]').check();
+  await page.locator("#quantity-instagram_post").fill("4");
+  await page.locator("#quantity-instagram_story").fill("2");
+  await expect(page.locator("#output-count")).toHaveText("6");
+  await page.locator("#date-mode").selectOption("range");
+  await page.locator("#date-end").fill("2026-11-28");
+  await expect(page.locator("#date-end")).toBeVisible();
+  await page.locator("#date-mode").selectOption("list");
+  await page.locator("#date-text").fill("21, 23 and 28 November 2026");
+  await expect(page.locator("#date")).toBeHidden();
+  await page.locator("#date-mode").selectOption("text");
+  await page.locator("#date-text").fill("Every Tuesday in November 2026");
+  await page.locator("#connect-key").click();
+  await page.locator("#openai-key").fill("test-repair-visit-key");
+  await page.locator("#save-connection").click();
+  let requests = 0;
+  await page.route("https://api.openai.com/v1/chat/completions", (route) => {
+    requests++;
+    const body = route.request().postDataJSON();
+    const plan = JSON.parse(
+      body.messages.find((message) => message.role === "user").content,
+    );
+    expect(plan.brief.dateMode).toBe("text");
+    expect(plan.brief.dateText).toBe("Every Tuesday in November 2026");
+    expect(plan.posts.map((post) => post.visualIds.length)).toEqual([4, 2]);
+    const posts = plan.posts.map((post) => ({
+      id: post.id,
+      caption: post.id.includes("story")
+        ? "Creative Lab story series."
+        : "Creative Lab carousel.",
+      visuals: plan.outputs
+        .filter((output) => output.postId === post.id)
+        .map((output) => ({
+          id: output.id,
+          headline:
+            output.position === 1
+              ? "Creative Lab"
+              : output.position === output.sequenceLength
+                ? "Build together"
+                : "Learn by doing",
+          subheading:
+            output.id === "instagram_post-en-2" ? "x".repeat(200) : "",
+          cta: "Join us",
+          visualPlan: {
+            role: output.position === 1 ? "opening" : "closing",
+            layout: ["split-right", "split-left", "poster"][
+              (output.position - 1) % 3
+            ],
+            direction: "Complementary frame with original logos.",
+          },
+        })),
+    }));
+    return route.fulfill({
+      json: {
+        choices: [
+          {
+            finish_reason: "stop",
+            message: { content: JSON.stringify({ posts }) },
+          },
+        ],
+      },
+    });
+  });
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#run-mode-label")).toContainText("PARTIAL", {
+    timeout: 45000,
+  });
+  await expect(page.locator(".output-image")).toHaveCount(5);
+  await expect(page.locator(".output-pending.failed")).toContainText(
+    "subheading has 200 characters",
+  );
+  await page.locator(".repair-copy").click();
+  await page.locator("#edit-subheading").fill("Practical Java skills");
+  await page
+    .locator("#output-caption")
+    .fill("A shared, reviewed carousel caption.");
+  await page.locator("#render-edited-output").click();
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", {
+    timeout: 45000,
+  });
+  await expect(page.locator(".output-image")).toHaveCount(6);
+  await expect(page.locator("#history-list button")).toHaveCount(2);
+  await language.selectOption("uk");
+  await expect(page.locator(".output-copy").first()).toHaveText(
+    "A shared, reviewed carousel caption.",
+  );
+  await language.selectOption("en");
+  expect(requests).toBe(1);
+  const download = page.waitForEvent("download");
+  await page.locator("#download-zip").click();
+  const archive = await download,
+    path = testInfo.outputPath("repaired-carousel.zip");
+  await archive.saveAs(path);
+  const files = unzipSync(new Uint8Array(await readFile(path)));
+  const manifest = JSON.parse(strFromU8(files["manifest.json"]));
+  expect(manifest.derivedFromRunId).toBeTruthy();
+  expect(
+    manifest.outputs
+      .filter((output) => output.format === "instagram_post")
+      .every(
+        (output) => output.caption === "A shared, reviewed carousel caption.",
+      ),
+  ).toBe(true);
+  expect(strFromU8(files["instagram_post/en/post.txt"])).toBe(
+    "A shared, reviewed carousel caption.",
+  );
+  const storyboard = JSON.parse(strFromU8(files["storyboard.json"]));
+  expect(storyboard.posts[0].visuals).toHaveLength(4);
+  expect(storyboard.posts[0].visuals[1].visualPlan.layout).toBe("split-left");
+  await page.locator("#history-list button").last().click();
+  await expect(page.locator("#run-mode-label")).toContainText("PARTIAL");
+  await expect(page.locator(".output-image")).toHaveCount(5);
+  expect(errors).toEqual([]);
 });

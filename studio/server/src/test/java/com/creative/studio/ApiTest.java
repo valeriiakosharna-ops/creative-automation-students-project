@@ -51,4 +51,24 @@ class ApiTest {
         mvc.perform(options("/api/copy").header("Origin","https://untrusted.invalid").header("Access-Control-Request-Method","POST")).andExpect(status().isForbidden());
         mvc.perform(options("/api/copy").header("Origin","http://localhost:5173").header("Access-Control-Request-Method","POST")).andExpect(status().isOk()).andExpect(header().string("Access-Control-Allow-Origin","http://localhost:5173"));
     }
+    @Test @SuppressWarnings("unchecked") void independentCountsAndFlexibleSchedulesAreAccepted() throws Exception {
+        var data=request(); var brief=(Map<String,Object>)data.get("brief");
+        brief.put("quantities",Map.of("facebook",2)); brief.put("dateMode","range"); brief.put("endDate","2026-11-28");
+        data.put("outputs",List.of(Map.of("id","facebook-uk-1","format","facebook","language","uk","variant",1),Map.of("id","facebook-uk-2","format","facebook","language","uk","variant",2)));
+        mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isServiceUnavailable());
+        for(var mode:List.of("list","text")) {
+            brief.put("dateMode",mode);brief.put("date","");brief.put("dateText","21, 23 and 28 November 2026");
+            mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isServiceUnavailable());
+        }
+        brief.put("dateText","");
+        mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isBadRequest());
+    }
+    @Test @SuppressWarnings("unchecked") void reversedDateRangeAndExcessFramesAreRejected() throws Exception {
+        var data=request();var brief=(Map<String,Object>)data.get("brief");
+        brief.put("dateMode","range");brief.put("endDate","2026-11-20");
+        mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isBadRequest());
+        brief.put("dateMode","single");brief.put("formats",List.of("facebook","instagram_post"));brief.put("languages",List.of("uk","en"));brief.put("quantities",Map.of("facebook",10,"instagram_post",10));
+        mvc.perform(post("/api/copy").contentType("application/json").content(mapper.writeValueAsBytes(data))).andExpect(status().isBadRequest());
+    }
+
 }

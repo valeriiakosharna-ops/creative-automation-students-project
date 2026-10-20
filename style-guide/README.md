@@ -12,16 +12,16 @@ All uploaded logos appear on every generated visual. The favicon is an applicati
 
 ## Palette
 
-| Color | HEX | Role |
-| --- | --- | --- |
-| Cyan | `#00A6EB` | Main accents, geometry, highlights |
-| Red | `#E60036` | One focal accent or short CTA treatment |
-| Sky | `#81D0F4` | Soft supporting panels |
-| Peach | `#EF958C` | Warm supporting details |
-| Ocean | `#2A668E` | Readable blue text on white |
-| Mauve | `#937C8A` | Decorative secondary accents |
-| Ink | `#302A40` | Body text, dark backgrounds |
-| Wine | `#951B3C` | Readable red emphasis on white |
+| Color | HEX       | Role                                    |
+| ----- | --------- | --------------------------------------- |
+| Cyan  | `#00A6EB` | Main accents, geometry, highlights      |
+| Red   | `#E60036` | One focal accent or short CTA treatment |
+| Sky   | `#81D0F4` | Soft supporting panels                  |
+| Peach | `#EF958C` | Warm supporting details                 |
+| Ocean | `#2A668E` | Readable blue text on white             |
+| Mauve | `#937C8A` | Decorative secondary accents            |
+| Ink   | `#302A40` | Body text, dark backgrounds             |
+| Wine  | `#951B3C` | Readable red emphasis on white          |
 
 Start around 70% white/light space, 20% blue and 10% red in designed areas, excluding photos and original logos. Additional colors are optional. Project palettes override the three generation defaults; text colors are darkened as needed for contrast. Original logo colors stay unchanged.
 
@@ -31,12 +31,12 @@ Regular text needs 4.5:1 contrast; large text needs 3:1. Exact examples: ink on 
 
 Sizes and safe areas are source pixels. These are project export defaults and conservative safety margins, not universal platform limits.
 
-| Format | Size | Critical-content margins L/R/T/B | Headline preferred / minimum | Summary preferred / minimum | Summary max | Caption maximum |
-| --- | --- | --- | --- | --- | --- | --- |
-| Instagram post | 1080 × 1080 | 65 / 65 / 65 / 65 | 76 / 48 px | 32 / 24 px | 100 chars | 650 chars |
-| Instagram story | 1080 × 1920 | 90 / 90 / 250 / 320 | 88 / 60 px | 36 / 28 px | 100 chars | 180 chars |
-| Facebook | 1200 × 630 | 72 / 72 / 72 / 72 | 56 / 34 px | 26 / 24 px | 70 chars | 900 chars |
-| Google Chat | 1200 × 675 | 72 / 72 / 72 / 72 | 58 / 36 px | 26 / 24 px | 60 chars | 450 chars |
+| Format          | Size        | Critical-content margins L/R/T/B | Headline preferred / minimum | Summary preferred / minimum | Summary max | Caption maximum |
+| --------------- | ----------- | -------------------------------- | ---------------------------- | --------------------------- | ----------- | --------------- |
+| Instagram post  | 1080 × 1080 | 65 / 65 / 65 / 65                | 76 / 48 px                   | 32 / 24 px                  | 100 chars   | 650 chars       |
+| Instagram story | 1080 × 1920 | 90 / 90 / 250 / 320              | 88 / 60 px                   | 36 / 28 px                  | 100 chars   | 180 chars       |
+| Facebook        | 1200 × 630  | 72 / 72 / 72 / 72                | 56 / 34 px                   | 26 / 24 px                  | 70 chars    | 900 chars       |
+| Google Chat     | 1200 × 675  | 72 / 72 / 72 / 72                | 58 / 36 px                   | 26 / 24 px                  | 60 chars    | 450 chars       |
 
 Use Arial with a sans-serif fallback and full Latin/Cyrillic support. Headlines are bold; support copy is regular/medium. Keep titles short and use one clear CTA (at most 40 characters). The renderer fits text within the policy's minimum sizes and fails an output with an actionable error if essential copy cannot fit. It never silently crops essential text.
 
@@ -79,3 +79,13 @@ Example: 2 uploaded photos, with 2 Instagram formats × 2 languages × 2 variant
 Check event facts, original logo integrity, per-network photo uniqueness, language, contrast, mobile readability and destination-app safe areas. Every delivered PNG needs a matching UTF-8 caption. The manifest records allocation, failures and the applied policy. Source uploads and API keys are excluded from the ZIP.
 
 See [`studio/QUICKSTART.md`](../studio/QUICKSTART.md) for key setup and launch instructions. Style-guide edits take effect in generation through the policy JSON and a rebuild of both components, not through editing this prose alone.
+
+## Connected multi-frame posts (Pages AI)
+
+Frame counts are independent per format (1–10 per language, 24 total per run). A count of four means one four-frame carousel with a shared caption; Stories are a connected sequence. For multiple frames, plan an opening hook, complementary context/benefits/details, and a closing CTA. Avoid repeating the full event title and description on every frame. Keep all supplied facts consistent.
+
+The Pages AI request contains separate planner and copywriter instructions plus the shared policy. Structured JSON returns posts with shared captions and ordered visuals with `visualPlan.role`, `visualPlan.layout` (`split-right`, `split-left`, `poster`) and `visualPlan.direction`. The Canvas renderer applies the supported layout choice using exact uploaded assets; free-text directions are saved for review, not executed as drawing code. No images are sent to OpenAI. `storyboard.json` exports this plan, and each format/language folder contains `post.txt`.
+
+Per-output character budgets are included explicitly in the prompt, with shorter target budgets. If a field is still too long, only that output fails. Manual copy repair creates a new run without a new AI call and preserves the old run. A shared caption edit applies to every frame in its post. There is no silent factual truncation or automatic paid retry.
+
+Event dates can be a single date, a calendar range, multiple dates or a free-text schedule. Calendar dates/ranges are localized; custom schedule wording is printed exactly as supplied. Include the year and check that the complete date text fits without reducing type below the policy minimum.

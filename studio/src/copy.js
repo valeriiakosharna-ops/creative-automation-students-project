@@ -1,15 +1,20 @@
 import { BRAND_POLICY } from "./brand.js";
+import { copyError } from "./copy-limits.js";
 import { browserCopy } from "./browser-copy.js";
 import { csrfHeaders } from "./private-api.js";
-export const PROMPT_VERSION = "studio-copy-v2";
+export const PROMPT_VERSION = "studio-copy-v3";
 export function eventDate(b, lang) {
-  const [y, m, d] = b.date.split("-").map(Number);
-  return new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-GB", {
+  if (["list", "text"].includes(b.dateMode)) return b.dateText || "";
+  const formatter = new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
-  }).format(new Date(Date.UTC(y, m - 1, d)));
+  });
+  const start = new Date(`${b.date}T12:00:00Z`);
+  return b.dateMode === "range" && b.endDate
+    ? formatter.formatRange(start, new Date(`${b.endDate}T12:00:00Z`))
+    : formatter.format(start);
 }
 export function templateCopy(b, o) {
   const uk = o.language === "uk";
@@ -27,11 +32,7 @@ export function templateCopy(b, o) {
     .join(" · ");
   const cta = uk ? "Дізнайтеся більше" : "Find out more",
     link = b.url ? `\n${b.url}` : "";
-  const opening = uk
-    ? ["Долучайтеся до нас!", "Збережіть дату!", "Зустрінемося на події!"][
-        o.variant - 1
-      ]
-    : ["Join us!", "Save the date!", "See you there!"][o.variant - 1];
+  const opening = uk ? "Долучайтеся до нас!" : "Join us!";
   function compose(body) {
     let caption;
     if (o.format === "instagram_story")
@@ -86,6 +87,17 @@ export function templateCopy(b, o) {
   const limit = BRAND_POLICY.formats[o.format].subheading.maxCharacters;
   return {
     id: o.id,
+    postId: o.postId || `${o.format}-${o.language}`,
+    visualPlan: {
+      role:
+        o.variant === 1
+          ? "opening"
+          : o.variant === o.sequenceLength
+            ? "closing"
+            : "details",
+      layout: ["split-right", "split-left", "poster"][(o.variant - 1) % 3],
+      direction: "Deterministic branded template using supplied event facts.",
+    },
     headline: title,
     subheading:
       description.length > limit
@@ -162,30 +174,30 @@ export async function requestCopy(
         (k) => typeof copy[k] === "string",
       ) ||
       !copy.headline.trim() ||
-      !copy.caption.trim() ||
-      copy.headline.length > 80 ||
-      copy.subheading.length > 160 ||
-      copy.cta.length > 40 ||
-      copy.caption.length > 3000
+      !copy.caption.trim()
     )
       throw Error("AI response does not match this run.");
-    const format = outputs.find((output) => output.id === copy.id).format;
-    const rule = BRAND_POLICY.formats[format];
-    if (
-      copy.subheading.length > rule.subheading.maxCharacters ||
-      copy.caption.length > rule.caption.maxCharacters
-    )
-      throw Error("AI copy exceeds this format's brand style guide limits.");
     ids.add(copy.id);
   }
   return {
     model: String(data.model || "configured-model"),
-    outputs: data.outputs.map(({ id, headline, subheading, cta, caption }) => ({
-      id,
-      headline,
-      subheading,
-      cta,
-      caption,
-    })),
+    promptVersion: data.promptVersion || PROMPT_VERSION,
+    outputs: data.outputs.map(
+      ({ id, headline, subheading, cta, caption, visualPlan, postId }) => {
+        const copy = {
+          id,
+          headline,
+          subheading,
+          cta,
+          caption,
+          ...(visualPlan ? { visualPlan, postId } : {}),
+        };
+        const error = copyError(
+          copy,
+          outputs.find((output) => output.id === id),
+        );
+        return error ? { ...copy, error } : copy;
+      },
+    ),
   };
 }

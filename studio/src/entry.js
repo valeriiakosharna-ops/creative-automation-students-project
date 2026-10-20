@@ -1,4 +1,6 @@
 import "./style.css";
+import { initializeInterface } from "./i18n.js";
+initializeInterface();
 const runtime = window.STUDIO_RUNTIME || {};
 const app = document.querySelector("#studio-app"),
   gate = document.querySelector("#pages-signin");

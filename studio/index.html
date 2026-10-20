@@ -15,6 +15,15 @@
   </head>
   <body>
     <main id="pages-signin" class="pages-signin" hidden>
+      <label class="ui-language"
+        >Interface language<select
+          data-ui-language
+          aria-label="Interface language"
+        >
+          <option value="en">English</option>
+          <option value="uk">Українська</option>
+        </select></label
+      >
       <img src="./logo.svg" alt="NIX" width="100" height="56" />
       <p class="eyebrow">CREATIVE AUTOMATION / YOUR LOCAL STUDIO</p>
       <h1>Your ideas.<br />Your creative space.</h1>
@@ -94,6 +103,15 @@
               ><strong id="current-project-name">Loading…</strong>
             </div>
             <div class="topbar-actions">
+              <label class="ui-language"
+                >Interface language<select
+                  data-ui-language
+                  aria-label="Interface language"
+                >
+                  <option value="en">English</option>
+                  <option value="uk">Українська</option>
+                </select></label
+              >
               <button id="sign-out" class="button secondary" hidden>
                 Sign out
               </button>
@@ -161,11 +179,48 @@
                           placeholder="Tell us about the event, who it is for, and why they should join."
                         ></textarea>
                       </div>
-                      <div class="field-row three">
+                      <div class="schedule-block">
                         <div class="field">
-                          <label for="date">Date <span>*</span></label
-                          ><input type="date" id="date" name="date" required />
+                          <label for="date-mode"
+                            >Event schedule <span>*</span></label
+                          ><select id="date-mode" name="dateMode">
+                            <option value="single">One date</option>
+                            <option value="range">Date range</option>
+                            <option value="list">Several dates</option>
+                            <option value="text">Write the schedule</option>
+                          </select>
                         </div>
+                        <div class="field-row">
+                          <div class="field" id="date-start-field">
+                            <label for="date"
+                              >Date / start date <span>*</span></label
+                            ><input
+                              type="date"
+                              id="date"
+                              name="date"
+                              required
+                            />
+                          </div>
+                          <div class="field" id="date-end-field" hidden>
+                            <label for="date-end">End date <span>*</span></label
+                            ><input type="date" id="date-end" name="endDate" />
+                          </div>
+                        </div>
+                        <div class="field" id="date-text-field" hidden>
+                          <label for="date-text"
+                            >Dates or schedule <span>*</span></label
+                          ><input
+                            id="date-text"
+                            name="dateText"
+                            maxlength="200"
+                            placeholder="21, 23 and 28 November 2026 / Every Tuesday in November"
+                          /><small
+                            >This wording appears on visuals exactly as entered.
+                            Include the year and keep it concise.</small
+                          >
+                        </div>
+                      </div>
+                      <div class="field-row">
                         <div class="field">
                           <label for="time"
                             >Time <span class="optional">optional</span></label
@@ -211,7 +266,7 @@
                         <label for="direction"
                           >Visual direction
                           <span class="optional"
-                            >used for AI copy tone</span
+                            >used for the AI storyboard and copy</span
                           ></label
                         ><input
                           id="direction"
@@ -219,8 +274,9 @@
                           maxlength="300"
                           placeholder="Confident, academic, bright. An invitation to build together."
                         /><small
-                          >The layout follows our branded template. AI does not
-                          generate or edit your photos.</small
+                          >AI plans the story and chooses supported branded
+                          layouts. Your original photos and logos are composed
+                          locally without AI image editing.</small
                         >
                       </div>
                       <div class="field">
@@ -378,6 +434,71 @@
                           >
                         </div>
                       </fieldset>
+                      <fieldset class="quantity-options">
+                        <legend>How many visuals for each format?</legend>
+                        <p class="input-help">
+                          Counts apply to each selected post language. Maximum
+                          24 visuals in one pack. Multiple visuals form one
+                          carousel with a shared caption, or a connected Story
+                          sequence.
+                        </p>
+                        <div class="quantity-grid">
+                          <div class="quantity-item">
+                            <label for="quantity-instagram_post"
+                              >Instagram post</label
+                            ><input
+                              id="quantity-instagram_post"
+                              name="quantity-instagram_post"
+                              type="number"
+                              min="1"
+                              max="10"
+                              step="1"
+                              value="1"
+                              inputmode="numeric"
+                            />
+                          </div>
+                          <div class="quantity-item">
+                            <label for="quantity-instagram_story"
+                              >Instagram story</label
+                            ><input
+                              id="quantity-instagram_story"
+                              name="quantity-instagram_story"
+                              type="number"
+                              min="1"
+                              max="10"
+                              step="1"
+                              value="1"
+                              inputmode="numeric"
+                            />
+                          </div>
+                          <div class="quantity-item">
+                            <label for="quantity-facebook">Facebook</label
+                            ><input
+                              id="quantity-facebook"
+                              name="quantity-facebook"
+                              type="number"
+                              min="1"
+                              max="10"
+                              step="1"
+                              value="1"
+                              inputmode="numeric"
+                            />
+                          </div>
+                          <div class="quantity-item">
+                            <label for="quantity-google_chat">Google Chat</label
+                            ><input
+                              id="quantity-google_chat"
+                              name="quantity-google_chat"
+                              type="number"
+                              min="1"
+                              max="10"
+                              step="1"
+                              value="1"
+                              inputmode="numeric"
+                            />
+                          </div>
+                        </div>
+                      </fieldset>
                       <fieldset class="language-options">
                         <legend>
                           Post languages <span>*</span
@@ -402,11 +523,18 @@
                       <div class="field-row">
                         <div class="field">
                           <label for="variants"
-                            >Variants per format, per language</label
+                            >Set the same count for all formats</label
                           ><select name="variants" id="variants">
                             <option value="1">1 variant</option>
                             <option value="2">2 variants</option>
                             <option value="3">3 variants</option>
+                            <option value="4">4 variants</option>
+                            <option value="5">5 variants</option>
+                            <option value="6">6 variants</option>
+                            <option value="7">7 variants</option>
+                            <option value="8">8 variants</option>
+                            <option value="9">9 variants</option>
+                            <option value="10">10 variants</option>
                           </select>
                         </div>
                         <div class="field">
@@ -531,9 +659,8 @@
                           </div>
                         </dl>
                         <p>
-                          Every output includes a PNG visual and its own
-                          channel-specific caption. Each language gets a
-                          separate output.
+                          Each format and language has one shared post caption.
+                          Its ordered PNGs form a carousel or a Story sequence.
                         </p>
                         <button
                           class="button primary"
@@ -789,6 +916,15 @@
         <div class="output-dialog-grid">
           <div id="output-dialog-image"></div>
           <div>
+            <div id="copy-editor" hidden>
+              <label for="edit-headline">Visual headline</label
+              ><textarea id="edit-headline" rows="2"></textarea>
+              <label for="edit-subheading">Visual summary</label
+              ><textarea id="edit-subheading" rows="2"></textarea>
+              <label for="edit-cta">Call to action</label
+              ><input id="edit-cta" type="text" />
+              <p id="copy-limits" class="input-help"></p>
+            </div>
             <label for="output-caption">Post text</label
             ><textarea id="output-caption" readonly rows="12"></textarea>
             <div class="dialog-actions">
@@ -798,6 +934,9 @@
                 Download PNG
               </button>
             </div>
+            <button id="render-edited-output" class="button primary" hidden>
+              Save copy & render
+            </button>
             <p id="copy-status" role="status"></p>
           </div>
         </div>

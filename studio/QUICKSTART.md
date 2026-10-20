@@ -15,3 +15,13 @@ Every uploaded logo appears on every visual. A photo appears at most once per so
 The browser sends text directly to OpenAI; photos/logos stay local. A key in use can be inspected by the browser user/extensions. Firebase sees Google sign-in identities and the private access roster, never event content or OpenAI keys. Pages HTML/code/assets are public; see [Security boundaries](../SECURITY.md).
 
 For a private shared server library, use the separate [Corporate deployment](../DEPLOYMENT.md) instead. It requires hosting and different setup.
+
+## New editor controls
+
+Choose **Interface language** (English / Українська) in the header; this preference is remembered in this browser. Post languages are a separate required selection.
+
+Under **Event schedule**, choose one date, a date range, several dates, or write the schedule. A range has start/end calendar fields. Several dates and free text accept your wording, including the year; this wording is printed unchanged on every visual, so keep it short.
+
+Select formats, then set each format’s frame count (1–10). Counts apply separately to each selected post language, with 24 frames maximum in a pack. Four Instagram frames mean **one four-frame carousel and one shared caption**. Stories form a connected sequence. AI plans a hook, development and closing CTA with complementary copy and supported layouts; Template mode remains a deterministic offline fallback.
+
+If a frame cannot render, successful frames remain downloadable. Choose **Edit copy & render** on the failed card, shorten the indicated field, and save. This creates a new run without another OpenAI request; the old run remains in history. The caption belongs to the whole post and is updated on all its frames. ZIPs include `post.txt` and `storyboard.json` alongside existing PNG/text pairs. Review partial sequences before publishing.

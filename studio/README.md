@@ -17,7 +17,9 @@ The optional [corporate Java deployment](../DEPLOYMENT.md) remains available for
 - Create, rename and delete project folders. Drafts, original uploads, generation snapshots and output files persist in a separate local IndexedDB library for each Google account in Pages mode. The optional corporate profile uses encrypted shared server storage.
 - Upload 1–8 logos and up to 20 photos (PNG/JPEG/WebP, 10 MB and 24 MP per file, 100 MB per brief). Duplicate image bytes are rejected within each upload group.
 - Choose Instagram post/story, Facebook and Google Chat independently. Choose **English, Ukrainian, or both**; a language choice is mandatory.
-- Request 1–3 variants per format and language, up to 24 PNG/caption pairs per run.
+- Set **1–10 frames independently for each format**, per selected language, with at most 24 visuals per run. Frames form one carousel or connected Story sequence with a shared caption.
+- Switch the interface between English and Ukrainian without changing the post languages or your event wording.
+- Choose one date, a start/end range, several dates, or a free-text schedule. Custom schedule text appears on visuals exactly as entered; include the year and keep it concise.
 - Preview the branded layout, inspect generated visuals, copy channel-specific captions and download an individual PNG or a complete ZIP.
 - Reopen history, reuse an earlier brief as a new run, cancel a running generation and keep completed files after partial failure or interruption.
 
@@ -31,17 +33,19 @@ Example: 2 photos + Instagram post and story + 2 languages + 2 variants = 8 Inst
 
 ### Copy modes
 
-**Template** works immediately without a key, using localized channel-specific structures. It does not translate your text. Optional English/Ukrainian title and description fields supply exact localized wording; otherwise a title stays as supplied, and the description is included only when its source language matches. Optional descriptions are shortened to each channel’s style-guide limits; the full original description remains in the saved brief. Essential details are preserved, and an output reports an error if they cannot fit. Variants change their hook and template accents.
+**Template** works immediately without a key, using localized channel-specific structures. It does not translate your text. Optional English/Ukrainian title and description fields supply exact localized wording; otherwise a title stays as supplied, and the description is included only when its source language matches. Optional descriptions are shortened to each channel’s style-guide limits; the full original description remains in the saved brief. Essential details are preserved, and an output reports an error if they cannot fit. Template frames vary supported layouts and accents; narrative planning and translated copy require AI mode. All frames of a post share one caption.
 
-**AI** in Pages mode uses a visit-only key and sends only the text brief and requested output specifications directly to OpenAI. The request uses structured output from OpenAI (`gpt-4.1-mini` by default) and validates count, identities and text limits. It translates and adapts copy for each selected channel and language. Uploaded photos/logos are never sent to the provider. An AI error stays an error; no template text is silently substituted. Timeouts and provider errors are not automatically retried, avoiding unexpected repeat requests.
+**AI** in Pages mode uses a visit-only key and sends only the text brief and requested output specifications directly to OpenAI. The request uses structured output from OpenAI (`gpt-4.1-mini` by default) and validates count, identities and text limits. Separate storyboard-planner and social-copywriter prompts produce structured JSON: one post per format/language, one shared caption, and ordered visuals with a narrative role, supported layout, concrete direction and concise on-image copy. The prompt receives each format’s exact character budget, photo availability and logo count, alongside the mandatory brand policy. Uploaded photos/logos are never sent to the provider. An AI error stays an error; no template text is silently substituted. Timeouts and provider errors are not automatically retried, avoiding unexpected repeat requests.
 
-Visuals use deterministic Canvas composition inspired by the supplied reference: branded headings, exact event details, diagonal photo layouts and an original-logo shelf. This MVP does not generate synthetic photos or offer arbitrary AI-designed layouts. The visual-direction field guides AI copy tone.
+Visuals use deterministic Canvas composition inspired by the supplied reference: branded headings, exact event details, diagonal photo layouts and an original-logo shelf. This MVP does not generate synthetic photos or offer arbitrary AI-designed layouts. The visual-direction field guides the storyboard and copy. The renderer applies the selected split-right, split-left or poster layout; free-text plan directions are recorded for review rather than interpreted as arbitrary drawing commands.
+
+If one output exceeds its format’s copy limits, other valid outputs still render. **Edit copy & render** shows the exact field/limit, preserves the original response and creates a new run without another AI call. Editing a shared caption updates every frame in that post and can unblock its other frames; old history stays unchanged. Essential event facts are not silently truncated.
 
 ## Persistence and exports
 
 In Pages mode, IndexedDB stores original assets, drafts and completed/partial runs per Firebase project and Google UID. The library is local and unencrypted; Google sign-in does not hide it from someone with access to the same browser profile/device. Use separate browser profiles on shared computers. Clearing browser data or changing account/site/device separates or removes the library. There is no shared library, cloud project sync or Google Drive export.
 
-ZIPs contain PNG/caption pairs, `brief.json`, `manifest.json`, `style-guide.json` and `README.txt`. They omit source uploads and credentials and are deliverables, not re-importable workspace backups. Preserve important exports. The style policy applies to the deterministic Canvas renderer and AI prompt. Generation needs the page to stay open; saved outputs survive interruption.
+ZIPs contain ordered PNG/caption pairs, one `post.txt` per format/language, `storyboard.json` for narrative roles/layouts/directions, `brief.json`, `manifest.json`, `style-guide.json` and `README.txt`. They omit source uploads and credentials and are deliverables, not re-importable workspace backups. Preserve important exports. The style policy applies to the deterministic Canvas renderer and AI prompt. Generation needs the page to stay open; saved outputs survive interruption.
 
 ## Contributor validation
 
