@@ -1,11 +1,9 @@
 package com.creative.studio;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Component;
-import java.net.URI;
 import java.util.*;
 
 @Component
@@ -13,14 +11,10 @@ import java.util.*;
 public class CorporatePolicy {
     private final String domain,publicUrl;
     private final AccessDirectory access;
-    public CorporatePolicy(@Value("${creative.corporate.domain}") String domain,
-            @Value("${creative.corporate.public-url}") String publicUrl,AccessDirectory access) {
+    public CorporatePolicy(CorporateDeployment deployment,AccessDirectory access) {
         this.access=access;
-        this.domain=domain.trim().toLowerCase(Locale.ROOT);
-        if(!this.domain.matches("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\\.[a-z]{2,}"))throw new IllegalStateException("Set STUDIO_EMAIL_DOMAIN to your Google Workspace domain.");
-        var uri=URI.create(publicUrl);
-        if(!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null||uri.getQuery()!=null||uri.getFragment()!=null||!(uri.getPath().isEmpty()||uri.getPath().equals("/")))throw new IllegalStateException("STUDIO_PUBLIC_URL must be the full HTTPS site origin, with no path or credentials.");
-        this.publicUrl=publicUrl.replaceAll("/+$","");
+        this.domain=deployment.domain();
+        this.publicUrl=deployment.publicUrl();
     }
     public String publicUrl(){return publicUrl;}
     public String email(OidcUser user) {

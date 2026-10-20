@@ -4,7 +4,7 @@ A corporate Google Workspace content studio in the student brief's brand palette
 
 ## Start here
 
-[Quickstart](QUICKSTART.md) explains sign-in, **Team access**, adding/revoking colleagues and creating content packs. [Private deployment](../DEPLOYMENT.md) covers the one-time Google Internal OAuth registration, private owner/domain settings, company OpenAI key, persistent disk, backups and GitHub/GitLab hosting. The code does not provision a live service or Google credentials. [Security boundaries](../SECURITY.md) explains protections and limitations.
+[First launch on Render](RENDER_SETUP.md) walks through the four private configuration fields, without local tools. [Quickstart](QUICKSTART.md) explains sign-in, **Team access**, adding/revoking colleagues and creating content packs. [Private deployment](../DEPLOYMENT.md) covers the one-time Google Internal OAuth registration, private owner/domain settings, company OpenAI key, persistent disk, backups and GitHub/GitLab hosting. The code does not provision a live service or Google credentials. [Security boundaries](../SECURITY.md) explains protections and limitations.
 
 Only the owner manages the exact-email access list. All approved members share the library with edit/delete/export access; no project-specific permissions are implemented. Access and material APIs enforce authentication on the server, including direct image downloads. Revocation blocks future requests from existing sessions, but cannot recall previously downloaded files.
 

@@ -30,10 +30,19 @@ await copyFile(
   new URL("../brand-policy.json", import.meta.url),
   new URL("brand-policy.json", publicDir),
 );
-await copyFile(
-  new URL("../QUICKSTART.md", import.meta.url),
-  new URL("quickstart.md", publicDir),
-);
+const repositoryDocs =
+  "https://github.com/valeriiakosharna-ops/creative-automation-students-project/blob/main/";
+for (const [input, output] of [
+  ["QUICKSTART.md", "quickstart.md"],
+  ["RENDER_SETUP.md", "RENDER_SETUP.md"],
+])
+  await writeFile(
+    new URL(output, publicDir),
+    (await readFile(new URL(`../${input}`, import.meta.url), "utf8"))
+      .replaceAll("(QUICKSTART.md)", "(quickstart.md)")
+      .replaceAll("(../DEPLOYMENT.md)", `(${repositoryDocs}DEPLOYMENT.md)`)
+      .replaceAll("(../SECURITY.md)", `(${repositoryDocs}SECURITY.md)`),
+  );
 
 await writeFile(
   new URL("README.md", guideDir),

@@ -2,14 +2,16 @@
 
 The default Docker image serves frontend and Java API at one HTTPS origin, with Google Workspace OIDC sign-in, an owner-managed exact-email access list, a company server-side OpenAI key and one encrypted shared library. Ordinary users install nothing. Google/GitHub/GitLab repositories alone do not run this server.
 
+For the browser-only Render path, start with [First launch on Render](studio/RENDER_SETUP.md). It needs four private inputs; the detailed settings below are for administrators and other hosting platforms.
+
 No production service, OAuth application or secret has been provisioned by this PR. An authorized company administrator completes the following setup in company-controlled accounts. Never send credentials in chat, commit them, put them in a PR, or expose them through a frontend `VITE_*` variable.
 
 ## 1. Configure corporate Google sign-in
 
 1. In a company Google Cloud project belonging to the Workspace organization, configure Google Auth Platform with **Internal** audience. Follow the organization's application approval rules and enforce Google MFA through Workspace policy.
 2. Create an OAuth client of type **Web application**. Choose the final Studio HTTPS origin before configuring the callback. Add exactly `https://YOUR-STUDIO-HOST/login/oauth2/code/corporate` as its authorized redirect URI. Replace the host; no trailing slash or additional path. The application requests only `openid` and `email`, with no Gmail or Drive permissions.
-3. Store the client ID and secret privately in the hosting settings as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Set `STUDIO_PUBLIC_URL` to that HTTPS origin, without a path or trailing slash.
-4. Set `STUDIO_EMAIL_DOMAIN` to the corporate domain after `@` and `STUDIO_OWNER_EMAIL` to the initial owner's exact primary Workspace address. These are private deployment values, not repository configuration. Initially only this account is approved. The owner adds others through **Team access** after signing in.
+3. Store the client ID and secret privately in the hosting settings as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Render automatically supplies its HTTPS origin through `RENDER_EXTERNAL_URL`; leave `STUDIO_PUBLIC_URL` unset for the default Render host. On other hosts or for a custom domain, set `STUDIO_PUBLIC_URL` to that HTTPS origin, without a path or trailing slash. Explicit URL settings take precedence; invalid settings fail closed.
+4. Set `STUDIO_OWNER_EMAIL` to the initial owner's exact primary Workspace address. Studio derives its corporate domain from that email. `STUDIO_EMAIL_DOMAIN` is an optional compatibility override and must match the owner's domain. These are private deployment values, not repository configuration. Initially only this account is approved. The owner adds others through **Team access** after signing in.
 
 The server validates Google's signed ID token, issuer, audience, expiry, nonce, verified email and hosted-domain claim. A matching domain is necessary but not sufficient: the exact address must be active in the encrypted access directory. First successful login binds the entry to Google's stable account subject, preventing a recycled address from silently inheriting an existing grant. The server rechecks grants on authenticated requests; revocation applies to existing sessions. Use primary account addresses, not mailing lists or aliases.
 
@@ -27,9 +29,9 @@ Set these in the hosting secret manager/environment:
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SPRING_PROFILES_ACTIVE`       | `corporate` (image default). Do not enable `hosted` for company use.                                                                              |
 | `STUDIO_REQUIRE_PRIVATE`       | `true` (image default). Refuses startup if the corporate profile is removed.                                                                      |
-| `STUDIO_EMAIL_DOMAIN`          | Exact Workspace domain, private.                                                                                                                  |
+| `STUDIO_EMAIL_DOMAIN`          | Optional: defaults to the domain of `STUDIO_OWNER_EMAIL`; an override must match it.                                                              |
 | `STUDIO_OWNER_EMAIL`           | Initial owner's exact primary address, private.                                                                                                   |
-| `STUDIO_PUBLIC_URL`            | Final HTTPS origin, no path.                                                                                                                      |
+| `STUDIO_PUBLIC_URL`            | Optional on Render: defaults to `RENDER_EXTERNAL_URL`; required on other hosts/custom domains. HTTPS origin, no path.                             |
 | `GOOGLE_CLIENT_ID`             | Google web client ID.                                                                                                                             |
 | `GOOGLE_CLIENT_SECRET`         | Google web client secret.                                                                                                                         |
 | `CREATIVE_OPENAI_API_KEY`      | Company OpenAI project key; server only.                                                                                                          |
@@ -49,7 +51,7 @@ Allow outbound HTTPS to `accounts.google.com`, `oauth2.googleapis.com`, `www.goo
 
 ### Render option
 
-`render.yaml` defines a paid **Starter** Docker service with a 10 GiB persistent disk. Review current hosting/storage charges before provisioning. Use a company-controlled Render account; fill private values in its protected settings, not YAML. `STUDIO_STORAGE_KEY` is generated by Render: preserve it securely before relying on the library. Reserve the final service/custom domain and configure Google's callback and `STUDIO_PUBLIC_URL` to match it. A first deployment with missing values should fail closed until configuration is complete. Merges to `main` trigger rebuilds. Persistent disks require a single service instance and may cause downtime during deployments; plan company backups.
+`render.yaml` defines a paid **Starter** Docker service with a 10 GiB persistent disk. Review current hosting/storage charges before provisioning. Use a company-controlled Render account; fill private values in its protected settings, not YAML. `STUDIO_STORAGE_KEY` is generated by Render: preserve it securely before relying on the library. The Blueprint asks for owner email, Google Client ID/Secret and the company OpenAI key. It derives the corporate domain and uses Render's automatic `RENDER_EXTERNAL_URL`. Create the Google web client first, then deploy and add the actual Render callback to Google. For a custom domain, explicitly set `STUDIO_PUBLIC_URL` and update Google's callback to match it. A first deployment with missing values should fail closed until configuration is complete. Merges to `main` trigger rebuilds. Persistent disks require a single service instance and may cause downtime during deployments; plan company backups.
 
 The HTTPS sign-in page is reachable publicly, but Studio pages, APIs and materials require an approved account. If company policy also requires the whole site to be inaccessible from the Internet, use company private hosting/VPN or an approved access gateway in addition to application authentication.
 

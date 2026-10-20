@@ -8,7 +8,7 @@ The separate [Studio application](studio/README.md) creates branded PNG/caption 
 
 The owner opens **Team access**, adds an exact corporate email and shares the protected Studio link. They can revoke or restore access without changing code or restarting. Only approved accounts enter; knowing the corporate domain is insufficient. Real email addresses, domains and secrets are private hosting settings and are absent from this repository.
 
-Follow [Quickstart](studio/QUICKSTART.md) for daily use and [Private deployment](DEPLOYMENT.md) for the one-time Google/hosting administrator setup. No live host or Google OAuth credentials are provisioned by the code itself. The default container requires corporate mode and a persistent disk. The included Render template uses a paid service/storage; the same image runs on company infrastructure with GitLab CI.
+Start with [First launch on Render](studio/RENDER_SETUP.md): only four private fields, with the domain and Render address resolved automatically. Follow [Quickstart](studio/QUICKSTART.md) for daily use and [Private deployment](DEPLOYMENT.md) for advanced Google/hosting administrator setup. No live host or Google OAuth credentials are provisioned by the code itself. The default container requires corporate mode and a persistent disk. The included Render template uses a paid service/storage; the same image runs on company infrastructure with GitLab CI.
 
 The separate [social style guide](style-guide/README.md) and shared [generation policy](studio/brand-policy.json) control original-logo composition, format-specific visuals and English/Ukrainian AI copy. Every logo appears on every visual; photos are never repeated within a network/run. Extra visuals are information-only.
 

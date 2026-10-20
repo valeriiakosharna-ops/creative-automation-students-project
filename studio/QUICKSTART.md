@@ -4,7 +4,7 @@ Studio runs on company-controlled hosting. You and your colleagues need only a b
 
 ## One-time setup
 
-Ask the hosting/Google Workspace administrator to follow [Private deployment](../DEPLOYMENT.md). They connect a Google **Internal** OAuth application, set the initial owner's exact email privately, store the company OpenAI key in the hosting secret manager, and attach a persistent encrypted library disk. The repository contains no real domain, colleague addresses or keys. The Google connection and hosting still need this one-time configuration before a real team can sign in.
+For your first Render launch, follow [First launch on Render](RENDER_SETUP.md): it walks through Google login and the four private fields, without local tools. Render supplies the site address and generates the storage key; Studio derives the corporate domain from the owner's email. Ask IT for the Google Internal application/approval if your account cannot configure it. For internal GitLab, custom domains and backups, see [Private deployment](../DEPLOYMENT.md). Real hosting and Google credentials still need this one-time setup before the team can sign in. The repository contains no real domain, colleague addresses or keys.
 
 The application container is private by default and refuses to start without its required private settings. The public GitHub Pages site contains the student brief, style guide and a Studio landing page. It does not host your team workspace.
 

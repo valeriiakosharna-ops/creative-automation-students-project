@@ -1,7 +1,7 @@
 package com.creative.studio;
 
 import com.fasterxml.jackson.databind.node.*;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,8 +16,11 @@ import java.util.*;
 public class AccessDirectory {
     private final EncryptedWorkspace storage;
     private final String domain,owner;
-    public AccessDirectory(EncryptedWorkspace storage,@Value("${creative.corporate.domain}") String domain,
-            @Value("${creative.corporate.owner-email}") String owner) throws IOException,GeneralSecurityException {
+    @Autowired
+    public AccessDirectory(EncryptedWorkspace storage,CorporateDeployment deployment) throws IOException,GeneralSecurityException {
+        this(storage,deployment.domain(),deployment.owner());
+    }
+    AccessDirectory(EncryptedWorkspace storage,String domain,String owner) throws IOException,GeneralSecurityException {
         this.storage=storage;this.domain=domain.trim().toLowerCase(Locale.ROOT);this.owner=email(owner);
         synchronized(storage) {
             ObjectNode state=storage.setting("access");

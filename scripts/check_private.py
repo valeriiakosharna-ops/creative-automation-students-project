@@ -4,6 +4,7 @@ import json
 import sys
 import time
 from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 class NoRedirect(HTTPRedirectHandler):
@@ -11,6 +12,7 @@ class NoRedirect(HTTPRedirectHandler):
         return None
 
 base = sys.argv[1].rstrip("/")
+expected_origin = sys.argv[2].rstrip("/") if len(sys.argv) > 2 else "https://studio.example.org"
 http = build_opener(NoRedirect)
 deadline = time.monotonic() + 60
 while True:
@@ -38,11 +40,13 @@ for path in ["/api/session", "/api/health", "/api/access", "/api/workspace/proje
         assert error.code == 401, path
 
 try:
-    http.open(base + "/oauth2/authorization/corporate")
+    # A request host must never replace the deployment's configured callback.
+    http.open(Request(base + "/oauth2/authorization/corporate", headers={"Host": "untrusted.example"}))
     raise AssertionError("Expected corporate authorization redirect")
 except HTTPError as error:
     assert error.code == 302
     assert error.headers["Location"].startswith("https://accounts.google.com/")
+    assert parse_qs(urlsplit(error.headers["Location"]).query)["redirect_uri"] == [expected_origin + "/login/oauth2/code/corporate"]
     cookies = error.headers.get_all("Set-Cookie", [])
     assert any("HttpOnly" in cookie and "Secure" in cookie and "SameSite=Lax" in cookie for cookie in cookies)
 

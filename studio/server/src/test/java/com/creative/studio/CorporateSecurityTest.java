@@ -32,8 +32,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(properties={"creative.corporate.domain=team.example","creative.corporate.owner-email=owner@team.example",
-    "creative.corporate.public-url=https://studio.team.example","creative.corporate.client-id=test-google-client",
+@SpringBootTest(properties={"creative.corporate.owner-email=owner@team.example",
+    "creative.corporate.render-public-url=https://studio.team.example","creative.corporate.client-id=test-google-client",
     "creative.corporate.client-secret=test-only-not-a-real-secret","creative.workspace.key=test-only-private-storage-key-never-use-for-production",
     "creative.openai.api-key="})
 @ActiveProfiles("corporate")

@@ -15,11 +15,7 @@ services:
     envVars:
       - key: PORT
         value: "10000"
-      - key: STUDIO_EMAIL_DOMAIN
-        sync: false
       - key: STUDIO_OWNER_EMAIL
-        sync: false
-      - key: STUDIO_PUBLIC_URL
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false

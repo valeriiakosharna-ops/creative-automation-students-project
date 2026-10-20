@@ -14,6 +14,7 @@
 !studio/package-lock.json
 !studio/vite.config.js
 !studio/QUICKSTART.md
+!studio/RENDER_SETUP.md
 !studio/brand-policy.json
 !studio/src/
 !studio/src/**
