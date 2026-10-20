@@ -47,7 +47,7 @@
     "voice": "Clear, confident, welcoming and practical. Invite participation without hype.",
     "facts": "Preserve dates, time zones, venues, proper names and real URLs. Invent no facts, speakers, price, deadline or registration link.",
     "localization": "One complete visual and caption per selected language. Translate naturally, respect supplied translations, and preserve exact event facts.",
-    "cta": "Use one clear next step. Keep CTA text at most 40 characters.",
+    "cta": "No call to action or promotional ending. Keep the cta field empty; an event URL can be presented neutrally.",
     "headlineMaxCharacters": 80
   },
   "formats": {
@@ -79,7 +79,7 @@
       "logoRowHeight": 100,
       "caption": {
         "targetMin": 250,
-        "direction": "Open with a benefit or question. Use short paragraphs, event details, one CTA and 1–3 relevant hashtags.",
+        "direction": "A useful hook, natural short paragraphs, complete event facts and a neutral factual ending. No CTA.",
         "targetMax": 900
       }
     },
@@ -111,7 +111,7 @@
       "logoRowHeight": 110,
       "caption": {
         "targetMin": 40,
-        "direction": "Use a very short event message and one CTA. No hashtag block. A native link sticker is added manually during publication.",
+        "direction": "A short informative message, without a CTA or hashtag block. Native stickers are added manually.",
         "targetMax": 180
       }
     },
@@ -143,7 +143,7 @@
       "logoRowHeight": 64,
       "caption": {
         "targetMin": 300,
-        "direction": "Write a welcoming community announcement: who it is for, value, practical details and one direct next step. Use complete sentences and no hashtag block.",
+        "direction": "A welcoming factual event announcement with audience relevance and practical details. No CTA or hashtag block.",
         "targetMax": 1000
       }
     },
@@ -175,7 +175,7 @@
       "logoRowHeight": 64,
       "caption": {
         "targetMin": 160,
-        "direction": "Write a concise team announcement with an optional *bold* title, essential details and one event link. No hashtag block.",
+        "direction": "A concise internal update with essential facts and a neutral event link. No CTA or hashtag block.",
         "targetMax": 600
       }
     }

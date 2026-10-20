@@ -61,6 +61,7 @@ async function mockOpenAI(
     text: [],
     images: [],
     research: [],
+    framePlans: [],
     activeImages: 0,
     maxActiveImages: 0,
     plannerDone: false,
@@ -84,9 +85,21 @@ async function mockOpenAI(
         stage = body.response_format.json_schema.name;
       if (key) expect(request.headers().authorization).toBe(`Bearer ${key}`);
       expect(body.messages[0].content).not.toContain("minimumTextContrast");
-      const input = JSON.parse(
-        body.messages.find((message) => message.role === "user").content,
-      );
+      const userContent = body.messages.find((message) => message.role === "user").content;
+      const input = JSON.parse(Array.isArray(userContent) ? userContent.find((part) => part.type === "text").text : userContent);
+      if (stage === "visual_frame") {
+        const refs = userContent.filter((part) => part.type === "image_url");
+        expect(refs).toHaveLength(input.references.length);
+        expect(input.references.filter((ref) => ref.role.startsWith("ASSIGNED_EVENT_PHOTO")).length).toBeLessThanOrEqual(1);
+        expect(input.backgroundPreference).toBe("light");
+        state.framePlans.push({ input, refs });
+        await route.fulfill({ json: { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({
+          headline: input.frame.headline, subheading: input.frame.subheading, cta: "",
+          photoSummary: input.photoAvailable ? "The original event photograph, with only its existing people." : "",
+          visualPlan: { layout: "An organic light composition", direction: "Light background, original references only, no added people, no CTA." },
+        }) } }] } });
+        return;
+      }
       state.text.push({ stage, input });
       const posts = input.posts.map((post) =>
         stage === "social_posts"
@@ -108,7 +121,7 @@ async function mockOpenAI(
                       ? "Творча лабораторія"
                       : "Creative Lab",
                   subheading: "",
-                  cta: output.language === "uk" ? "Долучайтеся" : "Join us",
+                  cta: "",
                   visualPlan: {
                     role: output.position === 1 ? "opening" : "closing",
                     layout: ["split-right", "split-left", "poster"][
@@ -177,6 +190,13 @@ async function mockOpenAI(
     expect(input.campaignStyle).toContain("consistent cyan/red");
     expect(form.get("quality")).toBe("high");
     expect(form.get("input_fidelity")).toBeNull();
+    expect(form.get("background")).toBe("opaque");
+    expect(input.callToAction).toBe(false);
+    expect(input.frame.cta).toBe("");
+    expect(input.backgroundPreference).toContain("light");
+    const framePlan = state.framePlans.find((plan) => plan.input.frame.id === input.frame.id);
+    expect(framePlan).toBeTruthy();
+    expect(framePlan.input.references.map((ref) => ref.role)).toEqual(input.references.map((ref) => ref.role));
     if (heldCopy) {
       expect(state.copyDone).toBe(false);
       const release = heldCopy;
@@ -380,6 +400,10 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
     timeout: 45000,
   });
   await expect(page.locator(".output-image")).toHaveCount(6);
+  await expect(page.locator(".output-card .output-copy")).toHaveCount(0);
+  await expect(page.locator(".post-copy-editor")).toHaveCount(2);
+  expect(requests.framePlans).toHaveLength(6);
+  expect(requests.framePlans.filter((plan) => plan.input.photoAvailable)).toHaveLength(1);
   await expect(page.locator("#download-zip")).toBeDisabled();
   expect(requests.text).toHaveLength(2);
   expect(requests.images).toHaveLength(6);
@@ -391,10 +415,11 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
       ),
     ),
   ).toHaveLength(1);
-  expect(requests.images[0].files).toHaveLength(2);
-  expect(
-    requests.images.slice(1).every((request) => request.files.length === 1),
-  ).toBe(true);
+  // Vision planning runs concurrently: completion order is not frame order.
+  const photoRequest = requests.images.find((request) => request.input.references.some((ref) => ref.role.startsWith("ASSIGNED_EVENT_PHOTO")));
+  expect(photoRequest.input.frame.id).toBe("instagram_post-en-1");
+  expect(photoRequest.files).toHaveLength(2);
+  expect(requests.images.filter((request) => request !== photoRequest).every((request) => request.files.length === 1)).toBe(true);
   expect(
     requests.images.every(
       (request) =>
@@ -425,8 +450,9 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
   expect(revision.input.revisionInstructions).toBe(
     "Make the heading larger and use more cyan.",
   );
-  expect(revision.input.references[0].role).toContain("PREVIOUS_VISUAL");
-  expect(revision.files).toHaveLength(2);
+  expect(revision.input.references.every((ref) => !ref.role.includes("PREVIOUS_VISUAL"))).toBe(true);
+  expect(revision.files).toHaveLength(1);
+  expect(requests.framePlans).toHaveLength(6);
   await expect(page.locator("#history-list button")).toHaveCount(3);
   await page.locator(".output-card").nth(1).locator(".approve-visual").click();
   await expect(page.locator("#download-zip")).toBeEnabled();

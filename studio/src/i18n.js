@@ -27,6 +27,11 @@ export function translate(text) {
   if (ukrainian[source])
     return text.match(/^\s*/)[0] + ukrainian[source] + text.match(/\s*$/)[0];
   let match;
+  if ((match = source.match(/^AI requests: 3 campaign text \+ (\d+) reference plans \+ (\d+) high-quality images\./)))
+    return `AI-запити: 3 для кампанії + ${match[1]} планів за референсами + ${match[2]} зображень високої якості. Публічний вебпошук включено. Правка — 1 запит на зображення; для старих наборів може знадобитися ще 1 план.`;
+  if ((match = source.match(/^Assigned photo: (.+)\. Check that no people were added or replaced\.$/)))
+    return `Призначене фото: ${match[1]}. Перевірте, що людей не додано й не замінено.`;
+
   if ((match = source.match(/^AI VISUALS \+ POSTS \/ (\w+)$/)))
     return `AI-ВІЗУАЛИ + ДОПИСИ / ${(statuses[match[1].toLowerCase()] || match[1]).toUpperCase()}`;
 

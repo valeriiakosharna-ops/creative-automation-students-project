@@ -30,13 +30,15 @@ const outputs = [
     height: 675,
     photoId: "private-photo-id",
     logoIds: ["private-logo-id"],
+    referencePlanVersion: "reference-frame-planner-v1",
+    plannedPhotoId: "private-photo-id", plannedLogoIds: ["private-logo-id"],
   },
 ];
 const visual = {
   id: outputs[0].id,
   headline: "Creative Lab",
   subheading: "Learn Java",
-  cta: "Join us",
+  cta: "",
   visualPlan: {
     role: "opening",
     layout: "split-right",
@@ -45,7 +47,7 @@ const visual = {
 };
 const storyboard = { campaignStyle: "Contemporary editorial, shared cyan/red identity", posts: [{ id: "google_chat-en", visuals: [visual] }] };
 const copy = {
-  posts: [{ id: "google_chat-en", caption: "Join Creative Lab." }],
+  posts: [{ id: "google_chat-en", caption: "Creative Lab." }],
 };
 const response = (data) =>
   Response.json({
@@ -54,7 +56,7 @@ const response = (data) =>
     ],
   });
 
-test("planner and copy are separate concurrent requests with repository prompts and mandatory per-network policy", async (t) => {
+test("planner and copy are separate concurrent requests with shared campaign direction and advisory writing targets", async (t) => {
   const pending = [];
   t.mock.method(
     globalThis,
@@ -228,11 +230,11 @@ test("image edits receive the planner, only the assigned photo, all original log
     assert.equal(body.get("model"), "gpt-image-2.5-flare");
     assert.equal(body.get("n"), "1");
     assert.equal(body.get("input_fidelity"), null);
-    assert.equal(refs.length, withPhoto ? 3 : 1);
+    assert.equal(refs.length, withPhoto ? 2 : 1);
     assert.equal(await refs.at(-1).text(), "ORIGINAL LOGO");
     if (withPhoto) {
-      assert.equal(await refs[0].text(), "PREVIOUS VISUAL");
-      assert.equal(await refs[1].text(), "ASSIGNED PHOTO");
+      assert.equal(await refs[0].text(), "ASSIGNED PHOTO");
+      assert.ok(!(await Promise.all(refs.map((ref) => ref.text()))).includes("PREVIOUS VISUAL"));
     }
     const prompt = body.get("prompt");
     assert.ok(!prompt.includes("test-key"));
@@ -245,6 +247,11 @@ test("image edits receive the planner, only the assigned photo, all original log
     assert.equal(input.logoShelf, undefined);
     assert.equal(input.campaignStyle, storyboard.campaignStyle);
     assert.equal(body.get("quality"), "high");
+    assert.equal(body.get("background"), "opaque");
+    assert.match(input.backgroundPreference, /light/);
+    assert.equal(input.frame.cta, "");
+    assert.equal(input.callToAction, false);
+    assert.match(input.peoplePolicy, withPhoto ? /Only preserve people/ : /No people/);
     if (withPhoto) assert.match(prompt, /Make the heading larger/);
     // Do not silently accept a URL or invalid image as a generated visual.
     return Response.json({
@@ -270,7 +277,7 @@ test("image edits receive the planner, only the assigned photo, all original log
   await assert.rejects(
     generateAIVisual(
       brief,
-      { ...outputs[0], ...visual, photoId: null },
+      { ...outputs[0], ...visual, photoId: null, plannedPhotoId: null },
       { ...storyboard.posts[0], campaignStyle: storyboard.campaignStyle },
       { logos, photos },
       "test-key",

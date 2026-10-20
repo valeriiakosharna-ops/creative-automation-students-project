@@ -2,7 +2,7 @@ import { BRAND_POLICY } from "./brand.js";
 import { copyError } from "./copy-limits.js";
 import { browserCopy } from "./browser-copy.js";
 import { csrfHeaders } from "./private-api.js";
-export const PROMPT_VERSION = "studio-copy-v3";
+export const PROMPT_VERSION = "studio-copy-v4";
 export function eventDate(b, lang) {
   if (["list", "text"].includes(b.dateMode)) return b.dateText || "";
   const formatter = new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-GB", {
@@ -30,39 +30,12 @@ export function templateCopy(b, o) {
   ]
     .filter(Boolean)
     .join(" · ");
-  const cta = uk ? "Дізнайтеся більше" : "Find out more",
-    link = b.url ? `\n${b.url}` : "";
-  const opening = uk ? "Долучайтеся до нас!" : "Join us!";
+  const cta = "";
   function compose(body) {
-    let caption;
-    if (o.format === "instagram_story")
-      caption = [title, details, b.url ? `${cta}${link}` : opening]
-        .filter(Boolean)
-        .join("\n");
-    else if (o.format === "google_chat")
-      caption = [`*${title}*`, details, body, `${cta}${link}`]
-        .filter(Boolean)
-        .join("\n\n");
-    else if (o.format === "facebook")
-      caption = [
-        `${opening} ${title}`,
-        body,
-        details,
-        b.url ? `${cta}:${link}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-    else
-      caption = [
-        `${title} — ${opening}`,
-        body,
-        details,
-        b.url ? `${cta}${link}` : "",
-        uk ? "#Подія" : "#Event",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-    return caption;
+    if (o.format === "instagram_story") return [title, details, b.url].filter(Boolean).join("\n");
+    const lines = o.format === "google_chat" ? [`*${title}*`, details, body, b.url]
+      : o.format === "facebook" ? [title, details, body, b.url] : [title, body, details, b.url];
+    return lines.filter(Boolean).join("\n\n");
   }
   let caption = compose(description);
   const captionLimit = BRAND_POLICY.formats[o.format].caption.targetMax;

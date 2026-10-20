@@ -5,6 +5,7 @@ import {
   PROMPT_VERSIONS,
 } from "./browser-copy.js";
 import { generateAIVisual, VISUAL_PROMPT_VERSION } from "./ai-visual.js";
+import { planVisualFrame, FRAME_PLANNER_VERSION } from "./frame-planner.js";
 import { MODELS } from "./prompts/channel-styles.js";
 import { researchCaptions, RESEARCH_PROMPT_VERSION } from "./caption-research.js";
 
@@ -76,12 +77,12 @@ export async function generatePagesRun(
 ) {
   run.reviewRequired = true;
   run.pipeline = {
-    version: "openai-organic-v2",
-    prompts: { ...PROMPT_VERSIONS, visual: VISUAL_PROMPT_VERSION, research: RESEARCH_PROMPT_VERSION },
+    version: "openai-reference-v3",
+    prompts: { ...PROMPT_VERSIONS, visual: VISUAL_PROMPT_VERSION, research: RESEARCH_PROMPT_VERSION, framePlanner: FRAME_PLANNER_VERSION },
     planner: { status: "running" },
     copy: { status: "running" },
   };
-  run.promptVersion = "studio-ai-v5";
+  run.promptVersion = "studio-ai-v6";
   run.model = MODELS.text;
   run.imageModel = MODELS.image;
   run.posts = postRequirements(run.outputs).map(({ id, format, language }) => ({
@@ -144,9 +145,15 @@ export async function generatePagesRun(
       const worker = async () => {
         while (next < run.outputs.length && !signal.aborted) {
           const output = run.outputs[next++];
-          output.imageStatus = "running";
+          output.imageStatus = "planning";
           await publish();
           try {
+            Object.assign(output, await planVisualFrame(
+              run.brief, output, run.storyboard.find((post) => post.id === output.postId),
+              run.assets, key, signal,
+            ));
+            output.imageStatus = "running";
+            await publish();
             const rendered = await generateAIVisual(
               run.brief,
               output,

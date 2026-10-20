@@ -98,12 +98,12 @@ export async function buildArchive(run) {
     );
   files["manifest.json"] = strToU8(JSON.stringify(manifest, null, 2));
   files["brief.json"] = strToU8(JSON.stringify(run.brief, null, 2));
-  if (run.styleGuideSnapshot && run.pipeline?.version !== "openai-organic-v2")
+  if (run.styleGuideSnapshot && !["openai-organic-v2", "openai-reference-v3"].includes(run.pipeline?.version))
     files["style-guide.json"] = strToU8(
       JSON.stringify(run.styleGuideSnapshot, null, 2),
     );
-  if (run.pipeline?.version === "openai-organic-v2")
-    files["creative-direction.json"] = strToU8(JSON.stringify({ version: 2, palette: run.brief.colors, desiredStyle: run.brief.direction, campaignStyle: run.storyboard?.[0]?.campaignStyle, imageModel: run.imageModel, prompts: run.pipeline.prompts }, null, 2));
+  if (["openai-organic-v2", "openai-reference-v3"].includes(run.pipeline?.version))
+    files["creative-direction.json"] = strToU8(JSON.stringify({ version: 2, palette: run.brief.colors, desiredStyle: run.brief.direction, campaignStyle: run.storyboard?.[0]?.campaignStyle, imageModel: run.imageModel, backgroundPreference: "light", callToAction: false, prompts: run.pipeline.prompts }, null, 2));
   files["README.txt"] = strToU8(
     "Creative Automation Studio\nFrames are ordered by their numeric filenames. posts.txt contains the complete post set; each format/language folder has its shared post.txt. storyboard.json records the visual plan. AI pipeline packs require every visual and post to be approved. Legacy packs may have repeated per-frame text files. Always check final facts, image quality and Ukrainian/English text before publication.\nmanifest.json records inputs, photo assignments, all logo IDs, generation mode and failures. Original uploads are not included. Failed/cancelled outputs are omitted from content folders.\n",
   );
