@@ -134,7 +134,7 @@ async function mockOpenAI(
           },
         });
       };
-      if (stage === "social_posts" && holdCopyUntilImage) heldCopy = fulfill;
+      if (stage === "social_posts" && holdCopyUntilImage && !state.images.length) heldCopy = fulfill;
       else await fulfill();
     },
   );
@@ -179,8 +179,9 @@ async function mockOpenAI(
     expect(form.get("input_fidelity")).toBeNull();
     if (heldCopy) {
       expect(state.copyDone).toBe(false);
-      await heldCopy();
+      const release = heldCopy;
       heldCopy = null;
+      await release();
     }
     state.activeImages++;
     state.maxActiveImages = Math.max(state.maxActiveImages, state.activeImages);
