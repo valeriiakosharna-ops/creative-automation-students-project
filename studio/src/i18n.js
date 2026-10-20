@@ -98,9 +98,9 @@ export function translate(text) {
   if ((match = source.match(/^(Photo included|Information-only) · V(\d+)$/)))
     return `${ukrainian[match[1]]} · №${match[2]}`;
   if (
-    (match = source.match(/^(AI COPY|TEMPLATE COPY) \/ (\w+) \/ GUIDE (.+)$/))
+    (match = source.match(/^(AI VISUALS \+ POSTS|AI COPY|TEMPLATE COPY) \/ (\w+) \/ GUIDE (.+)$/))
   )
-    return `${match[1] === "AI COPY" ? "AI-ТЕКСТ" : "ТЕКСТ ШАБЛОНУ"} / ${(statuses[match[2].toLowerCase()] || match[2]).toUpperCase()} / СТИЛЬ ${match[3]}`;
+    return `${match[1] === "AI VISUALS + POSTS" ? "AI-ВІЗУАЛИ + ДОПИСИ" : match[1] === "AI COPY" ? "AI-ТЕКСТ" : "ТЕКСТ ШАБЛОНУ"} / ${(statuses[match[2].toLowerCase()] || match[2]).toUpperCase()} / СТИЛЬ ${match[3]}`;
   if (
     (match = source.match(
       /^headline: (\d+) · subheading: (\d+) · CTA: (\d+) · caption: (\d+)$/,

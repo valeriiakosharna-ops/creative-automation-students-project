@@ -347,5 +347,6 @@
   "The assigned original photo is missing.": "Не знайдено призначене оригінальне фото.",
   "The visual prompt is too long. Shorten the event direction or revision instructions.": "Промпт візуалу задовгий. Скоротіть побажання до стилю або правки.",
   "Reference preview only. AI-generated artwork appears after generation and must be reviewed.": "Це лише попередній приклад. AI-візуали з’являться після генерації та потребуватимуть погодження.",
-  "Template mode processes images locally. Pages AI mode sends event text, photos and logos to OpenAI.": "Режим шаблону обробляє зображення локально. Pages AI надсилає текст події, фото та логотипи в OpenAI."
+  "Template mode processes images locally. Pages AI mode sends event text, photos and logos to OpenAI.": "Режим шаблону обробляє зображення локально. Pages AI надсилає текст події, фото та логотипи в OpenAI.",
+  "AI visuals + posts": "AI-візуали та дописи"
 }

@@ -387,7 +387,9 @@ function updateSummary() {
     $(`#${id}-hex`).textContent = $(`#${id}-color`).value.toUpperCase();
   const ai = b.mode === "ai";
   $("#mode-indicator").lastChild.textContent = ai
-    ? " AI copy mode"
+    ? runtime.pages
+      ? " AI visuals + posts"
+      : " AI copy mode"
     : " Template mode";
   $("#mode-note").textContent = ai
     ? runtime.pages
@@ -965,7 +967,7 @@ function renderResults() {
   const completed = run.outputs.filter((o) => o.status === "completed").length;
   $("#run-label").textContent = `RUN / ${run.id.slice(0, 8).toUpperCase()}`;
   $("#run-mode-label").textContent =
-    `${run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()} / GUIDE ${run.styleGuideVersion || "LEGACY"}`;
+    `${run.pipeline ? "AI VISUALS + POSTS" : run.mode === "ai" ? "AI COPY" : "TEMPLATE COPY"} / ${run.status.toUpperCase()} / GUIDE ${run.styleGuideVersion || "LEGACY"}`;
   $("#results-title").textContent =
     run.status === "running"
       ? "Making it yours."
