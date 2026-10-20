@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#302A40" />
+    <meta
+      name="description"
+      content="Create branded social visuals and channel-specific posts. Organize campaigns and export your content pack."
+    />
+    <title>Creative Automation Studio</title>
+    <link rel="icon" href="./favicon.svg" />
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to workspace</a>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Projects and history">
+        <a class="brand" href="#"
+          ><img src="./logo.svg" width="38" height="38" alt="" /><span
+            >creative<span>automation</span><small>STUDIO / MVP</small></span
+          ></a
+        >
+        <button class="new-project button" id="new-project">
+          <span aria-hidden="true">＋</span> New project
+        </button>
+        <div class="sidebar-label">
+          YOUR PROJECTS <span id="project-count">0</span>
+        </div>
+        <div id="project-list" class="project-list"></div>
+        <div class="sidebar-label history-label">
+          RUN HISTORY <span id="history-count">0</span>
+        </div>
+        <div id="history-list" class="history-list">
+          <p class="sidebar-empty">Your generation runs will live here.</p>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="local-indicator">
+            <span></span> A workspace on your device
+          </div>
+          <p>
+            Files and history stay in this browser. Export your ZIP before
+            clearing browser data.
+          </p>
+          <button id="open-settings">
+            Connection settings <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </aside>
+      <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
+      <div class="app-main">
+        <header class="topbar">
+          <div class="breadcrumb">
+            <button
+              id="toggle-sidebar"
+              class="mobile-menu"
+              aria-label="Open projects"
+              aria-expanded="false"
+              aria-controls="sidebar"
+            >
+              ☰</button
+            ><span class="breadcrumb-label">Workspace</span
+            ><span aria-hidden="true">/</span
+            ><strong id="current-project-name">Loading…</strong>
+          </div>
+          <div class="topbar-actions">
+            <span class="mode-indicator" id="mode-indicator"
+              ><i></i> Template mode</span
+            ><a href="./brief/index.html" class="brief-link">Student brief →</a>
+          </div>
+        </header>
+        <main id="workspace" tabindex="-1">
+          <div class="notice" id="notice" role="status" hidden></div>
+          <section id="editor-view">
+            <div class="page-heading">
+              <div>
+                <p class="eyebrow">LESS REPETITION. MORE CREATION.</p>
+                <h1>One event.<br /><span>Every feed.</span></h1>
+                <p>Your assets, your brand, a content pack ready to share.</p>
+              </div>
+              <div class="heading-actions">
+                <button id="example-button" class="button secondary">
+                  Use example brief <span aria-hidden="true">→</span>
+                </button>
+                <div class="project-tools">
+                  <button id="rename-project">Rename project</button
+                  ><span>·</span
+                  ><button id="delete-project">Delete project</button>
+                </div>
+              </div>
+            </div>
+            <form id="campaign-form">
+              <div class="editor-grid">
+                <div class="form-panels">
+                  <section class="panel">
+                    <div class="panel-heading">
+                      <span class="step-number">01</span>
+                      <div>
+                        <h2>The event</h2>
+                        <p>Give your content the right context.</p>
+                      </div>
+                      <span class="required-note">* REQUIRED</span>
+                    </div>
+                    <div class="field">
+                      <label for="title">Event title <span>*</span></label
+                      ><input
+                        id="title"
+                        name="title"
+                        maxlength="80"
+                        required
+                        placeholder="e.g. ML Week 2026"
+                      />
+                    </div>
+                    <div class="field">
+                      <label for="description"
+                        >What is happening? <span>*</span></label
+                      ><textarea
+                        id="description"
+                        name="description"
+                        maxlength="2000"
+                        rows="3"
+                        required
+                        placeholder="Tell us about the event, who it is for, and why they should join."
+                      ></textarea>
+                    </div>
+                    <div class="field-row three">
+                      <div class="field">
+                        <label for="date">Date <span>*</span></label
+                        ><input type="date" id="date" name="date" required />
+                      </div>
+                      <div class="field">
+                        <label for="time"
+                          >Time <span class="optional">optional</span></label
+                        ><input type="time" id="time" name="time" />
+                      </div>
+                      <div class="field">
+                        <label for="timeZone">Time zone <span>*</span></label
+                        ><select id="timeZone" name="timeZone" required>
+                          <option value="Europe/Kyiv">Europe / Kyiv</option>
+                          <option value="Europe/London">Europe / London</option>
+                          <option value="Europe/Berlin">Europe / Berlin</option>
+                          <option value="America/New_York">New York</option>
+                          <option value="UTC">UTC</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="field-row">
+                      <div class="field">
+                        <label for="location">Location</label
+                        ><input
+                          id="location"
+                          name="location"
+                          maxlength="120"
+                          placeholder="Ostroh, Ukraine / online"
+                        />
+                      </div>
+                      <div class="field">
+                        <label for="url">Event link</label
+                        ><input
+                          type="url"
+                          id="url"
+                          name="url"
+                          maxlength="500"
+                          placeholder="https://your-event.com"
+                        />
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label for="direction"
+                        >Visual direction
+                        <span class="optional"
+                          >used for AI copy tone</span
+                        ></label
+                      ><input
+                        id="direction"
+                        name="direction"
+                        maxlength="300"
+                        placeholder="Confident, academic, bright. An invitation to build together."
+                      /><small
+                        >The layout follows our branded template. AI does not
+                        generate or edit your photos.</small
+                      >
+                    </div>
+                    <div class="field">
+                      <label for="sourceLanguage"
+                        >Language of the original brief</label
+                      ><select id="sourceLanguage" name="sourceLanguage">
+                        <option value="en">English</option>
+                        <option value="uk">Українська</option>
+                      </select>
+                    </div>
+                  </section>
+                  <section class="panel">
+                    <div class="panel-heading">
+                      <span class="step-number">02</span>
+                      <div>
+                        <h2>Brand ingredients</h2>
+                        <p>Original logos. Real photos. Consistent results.</p>
+                      </div>
+                    </div>
+                    <div class="upload-grid">
+                      <div>
+                        <div class="upload-zone">
+                          <span class="upload-symbol" aria-hidden="true"
+                            >＋</span
+                          ><strong>Choose logos <span>*</span></strong
+                          ><small>1–8 logos · every logo on every visual</small
+                          ><input
+                            type="file"
+                            id="logo-upload"
+                            accept="image/png,image/jpeg,image/webp"
+                            multiple
+                            aria-label="Upload logos"
+                          />
+                        </div>
+                        <div id="logo-list" class="asset-list"></div>
+                      </div>
+                      <div>
+                        <div class="upload-zone">
+                          <span class="upload-symbol" aria-hidden="true"
+                            >＋</span
+                          ><strong>Choose photos</strong
+                          ><small>Up to 20 photos · optional</small
+                          ><input
+                            type="file"
+                            id="photo-upload"
+                            accept="image/png,image/jpeg,image/webp"
+                            multiple
+                            aria-label="Upload event photos"
+                          />
+                        </div>
+                        <div id="photo-list" class="asset-list"></div>
+                      </div>
+                    </div>
+                    <p class="input-help">
+                      PNG, JPG or WebP · max 10 MB and 24 megapixels per file ·
+                      100 MB total. Photo order follows your selection.
+                    </p>
+                    <div class="asset-rule">
+                      <span aria-hidden="true">→</span>
+                      <p>
+                        <strong
+                          >No repeated photos within a social network.</strong
+                        >
+                        Instagram posts and stories share the same photo pool,
+                        including all languages. Extra visuals use event
+                        information without a photo. All uploaded logos are
+                        always included.
+                      </p>
+                    </div>
+                    <fieldset class="palette">
+                      <legend>Brand palette</legend>
+                      <div class="palette-controls">
+                        <label for="primary-color"
+                          ><input
+                            type="color"
+                            id="primary-color"
+                            name="primaryColor"
+                            value="#00a6eb"
+                          /><span>Main</span
+                          ><code id="primary-hex">#00A6EB</code></label
+                        ><label for="accent-color"
+                          ><input
+                            type="color"
+                            id="accent-color"
+                            name="accentColor"
+                            value="#e60036"
+                          /><span>Accent</span
+                          ><code id="accent-hex">#E60036</code></label
+                        ><label for="ink-color"
+                          ><input
+                            type="color"
+                            id="ink-color"
+                            name="inkColor"
+                            value="#302a40"
+                          /><span>Text</span
+                          ><code id="ink-hex">#302A40</code></label
+                        >
+                      </div>
+                    </fieldset>
+                  </section>
+                  <section class="panel">
+                    <div class="panel-heading">
+                      <span class="step-number">03</span>
+                      <div>
+                        <h2>The content pack</h2>
+                        <p>
+                          Pick your formats and languages. We will handle the
+                          rest.
+                        </p>
+                      </div>
+                    </div>
+                    <fieldset class="format-options">
+                      <legend>Where will it go? <span>*</span></legend>
+                      <div class="choice-grid">
+                        <label
+                          ><input
+                            type="checkbox"
+                            name="formats"
+                            value="instagram_post"
+                            checked
+                          /><span
+                            ><b>◎</b><strong>Instagram post</strong
+                            ><small>1080 × 1080</small></span
+                          ></label
+                        ><label
+                          ><input
+                            type="checkbox"
+                            name="formats"
+                            value="instagram_story"
+                          /><span
+                            ><b>▯</b><strong>Instagram story</strong
+                            ><small>1080 × 1920</small></span
+                          ></label
+                        ><label
+                          ><input
+                            type="checkbox"
+                            name="formats"
+                            value="facebook"
+                          /><span
+                            ><b>f</b><strong>Facebook</strong
+                            ><small>1200 × 630</small></span
+                          ></label
+                        ><label
+                          ><input
+                            type="checkbox"
+                            name="formats"
+                            value="google_chat"
+                          /><span
+                            ><b>G</b><strong>Google Chat</strong
+                            ><small>1200 × 675</small></span
+                          ></label
+                        >
+                      </div>
+                    </fieldset>
+                    <fieldset class="language-options">
+                      <legend>
+                        Post languages <span>*</span
+                        ><small>CHOOSE ONE OR BOTH</small>
+                      </legend>
+                      <div class="language-grid">
+                        <label
+                          ><input
+                            type="checkbox"
+                            name="languages"
+                            value="en"
+                          /><span><b>EN</b> English</span></label
+                        ><label
+                          ><input
+                            type="checkbox"
+                            name="languages"
+                            value="uk"
+                          /><span><b>UA</b> Українська</span></label
+                        >
+                      </div>
+                    </fieldset>
+                    <div class="field-row">
+                      <div class="field">
+                        <label for="variants"
+                          >Variants per format, per language</label
+                        ><select name="variants" id="variants">
+                          <option value="1">1 variant</option>
+                          <option value="2">2 variants</option>
+                          <option value="3">3 variants</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="generation-mode">Copy generation</label
+                        ><select name="mode" id="generation-mode">
+                          <option value="template">
+                            Template · no API key needed
+                          </option>
+                          <option value="ai">AI · connected Java server</option>
+                        </select>
+                      </div>
+                    </div>
+                    <p class="mode-note" id="mode-note">
+                      Template mode uses your supplied wording, with
+                      channel-specific structure. It does not translate
+                      descriptions. Add localized copy below, or connect AI for
+                      translation.
+                    </p>
+                    <details class="localized-copy">
+                      <summary>
+                        Localized titles & descriptions <span>optional</span>
+                      </summary>
+                      <div class="localized-grid">
+                        <div>
+                          <label for="titleEn">English title</label
+                          ><input
+                            id="titleEn"
+                            name="titleEn"
+                            maxlength="80"
+                            placeholder="Uses the event title if blank"
+                          /><label for="descriptionEn"
+                            >English description</label
+                          ><textarea
+                            id="descriptionEn"
+                            name="descriptionEn"
+                            maxlength="2000"
+                            rows="3"
+                          ></textarea>
+                        </div>
+                        <div>
+                          <label for="titleUk">Ukrainian title</label
+                          ><input
+                            id="titleUk"
+                            name="titleUk"
+                            maxlength="80"
+                            placeholder="Назва події українською"
+                          /><label for="descriptionUk"
+                            >Ukrainian description</label
+                          ><textarea
+                            id="descriptionUk"
+                            name="descriptionUk"
+                            maxlength="2000"
+                            rows="3"
+                          ></textarea>
+                        </div>
+                      </div>
+                      <p>
+                        Template captions use the selected language’s
+                        description, or the original description when its
+                        language matches. Event names are kept as supplied. AI
+                        translates from your brief and respects provided
+                        translations.
+                      </p>
+                    </details>
+                  </section>
+                </div>
+                <aside class="pack-panel">
+                  <div class="pack-sticky">
+                    <div class="pack-header">
+                      <span class="eyebrow">A PREVIEW OF WHAT’S NEXT</span
+                      ><span class="preview-dot"></span>
+                    </div>
+                    <div class="visual-preview" id="visual-preview">
+                      <div class="placeholder-poster">
+                        <span class="poster-line"></span
+                        ><strong>Make room<br />for <em>ideas.</em></strong>
+                        <p>Your next event.<br />Your brand. Every channel.</p>
+                        <div class="poster-orbit"></div>
+                        <div class="poster-logos">
+                          <img src="./logo.svg" alt="" /><span
+                            >Your logos belong here.</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    <p class="preview-label" id="preview-label">
+                      Add a logo and event details to preview your first visual.
+                    </p>
+                    <div class="pack-summary">
+                      <h2>
+                        Your content pack <span id="output-count">0</span>
+                      </h2>
+                      <dl>
+                        <div>
+                          <dt>Formats</dt>
+                          <dd id="format-count">1</dd>
+                        </div>
+                        <div>
+                          <dt>Languages</dt>
+                          <dd id="language-count">Choose below</dd>
+                        </div>
+                        <div>
+                          <dt>With photos</dt>
+                          <dd id="photo-count">0</dd>
+                        </div>
+                        <div>
+                          <dt>Information-only</dt>
+                          <dd id="info-count">0</dd>
+                        </div>
+                        <div>
+                          <dt>Delivery</dt>
+                          <dd>ZIP archive</dd>
+                        </div>
+                      </dl>
+                      <p>
+                        Every output includes a PNG visual and its own
+                        channel-specific caption. Each language gets a separate
+                        output.
+                      </p>
+                      <button
+                        class="button primary"
+                        type="submit"
+                        id="generate-button"
+                      >
+                        Create content pack <span aria-hidden="true">→</span>
+                      </button>
+                      <p class="privacy-note">
+                        Images stay on this device. AI mode sends only your
+                        event text to the configured server.
+                      </p>
+                      <div id="form-errors" role="alert" hidden></div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </form>
+          </section>
+          <section id="results-view" hidden aria-labelledby="results-title">
+            <div class="results-top">
+              <button class="text-button" id="back-to-editor">
+                ← Back to brief</button
+              ><span class="run-label" id="run-label"></span>
+            </div>
+            <div class="page-heading results-heading">
+              <div>
+                <p class="eyebrow" id="run-mode-label">YOUR CONTENT PACK</p>
+                <h1 id="results-title">Ready to share.</h1>
+                <p id="run-summary"></p>
+              </div>
+              <div class="result-actions">
+                <button id="reuse-brief" class="button secondary">
+                  Reuse this brief</button
+                ><button id="download-zip" class="button primary">
+                  Download ZIP <span aria-hidden="true">↓</span>
+                </button>
+              </div>
+            </div>
+            <div class="generation-progress" id="generation-progress" hidden>
+              <div>
+                <strong id="progress-message">Preparing your run…</strong
+                ><button id="cancel-generation" type="button">Cancel</button>
+              </div>
+              <progress
+                id="run-progress"
+                max="100"
+                value="0"
+                aria-label="Generation progress"
+              ></progress>
+            </div>
+            <div id="run-error" class="run-error" role="alert" hidden></div>
+            <div class="results-toolbar">
+              <label for="result-filter"
+                >Show
+                <select id="result-filter">
+                  <option value="all">All outputs</option>
+                  <option value="en">English</option>
+                  <option value="uk">Українська</option>
+                </select></label
+              >
+              <p>
+                Original logos on every visual. Review the copy before
+                publishing.
+              </p>
+            </div>
+            <div id="output-grid" class="output-grid"></div>
+            <details class="run-details">
+              <summary>Original brief & generation details</summary>
+              <pre id="run-details-json"></pre>
+            </details>
+          </section>
+        </main>
+        <footer class="workspace-footer">
+          <span>CREATIVE AUTOMATION / STUDIO</span
+          ><span>One brief. Every format. Your brand.</span>
+        </footer>
+      </div>
+    </div>
+    <dialog id="project-dialog">
+      <form id="project-form">
+        <div class="dialog-heading">
+          <h2 id="project-dialog-title">A space for your ideas.</h2>
+          <button
+            type="button"
+            class="close-dialog"
+            aria-label="Close project dialog"
+          >
+            ×
+          </button>
+        </div>
+        <p>Create a project to keep briefs, uploads, and results together.</p>
+        <div class="field">
+          <label for="project-name">Project name</label
+          ><input
+            id="project-name"
+            maxlength="80"
+            required
+            placeholder="e.g. Winter School 2026"
+          />
+        </div>
+        <button type="submit" class="button primary">
+          Save project <span aria-hidden="true">→</span>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="delete-dialog">
+      <div class="dialog-heading">
+        <h2>Delete this project?</h2>
+        <button type="button" class="close-dialog" aria-label="Cancel deletion">
+          ×
+        </button>
+      </div>
+      <p>
+        This removes its brief, uploads, and all generation history from this
+        browser. Download the ZIP archives you need first.
+      </p>
+      <div class="dialog-actions">
+        <button class="button secondary close-dialog">Keep project</button
+        ><button class="button danger" id="confirm-delete">
+          Delete project
+        </button>
+      </div>
+    </dialog>
+    <dialog id="settings-dialog">
+      <div class="dialog-heading">
+        <h2>Your AI connection.</h2>
+        <button type="button" class="close-dialog" aria-label="Close settings">
+          ×
+        </button>
+      </div>
+      <p>
+        Template mode works without a server. For AI copy and translation, run
+        the Java backend and add your key to its private configuration.
+      </p>
+      <form id="settings-form">
+        <div class="field">
+          <label for="backend-url">Backend address</label
+          ><input
+            type="url"
+            id="backend-url"
+            placeholder="http://127.0.0.1:8080"
+          /><small
+            >Leave empty when the Java server serves this app. No API keys
+            belong in this form.</small
+          >
+        </div>
+        <div class="dialog-actions">
+          <button type="button" id="check-connection" class="button secondary">
+            Test connection</button
+          ><button type="submit" class="button primary">Save connection</button>
+        </div>
+        <p id="connection-status" role="status"></p>
+      </form>
+      <div class="settings-note">
+        <strong>Local workspace</strong>
+        <p>
+          Your browser stores projects and generated files with IndexedDB. There
+          is no cloud sync or account login in this single-user MVP.
+        </p>
+      </div>
+    </dialog>
+    <dialog id="output-dialog" class="output-dialog">
+      <div class="dialog-heading">
+        <h2 id="output-dialog-title">Your visual</h2>
+        <button type="button" class="close-dialog" aria-label="Close visual">
+          ×
+        </button>
+      </div>
+      <div class="output-dialog-grid">
+        <div id="output-dialog-image"></div>
+        <div>
+          <label for="output-caption">Post text</label
+          ><textarea id="output-caption" readonly rows="12"></textarea>
+          <div class="dialog-actions">
+            <button id="copy-caption" class="button secondary">Copy text</button
+            ><button id="download-image" class="button primary">
+              Download PNG
+            </button>
+          </div>
+          <p id="copy-status" role="status"></p>
+        </div>
+      </div>
+    </dialog>
+    <noscript
+      ><p class="noscript">
+        Studio needs JavaScript for local storage, image rendering, and ZIP
+        downloads. Please enable it to use the application.
+      </p></noscript
+    >
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "creative-automation-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/prepare.mjs && vite --host 127.0.0.1",
+    "build": "node scripts/prepare.mjs && vite build --base=./",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "vite": "8.3.4",
+    "@playwright/test": "1.60.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

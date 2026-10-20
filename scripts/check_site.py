@@ -56,7 +56,7 @@ for target in parser.targets:
 for asset in parser.assets:
     if asset.startswith('/'):
         parser.errors.append(f'Absolute asset path breaks repository Pages hosting: {asset}')
-    if not (ROOT / asset).is_file():
+    if not (ROOT / asset).is_file() and not ((ROOT / asset).is_dir() and (ROOT / asset / 'index.html').is_file()):
         parser.errors.append(f'Missing local asset: {asset}')
 for identifier, wrapped, aria_label in parser.controls:
     if not (wrapped or aria_label or identifier in parser.labels):
