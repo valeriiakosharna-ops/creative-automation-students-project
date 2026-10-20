@@ -39,12 +39,18 @@ public class ApiController {
     }
     static void validatePlan(CopyRequest request) {
         var b=request.brief();
-        try {LocalDate.parse(b.date());ZoneId.of(b.timeZone());if(b.time()!=null&&!b.time().isBlank())LocalTime.parse(b.time());}
+        try {
+            var mode=b.dateMode()==null?"single":b.dateMode();
+            if(mode.equals("list")||mode.equals("text")) { if(b.dateText()==null||b.dateText().isBlank())throw new IllegalArgumentException(); }
+            else { var start=LocalDate.parse(b.date()); if(mode.equals("range")&&LocalDate.parse(b.endDate()).isBefore(start))throw new IllegalArgumentException(); }
+            ZoneId.of(b.timeZone());if(b.time()!=null&&!b.time().isBlank())LocalTime.parse(b.time());
+        }
         catch(Exception e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Use a valid date, time and IANA time zone.");}
         if(b.formats().stream().distinct().count()!=b.formats().size()||b.languages().stream().distinct().count()!=b.languages().size())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Formats and languages must be unique.");
         var expected=new HashSet<String>();
-        for(var format:b.formats())for(var language:b.languages())for(int variant=1;variant<=b.variants();variant++)expected.add(format+"-"+language+"-"+variant);
+        for(var format:b.formats())for(var language:b.languages())for(int variant=1;variant<=(b.quantities()!=null&&b.quantities().containsKey(format)?b.quantities().get(format):b.variants());variant++)expected.add(format+"-"+language+"-"+variant);
+        if(expected.size()>24)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"A run can contain at most 24 visuals.");
         var actual=new HashSet<String>();
         for(var o:request.outputs()) {
             if(!o.id().equals(o.format()+"-"+o.language()+"-"+o.variant())||!actual.add(o.id()))

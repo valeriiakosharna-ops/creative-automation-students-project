@@ -22,17 +22,26 @@ const outputs = [
     logoIds: ["private-logo-id"],
   },
 ];
+const visual = {
+  id: outputs[0].id,
+  headline: "Creative Lab",
+  subheading: "Learn Java",
+  cta: "Join us",
+  visualPlan: {
+    role: "opening",
+    layout: "split-right",
+    direction: "Clear event hook with original logos.",
+  },
+};
 const valid = {
-  outputs: [
-    {
-      id: outputs[0].id,
-      headline: "Creative Lab",
-      subheading: "Learn Java",
-      cta: "Join us",
-      caption: "Join Creative Lab.",
-    },
+  posts: [
+    { id: "google_chat-en", caption: "Join Creative Lab.", visuals: [visual] },
   ],
 };
+const flattened = [
+  { ...visual, postId: "google_chat-en", caption: valid.posts[0].caption },
+];
+
 test("Pages AI sends a visit key only to fixed OpenAI with brand instructions and no image data", async (t) => {
   let count = 0;
   t.mock.method(globalThis, "fetch", async (url, options) => {
@@ -50,6 +59,22 @@ test("Pages AI sends a visit key only to fixed OpenAI with brand instructions an
     );
     const body = JSON.parse(options.body);
     assert.equal(body.store, false);
+    const payload = JSON.parse(
+      body.messages.find((message) => message.role === "user").content,
+    );
+    assert.equal(payload.outputs[0].maximumCharacters.caption, 450);
+    assert.equal(
+      payload.outputs[0].maximumCharacters.subheading,
+      BRAND_POLICY.formats.google_chat.subheading.maxCharacters,
+    );
+    assert.equal(payload.outputs[0].photoAvailable, true);
+    assert.equal(payload.outputs[0].logoCount, 1);
+    assert.equal(
+      body.messages.filter((message) => message.role === "developer").length,
+      2,
+    );
+    assert.match(body.messages[1].content, /ONE carousel/);
+    assert.match(body.messages[2].content, /ONE shared caption/);
     assert.ok(body.messages[0].content.includes(JSON.stringify(BRAND_POLICY)));
     return Response.json({
       choices: [
@@ -58,7 +83,7 @@ test("Pages AI sends a visit key only to fixed OpenAI with brand instructions an
     });
   });
   const result = await browserCopy(brief, outputs, "test-visit-key");
-  assert.deepEqual(result.outputs, valid.outputs);
+  assert.deepEqual(result.outputs, flattened);
   assert.equal(count, 1);
 });
 test("Pages uses common response validation and rejects unknown outputs or proxy URLs", async (t) => {
@@ -71,7 +96,12 @@ test("Pages uses common response validation and rejects unknown outputs or proxy
           finish_reason: "stop",
           message: {
             content: JSON.stringify({
-              outputs: [{ ...valid.outputs[0], id: "foreign-output" }],
+              posts: [
+                {
+                  ...valid.posts[0],
+                  visuals: [{ ...visual, id: "foreign-output" }],
+                },
+              ],
             }),
           },
         },
@@ -107,4 +137,90 @@ test("provider errors and malformed responses do not echo bodies, keys or silent
       !error.message.includes("test-key"),
   );
   assert.equal(count, 1);
+});
+
+test("overlong copy marks only affected outputs and keeps valid storyboard frames", async (t) => {
+  globalThis.window = { STUDIO_RUNTIME: { pages: true } };
+  t.after(() => delete globalThis.window);
+  const second = { ...outputs[0], id: "google_chat-en-2", variant: 2 };
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: {
+            content: JSON.stringify({
+              posts: [
+                {
+                  ...valid.posts[0],
+                  visuals: [
+                    visual,
+                    {
+                      ...visual,
+                      id: second.id,
+                      subheading: "x".repeat(500),
+                      visualPlan: {
+                        role: "closing",
+                        layout: "poster",
+                        direction: "Closing next step",
+                      },
+                    },
+                  ],
+                },
+              ],
+            }),
+          },
+        },
+      ],
+    }),
+  );
+  const result = await requestCopy(
+    brief,
+    [...outputs, second],
+    "",
+    undefined,
+    "test-key",
+  );
+  assert.equal(result.outputs[0].error, undefined);
+  assert.match(result.outputs[1].error, /subheading has 500 characters; limit/);
+  assert.equal(result.outputs[1].subheading.length, 500);
+  assert.equal(result.outputs[0].caption, result.outputs[1].caption);
+  assert.equal(result.outputs[1].visualPlan.role, "closing");
+});
+
+test("malformed storyboards are rejected as content errors, without retrying", async (t) => {
+  let payload;
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { content: JSON.stringify(payload) },
+        },
+      ],
+    }),
+  );
+  for (payload of [
+    null,
+    { posts: [null] },
+    { posts: [{ ...valid.posts[0], visuals: [null] }] },
+    {
+      posts: [
+        {
+          ...valid.posts[0],
+          visuals: [
+            {
+              ...visual,
+              visualPlan: { ...visual.visualPlan, layout: "arbitrary-code" },
+            },
+          ],
+        },
+      ],
+    },
+  ]) {
+    await assert.rejects(
+      browserCopy(brief, outputs, "test-key"),
+      /does not match this run/,
+    );
+  }
 });

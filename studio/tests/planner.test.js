@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { planOutputs, validateBrief } from "../src/planner.js";
-import { templateCopy } from "../src/copy.js";
+import { templateCopy, eventDate } from "../src/copy.js";
 import { buildArchive } from "../src/archive.js";
 import { unzipSync, strFromU8 } from "fflate";
 const brief = {
@@ -103,6 +103,10 @@ test("ZIP contains paired PNG/caption files, immutable brief and explicit failed
     files = unzipSync(new Uint8Array(await result.blob.arrayBuffer()));
   assert.equal(strFromU8(files["facebook/uk/variant-01.txt"]), "Вітаємо!");
   assert.ok(files["facebook/uk/variant-01.png"]);
+  assert.equal(strFromU8(files["facebook/uk/post.txt"]), "Вітаємо!");
+  const storyboard = JSON.parse(strFromU8(files["storyboard.json"]));
+  assert.equal(storyboard.posts[0].visuals.length, 2);
+  assert.equal(storyboard.posts[0].visuals[1].status, "failed");
   assert.ok(!files["facebook/uk/variant-02.png"]);
   const manifest = JSON.parse(strFromU8(files["manifest.json"]));
   assert.equal(manifest.outputs[1].status, "failed");
@@ -197,4 +201,69 @@ test("a visitor key is forwarded only in the same-origin request header, never i
   assert.equal(captured.mode, "same-origin");
   assert.equal(captured.redirect, "error");
   assert.ok(!captured.body.includes("visitor-test-key"));
+});
+
+test("independent counts form posts and enforce a total 24-frame budget", () => {
+  const b = {
+    ...brief,
+    quantities: {
+      instagram_post: 4,
+      instagram_story: 2,
+      facebook: 1,
+      google_chat: 3,
+    },
+  };
+  assert.deepEqual(validateBrief(b, logos), []);
+  const outputs = planOutputs(b, photos, logos);
+  assert.equal(outputs.length, 20);
+  const carousel = outputs.filter(
+    (output) => output.postId === "instagram_post-en",
+  );
+  assert.deepEqual(
+    carousel.map((output) => output.position),
+    [1, 2, 3, 4],
+  );
+  assert.equal(
+    new Set(carousel.map((output) => templateCopy(b, output).caption)).size,
+    1,
+  );
+  assert.match(
+    validateBrief(
+      { ...b, quantities: { ...b.quantities, instagram_post: 10 } },
+      logos,
+    ).join(" "),
+    /24 visuals/,
+  );
+  assert.match(
+    validateBrief(
+      { ...b, quantities: { ...b.quantities, instagram_post: 0 } },
+      logos,
+    ).join(" "),
+    /1–10/,
+  );
+});
+test("single, range, multiple and free-text schedules preserve event facts", () => {
+  assert.match(eventDate(brief, "en"), /21 November 2026/);
+  const range = { ...brief, dateMode: "range", endDate: "2026-11-28" };
+  assert.deepEqual(validateBrief(range, logos), []);
+  assert.match(eventDate(range, "en"), /21.*28.*November.*2026/);
+  assert.match(eventDate(range, "uk"), /21.*28.*2026/);
+  for (const dateMode of ["list", "text"]) {
+    const b = {
+      ...brief,
+      dateMode,
+      date: "",
+      dateText: "21, 23, 28 November 2026",
+    };
+    assert.deepEqual(validateBrief(b, logos), []);
+    assert.equal(eventDate(b, "uk"), b.dateText);
+  }
+  assert.match(
+    validateBrief({ ...range, endDate: "2026-11-20" }, logos).join(" "),
+    /end date/,
+  );
+  assert.match(
+    validateBrief({ ...brief, date: "2026-02-30" }, logos).join(" "),
+    /event date/,
+  );
 });

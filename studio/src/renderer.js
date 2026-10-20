@@ -158,14 +158,17 @@ export async function renderVisual(b, o, copy, assets) {
       gap = story ? 30 : 22,
       shelfY = y + ch - shelfH,
       bodyH = ch - shelfH - gap;
+    const layout = copy.visualPlan?.layout || "split-right";
+    style.layout = layout;
     let tx = x,
       ty = y + 20,
       tw = photo && !story ? cw * 0.49 : cw,
       th = bodyH - 20;
-    if (photo && story) {
+    if (photo && (story || layout === "poster")) {
       const ph = bodyH * 0.32,
         py = y + bodyH - ph;
       th = bodyH - ph - gap - 20;
+      tw = cw;
       style.photoRect = { x, y: py, width: cw, height: ph };
       c.save();
       c.beginPath();
@@ -177,6 +180,17 @@ export async function renderVisual(b, o, copy, assets) {
       c.clip();
       cover(c, photo, x, py, cw, ph);
       c.restore();
+    } else if (photo && layout === "split-left") {
+      const pw = cw * 0.44;
+      tx = x + cw * 0.54;
+      tw = cw * 0.46;
+      style.photoRect = { x, y, width: pw, height: bodyH };
+      c.save();
+      rounded(c, x, y, pw, bodyH, 20, primary);
+      c.clip();
+      cover(c, photo, x, y, pw, bodyH);
+      c.restore();
+      rounded(c, x + pw + 12, y + 20, 7, bodyH - 40, 3, accent);
     } else if (photo) {
       const px = x + cw * 0.56;
       style.photoRect = { x: px - 20, y, width: cw * 0.44 + 20, height: bodyH };
@@ -199,7 +213,7 @@ export async function renderVisual(b, o, copy, assets) {
       c.lineTo(px + 15, y + bodyH);
       c.stroke();
     }
-    rounded(c, x, y, Math.min(75, cw * 0.1), 7, 4, accent);
+    rounded(c, tx, y, Math.min(75, tw * 0.1), 7, 4, accent);
     const titleH = th * 0.44,
       summaryY = ty + titleH + 8,
       summaryH = th * 0.24,

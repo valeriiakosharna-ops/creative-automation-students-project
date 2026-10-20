@@ -1,7 +1,15 @@
+import { translate, confirmTranslated, interfaceLanguage } from "./i18n.js";
+import { copyError, copyLimits } from "./copy-limits.js";
 import { BRAND_POLICY, snapshotPolicy } from "./brand.js";
 import { session, privateFetch, jsonResponse } from "./private-api.js";
 import "./style.css";
-import { FORMATS, LANGUAGES, validateBrief, planOutputs } from "./planner.js";
+import {
+  FORMATS,
+  LANGUAGES,
+  validateBrief,
+  planOutputs,
+  quantityFor,
+} from "./planner.js";
 import { templateCopy, requestCopy, PROMPT_VERSION } from "./copy.js";
 import { renderVisual, decodeImage } from "./renderer.js";
 import { all, get, put, runsFor, deleteProject } from "./storage.js";
@@ -52,12 +60,22 @@ function revoke(urls) {
   urls.splice(0).forEach((url) => URL.revokeObjectURL(url));
 }
 function readBrief() {
-  const data = new FormData(form),
+  const data = {
+      get: (name) => form.elements.namedItem(name)?.value,
+      getAll: (name) =>
+        Array.from(
+          form.querySelectorAll(`[name="${name}"]:checked`),
+          (input) => input.value,
+        ),
+    },
     b = {};
   for (const name of [
     "title",
     "description",
     "date",
+    "dateMode",
+    "endDate",
+    "dateText",
     "time",
     "timeZone",
     "location",
@@ -73,6 +91,12 @@ function readBrief() {
   b.formats = data.getAll("formats");
   b.languages = data.getAll("languages");
   b.variants = Number(data.get("variants"));
+  b.quantities = Object.fromEntries(
+    Object.keys(FORMATS).map((format) => [
+      format,
+      Number(form.elements.namedItem(`quantity-${format}`).value),
+    ]),
+  );
   b.mode = data.get("mode");
   b.colors = [
     data.get("primaryColor"),
@@ -98,6 +122,8 @@ function fillBrief(b) {
       input.checked = (b[type] || []).includes(input.value);
     });
   $("#variants").value = String(b.variants || 1);
+  for (const format of Object.keys(FORMATS))
+    $("#quantity-" + format).value = String(quantityFor(b, format) || 1);
   if (b.colors) {
     $("#primary-color").value = b.colors[0];
     $("#accent-color").value = b.colors[1];
@@ -165,7 +191,7 @@ async function renderSidebar() {
       element(
         "small",
         "",
-        `${new Date(run.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} · ${run.status}`,
+        `${new Date(run.createdAt).toLocaleString(interfaceLanguage() === "uk" ? "uk-UA" : "en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} · ${run.status}`,
       ),
     );
     button.addEventListener("click", () => {
@@ -328,6 +354,21 @@ $("#photo-upload").addEventListener("change", async (event) => {
 function updateSummary() {
   const b = readBrief(),
     outputs = planOutputs(b, state.assets.photos, state.assets.logos);
+  const customDate = ["list", "text"].includes(b.dateMode);
+  $("#date-start-field").hidden = customDate;
+  $("#date-end-field").hidden = b.dateMode !== "range";
+  $("#date-text-field").hidden = !customDate;
+  $("#date").required = !customDate;
+  $("#date-end").required = b.dateMode === "range";
+  $("#date-end").min = b.date;
+  $("#date-text").required = customDate;
+  for (const format of Object.keys(FORMATS)) {
+    $("#quantity-" + format).disabled =
+      state.busy || !b.formats.includes(format);
+    $("#quantity-" + format)
+      .closest(".quantity-item")
+      .classList.toggle("is-inactive", !b.formats.includes(format));
+  }
   $("#output-count").textContent = outputs.length;
   $("#format-count").textContent = b.formats.length;
   $("#language-count").textContent = b.languages.length
@@ -342,7 +383,7 @@ function updateSummary() {
     ? " AI copy mode"
     : " Template mode";
   $("#mode-note").textContent = ai
-    ? "AI creates and translates copy for each selected format and language. Your original photos and logos stay on this device; only event text is sent to the Java server."
+    ? "AI plans a connected visual story and writes one shared caption per format and language. Uploaded images stay on this device; only event text and anonymous layout constraints are sent for AI processing."
     : "Template mode uses your supplied wording, with channel-specific structure. It does not translate descriptions. Add localized copy below, or connect AI for translation.";
 }
 async function updatePreview() {
@@ -390,6 +431,10 @@ async function updatePreview() {
   $("#preview-label").textContent =
     `Layout preview · ${FORMATS[first.format].label} · ${LANGUAGES[first.language]} · ${first.width} × ${first.height}. AI wording may differ.`;
 }
+$("#variants").addEventListener("change", () => {
+  for (const format of Object.keys(FORMATS))
+    $("#quantity-" + format).value = $("#variants").value;
+});
 form.addEventListener("input", edited);
 form.addEventListener("change", edited);
 async function persistRun(run) {
@@ -417,6 +462,7 @@ function setBusy(busy) {
   $("#reuse-brief").disabled = busy;
   $("#back-to-editor").disabled = busy;
   renderAssets();
+  updateSummary();
 }
 async function generate(event) {
   event.preventDefault();
@@ -488,7 +534,9 @@ async function generate(event) {
         `Rendering visual ${index + 1} of ${run.outputs.length}…`;
       $("#run-progress").value = 10 + (index / run.outputs.length) * 90;
       const copy = copies.find((c) => c.id === output.id);
+      Object.assign(output, copy);
       try {
+        if (copy.error) throw Error(copy.error);
         const rendered = await renderVisual(brief, output, copy, run.assets);
         Object.assign(output, copy, {
           image: rendered.blob,
@@ -647,6 +695,16 @@ function renderResults() {
           : output.error || output.status,
       );
       card.append(placeholder);
+      if (output.status === "failed" && !state.busy) {
+        const edit = element(
+          "button",
+          "button secondary repair-copy",
+          "Edit copy & render",
+        );
+        edit.type = "button";
+        edit.addEventListener("click", () => openCopyRepair(output));
+        card.append(edit);
+      }
     }
     grid.append(card);
   }
@@ -697,6 +755,12 @@ $("#download-zip").addEventListener("click", async () => {
   }
 });
 function openOutput(output) {
+  $("#copy-editor").hidden = true;
+  $("#render-edited-output").hidden = true;
+  $("#copy-caption").hidden = false;
+  $("#download-image").hidden = false;
+  $("#output-caption").readOnly = true;
+  $("#output-caption").removeAttribute("maxlength");
   if (dialogUrl) URL.revokeObjectURL(dialogUrl);
   dialogUrl = URL.createObjectURL(output.image);
   const img = element("img");
@@ -723,6 +787,124 @@ function openOutput(output) {
   };
   $("#output-dialog").showModal();
 }
+let repairOutputId;
+function openCopyRepair(output) {
+  if (state.busy) return;
+  repairOutputId = output.id;
+  $("#output-dialog-title").textContent = "Edit copy & render";
+  $("#output-dialog-image").replaceChildren(
+    element(
+      "p",
+      "",
+      "Edit only the copy that needs changing. Event details, logos and photo assignments are kept. Saving creates a new run without an AI request.",
+    ),
+  );
+  $("#copy-editor").hidden = false;
+  $("#render-edited-output").hidden = false;
+  $("#copy-caption").hidden = true;
+  $("#download-image").hidden = true;
+  $("#output-caption").readOnly = false;
+  const limits = copyLimits(output.format);
+  for (const field of ["headline", "subheading", "cta"]) {
+    $("#edit-" + field).value =
+      output[field] || (field === "headline" ? state.run.brief.title : "");
+    $("#edit-" + field).maxLength = limits[field];
+  }
+  $("#output-caption").value = output.caption || "";
+  $("#output-caption").maxLength = limits.caption;
+  $("#copy-status").textContent = output.error || "";
+  $("#copy-limits").textContent =
+    `headline: ${limits.headline} · subheading: ${limits.subheading} · CTA: ${limits.cta} · caption: ${limits.caption}`;
+  $("#output-dialog").showModal();
+}
+$("#render-edited-output").addEventListener("click", async () => {
+  if (state.busy || !state.run) return;
+  const source = state.run,
+    original = source.outputs.find((output) => output.id === repairOutputId);
+  if (!original) return;
+  const copy = {
+    id: original.id,
+    headline: $("#edit-headline").value.trim(),
+    subheading: $("#edit-subheading").value.trim(),
+    cta: $("#edit-cta").value.trim(),
+    caption: $("#output-caption").value.trim(),
+  };
+  const error = copyError(copy, original);
+  if (error) {
+    $("#copy-status").textContent = error;
+    return;
+  }
+  const run = structuredClone(source);
+  run.id = crypto.randomUUID();
+  run.createdAt = new Date().toISOString();
+  run.derivedFromRunId = source.id;
+  run.status = "running";
+  delete run.error;
+  delete run.finishedAt;
+  const output = run.outputs.find((item) => item.id === original.id);
+  Object.assign(output, copy, { status: "pending", copySource: "manual" });
+  delete output.error;
+  delete output.image;
+  const related = run.outputs.filter(
+    (item) =>
+      item.id === output.id || (output.postId && item.postId === output.postId),
+  );
+  for (const item of related) {
+    item.caption = copy.caption;
+    item.copySource = "manual";
+    if (item.status !== "completed" && !copyError(item, item)) {
+      item.status = "pending";
+      delete item.error;
+    }
+  }
+  $("#output-dialog").close();
+  state.cancelled = false;
+  state.controller = new AbortController();
+  state.run = run;
+  setBusy(true);
+  showRun(run);
+  try {
+    await persistRun(run);
+    for (const item of related.filter((item) => item.status === "pending")) {
+      if (state.cancelled) {
+        item.status = "cancelled";
+        item.error = "Cancelled before rendering.";
+        continue;
+      }
+      try {
+        const rendered = await renderVisual(run.brief, item, item, run.assets);
+        Object.assign(item, {
+          image: rendered.blob,
+          style: rendered.style,
+          status: "completed",
+        });
+      } catch (error) {
+        item.status = "failed";
+        item.error = error.message;
+      }
+      await persistRun(run);
+      renderResults();
+    }
+  } catch (error) {
+    run.error = error.message;
+  } finally {
+    const ready = run.outputs.filter(
+      (item) => item.status === "completed",
+    ).length;
+    run.status = state.cancelled
+      ? "cancelled"
+      : ready === run.outputs.length
+        ? "completed"
+        : ready
+          ? "partial"
+          : "failed";
+    run.finishedAt = new Date().toISOString();
+    await persistRun(run);
+    setBusy(false);
+    renderResults();
+    await renderSidebar();
+  }
+});
 function openProjectDialog(action) {
   if (state.busy || state.uploading) {
     notice("Wait for the current uploads or generation to finish.");
@@ -794,7 +976,7 @@ $("#confirm-delete").addEventListener("click", async () => {
     if (!state.projects.length) {
       const project = {
         id: crypto.randomUUID(),
-        name: "My first campaign",
+        name: translate("My first campaign"),
         createdAt: new Date().toISOString(),
       };
       await put("projects", project);
@@ -814,7 +996,7 @@ $("#confirm-delete").addEventListener("click", async () => {
 for (const button of document.querySelectorAll(".close-dialog"))
   button.addEventListener("click", () => button.closest("dialog").close());
 function setSidebar(open) {
-  const mobile = window.matchMedia("(max-width:700px)").matches,
+  const mobile = window.matchMedia("(max-width:950px)").matches,
     wasOpen = $("#sidebar").classList.contains("open");
   $("#sidebar").classList.toggle("open", open);
   $("#sidebar").inert = mobile && !open;
@@ -829,7 +1011,7 @@ function setSidebar(open) {
   else if (mobile && wasOpen) $("#toggle-sidebar").focus();
 }
 window
-  .matchMedia("(max-width:700px)")
+  .matchMedia("(max-width:950px)")
   .addEventListener("change", () => setSidebar(false));
 setSidebar(false);
 $("#toggle-sidebar").addEventListener("click", () =>
@@ -882,7 +1064,7 @@ if (runtime.corporate) {
   $("#sign-out").addEventListener("click", async () => {
     if (
       state.busy &&
-      !window.confirm(
+      !confirmTranslated(
         "A generation is in progress. Sign out and leave the page?",
       )
     )
@@ -946,7 +1128,8 @@ if (runtime.pages) {
     "Adding an account sends no email. Share the Studio link manually. Google access controls the private directory, while the Pages code remains public. Revocation cannot erase local files or prevent someone using a copied version of this app.";
   $("#sign-out").hidden = false;
   $("#sign-out").addEventListener("click", async () => {
-    if (state.busy && !confirm("Stop generation and sign out?")) return;
+    if (state.busy && !confirmTranslated("Stop generation and sign out?"))
+      return;
     window.dispatchEvent(new Event("studio:access-lost"));
     await (await import("./pages-auth.js")).signOutPages();
     window.location.reload();
@@ -1045,7 +1228,7 @@ $("#example-button").addEventListener("click", async () => {
   if (state.busy || state.uploading) return;
   if (
     (readBrief().title || state.assets.logos.length) &&
-    !window.confirm(
+    !confirmTranslated(
       "Replace this project’s draft and uploads with an example? Existing generation history is kept.",
     )
   )
@@ -1250,7 +1433,7 @@ async function init() {
     if (!state.projects.length) {
       const project = {
         id: crypto.randomUUID(),
-        name: "My first campaign",
+        name: translate("My first campaign"),
         createdAt: new Date().toISOString(),
       };
       await put("projects", project);
@@ -1277,21 +1460,23 @@ window.addEventListener("pagehide", () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     if (dialogUrl) URL.revokeObjectURL(dialogUrl);
     document.body.replaceChildren(
-      element(
-        "main",
-        "",
-        "Corporate session required. Reload Studio to continue.",
-      ),
+      element("main", "", "Sign-in required. Reload Studio to continue."),
     );
   }
 });
 window.addEventListener("pageshow", (event) => {
-  if (event.persisted && runtime.corporate) window.location.reload();
+  if (event.persisted && (runtime.corporate || runtime.pages))
+    window.location.reload();
 });
 window.addEventListener("beforeunload", (event) => {
   if (state.busy) {
     event.preventDefault();
     event.returnValue = "";
   }
+});
+window.addEventListener("studio:language-change", () => {
+  updateSummary();
+  renderResults();
+  if (state.projectId) renderSidebar().catch(handleError);
 });
 init();

@@ -80,3 +80,27 @@ Stay on Spark for a no-billing Firebase setup. Free quotas are finite: exhaustio
 | No Team access button                        | Only the configured owner manages colleagues.                                                                                          |
 | OpenAI 401/403/404/429                       | Check key, model access, API billing and provider limits. Never send a key in chat.                                                    |
 | Projects missing                             | Use the same Google account, Firebase project, site origin and browser profile. There is no cloud workspace sync.                      |
+
+## Staying signed in after refresh: available options
+
+The current build deliberately uses Firebase `inMemoryPersistence`, so a refresh requires Google sign-in again. This is separate from the OpenAI key lifetime. No persistence change is applied automatically by these instructions.
+
+| Option                          | What it keeps                                                                             | Appropriate use                  |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------- |
+| `inMemoryPersistence` (current) | Current loaded page only                                                                  | Shared/untrusted browser profile |
+| `browserSessionPersistence`     | Google sign-in through refresh in the same tab; normally ends when that tab/window closes | Recommended convenience option   |
+| `browserLocalPersistence`       | Google sign-in across browser restarts until sign-out/session invalidation                | Trusted personal device only     |
+
+A developer can change the imported persistence provider and the `setPersistence` call in `src/pages-auth.js`, then merge/redeploy. The private Firestore allowlist must still be checked against the server after restoring a login, and revocations must still block the normal app. **Never persist the OpenAI key with the Firebase session**: it stays in memory and clears on refresh regardless of the selected login mode. Any persisted sign-in token is sensitive browser data, so users should sign out on shared devices.
+
+## Free cloud storage options for a future shared library
+
+The current version has local libraries only. Existing Firestore rules explicitly deny project/file collections: the following are design options, not enabled features.
+
+- **Firestore on Spark:** useful for project names, run metadata, captions and file references within the current free quotas. Documents are limited to 1 MiB; do not put photos/PNGs or base64 archives in them. New rules must restrict reads/writes to approved team members and define deletion/ownership. Confirm current quotas in Firebase Console before relying on the free tier. Firebase file Storage currently requires a billing-enabled Blaze project, so it is not promised as a completely free file solution.
+- **Shared Google Drive folder:** JSON files can hold briefs/manifests and folders can hold PNGs/ZIPs. A future integration can let the user choose a folder through Google Picker and use the least-privilege `drive.file` scope for app-created/user-selected files. Firebase sign-in alone grants no Drive access. Drive API/Picker and OAuth consent setup are separate and can require Google Cloud Console; this adds setup again. Avoid permanent refresh-token storage in Pages. Personal Drive has limited capacity shared with other Google services; Workspace capacity/policies vary.
+- **Manual Drive handoff now:** download the ZIP, upload it to a private shared folder and grant exact Google accounts access. This needs no additional APIs, deployment or app changes. It is a practical free starting point within existing Drive capacity, but does not synchronize the app’s local project history.
+
+Drive is file storage rather than a transactional database: concurrent edits need version/conflict handling, search/indexing needs design, and folder permissions are separate from the Studio allowlist. Revoking Studio access does **not** revoke Drive sharing or delete files already downloaded. A truly shared library therefore needs both app access checks and correctly configured storage permissions. Do not enable public or “anyone with the link” sharing for confidential event materials.
+
+Reference: [Firebase Auth persistence](https://firebase.google.com/docs/auth/web/auth-state-persistence), [Firestore quotas](https://firebase.google.com/docs/firestore/quotas), [Firebase Storage billing changes](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024), [Google Picker](https://developers.google.com/drive/picker/guides/overview), and [Drive API scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth).
