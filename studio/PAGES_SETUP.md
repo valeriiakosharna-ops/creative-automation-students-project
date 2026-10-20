@@ -1,6 +1,6 @@
 # Free GitHub Pages Studio — first launch
 
-This version runs on GitHub Pages. No Render, Java server, local tools or corporate email are required. Use Firebase's **Spark** plan for Google sign-in and a private access directory, within its free quotas. OpenAI API usage is billed separately. Do not enable paid Firebase Storage, Cloud Functions or upgrade to Blaze for this version: event files stay in the browser.
+This version runs on GitHub Pages. No Render, Java server, local tools or corporate email are required. Use Firebase's **Spark** plan for Google sign-in and a private access directory, within its free quotas. OpenAI API usage is billed separately. Do not enable paid Firebase Storage, Cloud Functions or upgrade to Blaze for this version: event files are stored in the browser; AI-mode reference images are also transmitted to OpenAI.
 
 Google sign-in still requires registering an application. Firebase Console manages the underlying Google project/OAuth setup, so you do not need to configure Google Cloud Console manually. You must control the GitHub and Firebase projects. Nothing in the repository provisions your real Firebase service or credentials.
 
@@ -47,8 +47,8 @@ Never add owner/colleague emails, an OpenAI key, Firebase service-account JSON o
 
 1. Click **Sign in with Google**, allow the popup and select the exact `ownerEmail` account. Until Firebase/rules/owner setup is complete, access stays blocked.
 2. Click **Connect OpenAI**, paste your API key and choose **Use key for this visit**. The field clears after submission. The key stays in page memory only; refreshing, signing out, revocation in the normal app or closing the page clears it. It is never written to browser storage, Firebase, GitHub, history or ZIPs.
-3. Create a project, upload PNG/JPEG/WebP logos/photos, enter event details, and choose formats, variants and **English, Ukrainian, or both**. Generate a small first pack and download its ZIP.
-4. The browser sends text and requested output specifications directly to the fixed OpenAI HTTPS endpoint. Original photos/logos stay local. The shared style guide is included in AI instructions and visual composition. No public proxy receives your key, and provider failures are not automatically retried.
+3. Create a project, upload PNG/JPEG/WebP logos/photos, enter event details, and choose formats, variants and **English, Ukrainian, or both**. Generate a small first pack, review/approve every visual and post, then download its ZIP.
+4. The browser starts separate planner and copywriter requests in parallel, then generates each visual through OpenAI image edits with the plan, assigned photo and all logos. Revisions also send the previous visual and user feedback. All calls use fixed OpenAI HTTPS endpoints. The shared style guide is included in all three prompt stages. No public proxy receives your key, and provider failures are not automatically retried.
 5. **Forget key** clears the active key. On shared computers, sign out and use separate browser profiles; local file storage is not encrypted and does not protect against someone with access to your browser profile/device. A key in use can be inspected by that browser user or privileged extensions. Do not distribute a company-wide secret if you do not trust its users to know it.
 
 OpenAI API billing/model access is required; a ChatGPT subscription is separate. Template mode needs no key and does not translate your text. No live Google/OpenAI access is verified until you finish this setup and try it.
@@ -65,7 +65,7 @@ Approved users get separate IndexedDB libraries by Firebase project and Google U
 
 The HTML, JavaScript, brand assets and Firebase public configuration are public. A client-side sign-in screen cannot make Pages private: someone can copy/modify the app and use it with their own inputs/key. Google/Firebase rules protect the private access directory; there is no server-held company key or shared material library to access. Revocation cannot prevent use of a copied app or erase local/downloaded files. UID-separated local databases prevent normal account mix-ups, not malicious inspection of a shared browser profile.
 
-Firebase sees sign-in identities and the private roster. OpenAI sees text briefs and generated copy under its own API terms; `store: false` is requested but does not promise zero provider logging/retention. Neither receives original event photos/logos from this app. GitHub hosts public code/assets, not your event uploads.
+Firebase sees sign-in identities and the private roster. OpenAI receives text briefs, assigned photos, original logos, generated visuals used for revisions, and user feedback under its API terms. Text requests use `store: false`; image edits do not support that parameter. Neither setting promises zero provider logging/retention. Firebase receives no event images or content from this app. GitHub hosts public code/assets, not your event uploads.
 
 Stay on Spark for a no-billing Firebase setup. Free quotas are finite: exhaustion may temporarily block access. Provider plans/policies can change. No card-free unlimited storage or API generation is promised. For a genuinely private application and shared server library, keep the separate corporate Java deployment instead.
 
@@ -104,3 +104,9 @@ The current version has local libraries only. Existing Firestore rules explicitl
 Drive is file storage rather than a transactional database: concurrent edits need version/conflict handling, search/indexing needs design, and folder permissions are separate from the Studio allowlist. Revoking Studio access does **not** revoke Drive sharing or delete files already downloaded. A truly shared library therefore needs both app access checks and correctly configured storage permissions. Do not enable public or “anyone with the link” sharing for confidential event materials.
 
 Reference: [Firebase Auth persistence](https://firebase.google.com/docs/auth/web/auth-state-persistence), [Firestore quotas](https://firebase.google.com/docs/firestore/quotas), [Firebase Storage billing changes](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024), [Google Picker](https://developers.google.com/drive/picker/guides/overview), and [Drive API scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth).
+
+## Generation and approval after setup
+
+Use **Create content pack** to start two parallel text requests, followed by one image edit per visual. See [Quickstart](QUICKSTART.md) for the per-image feedback and post-text approval workflow. An API key needs image-model access, billing and any organization verification required by OpenAI. This changes the data sent to OpenAI compared with the older text-only MVP: review the provider terms before uploading confidential materials. API keys remain memory-only and are never stored with the history/approval state.
+
+ZIP is generated only when every requested visual and post is complete and approved. Regeneration is a separate explicit paid action for one image. No live provider setup or real Firebase changes are performed by this repository update.
