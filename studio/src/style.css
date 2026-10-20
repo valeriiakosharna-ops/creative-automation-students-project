@@ -1993,5 +1993,42 @@ body:has(dialog[open]) {
   color: var(--ocean);
 }
 
-.applied-guide{display:block;padding:12px 18px;border-bottom:1px solid var(--line);background:#edf7fc;color:var(--ocean);font-size:10px;font-weight:600;}
-@media(max-width:950px) and (min-width:421px){.applied-guide{grid-column:1;grid-row:4;padding:10px 0 0;background:none;border:0;}}
+.applied-guide {
+  display: block;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #edf7fc;
+  color: var(--ocean);
+  font-size: 10px;
+  font-weight: 600;
+}
+@media (max-width: 950px) and (min-width: 421px) {
+  .applied-guide {
+    grid-column: 1;
+    grid-row: 4;
+    padding: 10px 0 0;
+    background: none;
+    border: 0;
+  }
+}
+
+#connect-key {
+  font-size: 11px;
+  padding: 9px 12px;
+}
+#client-key-field small {
+  line-height: 1.65;
+}
+@media (max-width: 700px) {
+  .hosted-key-mode .mode-indicator {
+    display: none;
+  }
+  .hosted-key-mode .breadcrumb strong {
+    max-width: 110px;
+  }
+  #connect-key {
+    max-width: 116px;
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+}

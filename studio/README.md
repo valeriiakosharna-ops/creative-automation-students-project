@@ -1,10 +1,16 @@
 # Creative Automation Studio — MVP
 
-A working single-user content studio in the same palette as the student project brief. The frontend works on GitHub Pages. A separate Java 21 / Spring Boot server adds OpenAI copy generation and translation; it can also serve the complete built frontend.
+A working single-user content studio in the same palette as the student project brief. The complete hosted app packages frontend and Java 21 / Spring Boot server together. Open its URL, paste your own API key for the visit and generate — no local installation. GitHub/GitLab Pages remain static Template demos.
 
 ## Start here
 
-Use [Quickstart](QUICKSTART.md) for full macOS/Linux/Windows key and launch instructions. The [social style guide](../style-guide/README.md) is applied through the shared `brand-policy.json`, bundled into both frontend and Java server. It controls dimensions, safe areas, type floors, logo layout, and channel-specific copy. Each new run snapshots the effective policy; its ZIP includes `style-guide.json` and layout measurements. Legacy runs retain their original results.
+Use [Quickstart](QUICKSTART.md) for browser-only Render deployment and key entry. For company hosting and internal GitLab, see [Deployment](../DEPLOYMENT.md). Local contributor setup is optional in [Local development](LOCAL_DEVELOPMENT.md). The [social style guide](../style-guide/README.md) is applied through the shared `brand-policy.json`, bundled into both frontend and Java server. It controls dimensions, safe areas, type floors, logo layout, and channel-specific copy. Each new run snapshots the effective policy; its ZIP includes `style-guide.json` and layout measurements. Legacy runs retain their original results.
+
+## Hosted browser workflow
+
+Deploy once through Render's browser flow or the company's container platform. Open the single HTTPS URL → **Connect OpenAI** → paste your key → **Use key for this visit**. The app automatically uses its own server and defaults to AI copy for new briefs. Refreshing, closing the page or **Forget key** clears the key. It is never saved in browser storage, project history, logs or exports. Only enter a key on a deployment you trust: the hosting server forwards it to OpenAI. Hosted mode never falls back to a shared owner's key.
+
+The same root Dockerfile builds/tests on GitHub and GitLab. Render follows `main` automatically; a company hosting platform needs its own rollout integration. Repository/Pages hosting alone cannot execute the Java API.
 
 ## What works
 
@@ -31,7 +37,7 @@ Example: 2 photos + Instagram post and story + 2 languages + 2 variants = 8 Inst
 
 Visuals use deterministic Canvas composition inspired by the supplied reference: branded headings, exact event details, diagonal photo layouts and an original-logo shelf. This MVP does not generate synthetic photos or offer arbitrary AI-designed layouts. The visual-direction field guides AI copy tone.
 
-## Start the frontend
+## Optional developer frontend
 
 Requirements: Node.js 22.12+ (CI uses 24).
 
@@ -51,9 +57,9 @@ npm run preview
 
 `dist/` is the separate deployable web build. All paths are relative, including when hosted at `/repository/studio/`. Build/dev preparation copies the student brief and root branding assets; replace the logo/favicon in the repository's root `assets/` directory to update both sites.
 
-## Add your API key (server only)
+## Optional developer server key (non-hosted profile)
 
-The API key placeholder is intentionally empty in `server/application-local.properties.example`.
+Normal hosted use needs only the in-page visitor key. For local contributor testing without the `hosted` profile, the server key placeholder is intentionally empty in `server/application-local.properties.example`.
 
 ```sh
 cd studio/server

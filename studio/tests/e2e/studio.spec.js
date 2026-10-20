@@ -356,3 +356,97 @@ test("a Story photo and every logo stay inside the guide; too-long text fails at
   );
   await expect(page.locator("#download-zip")).toBeDisabled();
 });
+
+test("hosted Studio needs only a visit key, ignores old backend settings, and never persists or exports that key", async ({
+  page,
+}, testInfo) => {
+  const key = "visitor-test-key-never-a-real-secret";
+  await page.addInitScript(() =>
+    localStorage.setItem("studio:backend", "http://127.0.0.1:9999"),
+  );
+  await page.route("**/runtime.js", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: "window.STUDIO_RUNTIME={serverManaged:true,clientKeysEnabled:true,aiConfigured:false};",
+    }),
+  );
+  let calls = 0;
+  await page.route("**/api/copy", async (route) => {
+    calls++;
+    expect(new URL(route.request().url()).origin).toBe("http://127.0.0.1:4173");
+    expect(route.request().headers()["x-openai-key"]).toBe(key);
+    expect(route.request().postData()).not.toContain(key);
+    const request = route.request().postDataJSON();
+    await route.fulfill({
+      json: {
+        model: "mock-model",
+        styleGuideVersion: "1.0.0",
+        outputs: request.outputs.map((o) => ({
+          id: o.id,
+          headline:
+            o.language === "uk" ? "Зустріч студентів" : "Student meetup",
+          subheading: "",
+          cta: "Join",
+          caption:
+            o.language === "uk"
+              ? "Вітаємо на події!"
+              : "Join our student event.",
+        })),
+      },
+    });
+  });
+  await example(page);
+  await expect(page.locator("#generation-mode")).toHaveValue("ai");
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#settings-dialog")).toBeVisible();
+  await expect(page.locator("#backend-field")).toBeHidden();
+  expect(calls).toBe(0);
+  await page.locator("#openai-key").fill(key);
+  await page.locator("#save-connection").click();
+  await expect(page.locator("#settings-dialog")).not.toBeVisible();
+  await expect(page.locator("#openai-key")).toHaveValue("");
+  await generate(page);
+  expect(calls).toBe(1);
+  const pending = page.waitForEvent("download");
+  await page.locator("#download-zip").click();
+  const dl = await pending,
+    path = testInfo.outputPath("hosted.zip");
+  await dl.saveAs(path);
+  const files = unzipSync(new Uint8Array(await readFile(path)));
+  for (const name of ["manifest.json", "brief.json", "style-guide.json"])
+    expect(strFromU8(files[name])).not.toContain(key);
+  const persisted = await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const r = indexedDB.open("creative-automation-studio");
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = reject;
+    });
+    const contents = await Promise.all(
+      ["projects", "drafts", "runs"].map(
+        (name) =>
+          new Promise((resolve, reject) => {
+            const r = db.transaction(name).objectStore(name).getAll();
+            r.onsuccess = () => resolve(r.result);
+            r.onerror = reject;
+          }),
+      ),
+    );
+    return JSON.stringify([
+      contents,
+      { ...localStorage },
+      { ...sessionStorage },
+    ]);
+  });
+  expect(persisted).not.toContain(key);
+  await page.reload();
+  await expect(page.locator("#connect-key")).toHaveText("Connect OpenAI");
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#settings-dialog")).toBeVisible();
+  expect(calls).toBe(1);
+  await page.locator("#openai-key").fill(key);
+  await page.locator("#save-connection").click();
+  await page.locator("#connect-key").click();
+  await page.locator("#forget-key").click();
+  await expect(page.locator("#key-status")).toContainText("No key connected");
+  await expect(page.locator("#connect-key")).toHaveText("Connect OpenAI");
+});
