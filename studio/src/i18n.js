@@ -27,6 +27,35 @@ export function translate(text) {
   if (ukrainian[source])
     return text.match(/^\s*/)[0] + ukrainian[source] + text.match(/\s*$/)[0];
   let match;
+  if ((match = source.match(/^Remove (.+)$/))) return `Видалити ${match[1]}`;
+  if ((match = source.match(/^(\d+) files? processed\.$/)))
+    return `Оброблено файлів: ${match[1]}.`;
+  if ((match = source.match(/^You can add at most (\d+) (logos|photos)\.$/)))
+    return `Можна додати максимум ${match[1]} ${match[2] === "logos" ? "логотипів" : "фото"}.`;
+  if (
+    (match = source.match(
+      /^(Instagram post|Instagram story|Facebook post|Google Chat) · (English|Українська)$/,
+    ))
+  )
+    return `${ukrainian[match[1]] || match[1]} · ${ukrainian[match[2]] || match[2]}`;
+  if (
+    (match = source.match(
+      /^(Headline|Subheading|Details) cannot fit the brand guide's minimum (\d+)px type size\./,
+    ))
+  )
+    return `${{ Headline: "Заголовок", Subheading: "Короткий опис", Details: "Дані події" }[match[1]]} не вміщується за мінімального розміру шрифту ${match[2]} px. Скоротіть текст; для зміни даних події скопіюйте бриф у новий запуск.`;
+  for (const [suffix, replacement] of Object.entries({
+    ": exceeds 10 MB.": ": перевищує 10 МБ.",
+    ": exceeds 24 megapixels.": ": перевищує 24 мегапікселі.",
+    ": only genuine PNG, JPEG and WebP images are supported.":
+      ": підтримуються лише справжні зображення PNG, JPEG та WebP.",
+    ": this image is already in your logos.":
+      ": цей файл уже є серед логотипів.",
+    ": this image is already in your photos.": ": цей файл уже є серед фото.",
+    ": could not decode the image.": ": не вдалося відкрити зображення.",
+  }))
+    if (source.endsWith(suffix))
+      return source.slice(0, -suffix.length) + replacement;
   if ((match = source.match(/^Rendering visual (\d+) of (\d+)…$/)))
     return `Створюємо візуал ${match[1]} із ${match[2]}…`;
   if ((match = source.match(/^(.*?) · (\d+) of (\d+) outputs ready · (.*)$/)))
