@@ -149,7 +149,12 @@ class CorporateSecurityTest {
         var query=UriComponentsBuilder.fromUriString(start.getResponse().getRedirectedUrl()).build().getQueryParams();nonce.set(java.net.URLDecoder.decode(query.getFirst("nonce"),java.nio.charset.StandardCharsets.UTF_8));
         var session=(MockHttpSession)start.getRequest().getSession(false);
         mvc.perform(get("/login/oauth2/code/corporate").param("code","test-code").param("state",java.net.URLDecoder.decode(query.getFirst("state"),java.nio.charset.StandardCharsets.UTF_8)).session(session)).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/"));
-        mvc.perform(get("/api/session").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.canManageAccess").value(true));
+        var account=mvc.perform(get("/api/session").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.canManageAccess").value(true)).andReturn();
+        var csrfToken=JSON.readTree(account.getResponse().getContentAsString()).path("csrfToken").asText();
+        // Use the real browser-facing token/header, without the test csrf() shortcut.
+        mvc.perform(post("/api/access").session(session).header("X-CSRF-TOKEN",csrfToken).contentType("application/json").content("{\"email\":\"roundtrip@team.example\"}")).andExpect(status().isOk());
+        mvc.perform(post("/api/logout").session(session).header("X-CSRF-TOKEN",csrfToken)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/session").session(session)).andExpect(status().isUnauthorized());
         for (var mode:List.of("wrong-audience","wrong-nonce","wrong-signature")) {
             tokenMode.set(mode);start=mvc.perform(get("/oauth2/authorization/corporate")).andReturn();query=UriComponentsBuilder.fromUriString(start.getResponse().getRedirectedUrl()).build().getQueryParams();nonce.set(java.net.URLDecoder.decode(query.getFirst("nonce"),java.nio.charset.StandardCharsets.UTF_8));
             mvc.perform(get("/login/oauth2/code/corporate").param("code","test-code").param("state",java.net.URLDecoder.decode(query.getFirst("state"),java.nio.charset.StandardCharsets.UTF_8)).session((MockHttpSession)start.getRequest().getSession(false))).andExpect(redirectedUrl("/signin.html?denied=1"));
