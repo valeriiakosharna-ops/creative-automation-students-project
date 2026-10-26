@@ -70,3 +70,14 @@ test("offline captions keep useful facts and plain URLs without a generated CTA"
       assert.doesNotMatch(copy.caption, /Join us|Find out more|Дізнайтеся більше|Долучайтеся/);
     }
 });
+
+test("optional layout fields do not discard a paid frame plan or trigger a repeat request", async (t) => {
+  let calls = 0; const saved = [];
+  t.mock.method(globalThis, "fetch", async () => { calls++; return response({ visualPlan: null, subheading: null }); });
+  const result = await planVisualFrame(brief, frame, {}, assets, "test-key", undefined, (data) => { saved.push(data); });
+  assert.equal(result.headline, "Creative Lab");
+  assert.equal(hasReferencePlan({ ...frame, ...result }), true);
+  assert.match(result.planningNote, /do not block/);
+  assert.equal(saved.length, 1);
+  assert.equal(calls, 1);
+});

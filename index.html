@@ -1,122 +1,702 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#302A40">
-  <meta name="description" content="A hands-on Java and JavaScript student project: turn one event brief into branded social content with creative automation.">
-  <title>Creative Automation — Student Project</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <header class="site-header">
-    <a class="brand" href="#top" aria-label="Creative Automation home"><img src="assets/logo.svg" alt="" width="40" height="40"><span>creative<span class="brand-light">automation</span><small>THE STUDENT PROJECT</small></span></a>
-    <button class="menu-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Open navigation"><span></span><span></span></button>
-    <nav id="main-nav" aria-label="Main navigation"><a href="#idea">The idea</a><a href="#scope">Project scope</a><a href="#blueprint">Blueprint</a><a href="#roadmap">Roadmap</a><a href="#ready" class="nav-cta">Your checklist <span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a></nav>
-  </header>
-  <main id="main">
-    <section class="hero" id="top" aria-labelledby="hero-title">
-      <div class="hero-grid" aria-hidden="true"></div>
-      <div class="hero-content">
-        <p class="eyebrow light"><span class="status-dot"></span> A REAL-WORLD BUILD FOR JAVA + JAVASCRIPT STUDENTS</p>
-        <h1 id="hero-title">One brief.<br><span class="blue-text">Every format.</span><br>Your next build<span class="red-text">.</span></h1>
-        <p class="hero-description">Build a platform that turns event details and brand assets into social content. Less repetitive work. More room for creativity.</p>
-        <div class="hero-actions"><a class="button primary" href="#idea">Explore the project <span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a><a class="text-link" href="#roadmap">See the roadmap <span aria-hidden="true">↓</span></a></div>
-        <div class="hero-meta"><span>Java / Spring Boot</span><span>Vanilla JavaScript</span><span>AI APIs</span></div>
-      </div>
-      <div class="hero-art" role="img" aria-label="An event brief becomes Instagram, Facebook, and Google Chat content through creative automation.">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <div class="brief-card"><div class="mini-card-top"><span class="tiny-dot"></span> EVENT BRIEF <span>01</span></div><div class="brief-art-icon"><svg class="icon burst" viewBox="0 0 100 100" aria-hidden="true"><path d="m45 0 10 0 3 32L83 9l8 8-23 25 32 3v10l-32 3 23 25-8 8-25-23-3 32H45l-3-32-25 23-8-8 23-25L0 55V45l32-3L9 17l8-8 25 23Z"/></svg></div><strong>Ideas worth<br>sharing.</strong><div class="brief-card-lines"><span></span><span></span></div><div class="brief-chips"><i>#00A6EB</i><i>#E60036</i></div></div>
-        <div class="flow-line"></div><div class="automation-node" aria-hidden="true"><svg class="icon burst" viewBox="0 0 100 100" aria-hidden="true"><path d="m45 0 10 0 3 32L83 9l8 8-23 25 32 3v10l-32 3 23 25-8 8-25-23-3 32H45l-3-32-25 23-8-8 23-25L0 55V45l32-3L9 17l8-8 25 23Z"/></svg></div>
-        <div class="output-card output-post"><div class="output-art"><span>MAKE<br>ROOM FOR<br><b>IDEAS.</b></span><div class="poster-star"><svg class="icon burst" viewBox="0 0 100 100" aria-hidden="true"><path d="m45 0 10 0 3 32L83 9l8 8-23 25 32 3v10l-32 3 23 25-8 8-25-23-3 32H45l-3-32-25 23-8-8 23-25L0 55V45l32-3L9 17l8-8 25 23Z"/></svg></div><small>STUDENT DESIGN NIGHT / OCT 24</small></div><div class="output-caption"><span class="platform-icon">◎</span> Instagram post <span>1:1</span></div></div>
-        <div class="output-card output-story"><span class="story-label">YOUR NEXT<br><b>BIG IDEA</b><br>STARTS HERE.</span><div class="story-orb"></div><small>LET’S MAKE IT HAPPEN <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></small><div class="story-platform">Instagram story <span>9:16</span></div></div>
-        <div class="output-chat"><span class="chat-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span><div><strong>Ready for the team.</strong><small>Facebook + Google Chat</small></div><span class="check-mark">✓</span></div>
-        <div class="art-tag"><span class="status-dot"></span> ONE INPUT. MULTIPLE POSSIBILITIES.</div>
-      </div>
-      <div class="hero-bottom"><span>PROJECT BRIEF / 01</span><span>FROM FIRST USER STORY TO A WORKING PRODUCT <span aria-hidden="true">↓</span></span></div>
-    </section>
-
-    <div class="studio-callout"><div><strong>Meet the working MVP.</strong><p>Create branded visuals, choose English and Ukrainian, keep local project history, and download a ZIP in Creative Automation Studio. The hosted app needs no local installation: connect your own OpenAI key for the visit. Explore the <a href="style-guide/" style="color:#2A668E;text-decoration:underline">brand inspiration</a> for a coherent creative direction.</p></div><a class="button primary" href="studio/">Open Studio <span aria-hidden="true">→</span></a></div>
-
-    <section class="section idea-section" id="idea" aria-labelledby="idea-title">
-      <div class="section-intro"><p class="eyebrow">01 / THE IDEA</p><h2 id="idea-title">Good content takes thought.<br><span class="muted">Resizing it shouldn’t.</span></h2><p>An event organizer has the details, the photos, and the brand. But turning them into a consistent set of posts means repeating the same work across channels. Your platform connects those pieces.</p></div>
-      <div class="idea-cards">
-        <article class="idea-card"><span class="card-number">01</span><div class="line-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></svg></div><h3>Bring the ingredients</h3><p>Upload logos and event images. Add a description, date, brand colors, and a creative direction.</p><span class="card-foot">A CLEAR INPUT</span></article>
-        <article class="idea-card"><span class="card-number">02</span><div class="line-icon" aria-hidden="true"><svg class="icon burst" viewBox="0 0 100 100" aria-hidden="true"><path d="m45 0 10 0 3 32L83 9l8 8-23 25 32 3v10l-32 3 23 25-8 8-25-23-3 32H45l-3-32-25 23-8-8 23-25L0 55V45l32-3L9 17l8-8 25 23Z"/></svg></div><h3>Make it work together</h3><p>Use AI to draft channel-specific copy and visuals. Let the user preview, request per-visual revisions, and approve every visual and post before export.</p><span class="card-foot">A THOUGHTFUL PROCESS</span></article>
-        <article class="idea-card"><span class="card-number">03</span><div class="line-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></div><h3>Keep the good stuff</h3><p>Organize projects in folders, revisit every generation, and download a ready-to-use content pack.</p><span class="card-foot">A USEFUL OUTPUT</span></article>
-      </div>
-      <div class="outcome-strip"><span class="strip-symbol" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span><div><strong>The outcome is a product, not just an API call.</strong><p>Build a reliable workflow from the first upload to the final download, with a history that users can trust.</p></div><span class="pill">YOUR CHALLENGE</span></div>
-    </section>
-
-    <section class="section scope-section" id="scope" aria-labelledby="scope-title">
-      <div class="section-heading"><div><p class="eyebrow">02 / THE PRODUCT</p><h2 id="scope-title">Give the idea<br>a clear scope.</h2></div><p>Start with one complete journey.<br>Make it useful before making it bigger.</p></div>
-      <div class="scope-layout">
-        <div class="journey-panel"><span class="panel-kicker">THE USER JOURNEY</span><h3>From an event<br>to a content pack.</h3><ol class="journey"><li><strong>Create a project</strong><p>Name a folder, then start an event brief inside it.</p></li><li><strong>Add context & assets</strong><p>Describe the event, upload images, and set the palette.</p></li><li><strong>Choose the outputs</strong><p>Select channels, formats, languages and a frame count for each format.</p></li><li><strong>Generate & review</strong><p>Preview images and editable post texts. Submit feedback to regenerate one visual; approve every item.</p></li><li><strong>Export & revisit</strong><p>After every visual and post is approved, download a ZIP. Find the brief and versions in history.</p></li></ol><div class="journey-note">Human review stays in the loop.<br>Nothing is published automatically.</div></div>
-        <div class="requirements">
-          <details open><summary><span><span class="requirement-number">01</span> The event brief</span><span class="details-plus" aria-hidden="true">+</span></summary><div class="details-body"><p><strong>Required:</strong> project, event title, description, date, time zone, at least one uploaded logo, at least one output format, an explicit choice of English, Ukrainian, or both, and a frame count per format and language. Dates may be one date, a start/end range, several dates or a concise free-text schedule.</p><p><strong>Optional:</strong> event time, venue or link, tone (default: friendly), audience, event photos, visual direction, and a palette of <code>#RRGGBB</code> colors.</p><p>Show upload type/size limits before selection. Include every uploaded logo in each visual and require users to review logo accuracy. Support PNG/JPEG images; add other formats only when safely handled. Validate on both client and server. Never silently invent missing event details.</p></div></details>
-          <details><summary><span><span class="requirement-number">02</span> Channels & formats</span><span class="details-plus" aria-hidden="true">+</span></summary><div class="details-body"><p>Use a multi-select: <strong>Instagram post, Instagram story, Facebook post, Google Chat message.</strong> A user can select several at once.</p><div class="format-table"><div><strong>Instagram post</strong><span>1080 × 1080 · caption</span></div><div><strong>Instagram story</strong><span>1080 × 1920 · brief overlay</span></div><div><strong>Facebook post</strong><span>1200 × 630 · post copy</span></div><div><strong>Google Chat</strong><span>Message + optional image</span></div></div><p>These are project defaults, not universal platform limits. Confirm current channel rules during discovery. Set frame counts <em>independently per selected format and language</em>. For example, 4 Instagram feed frames + 2 Story frames, in 2 languages, produce 12 visuals. Feed frames form one carousel per language with one shared caption; Stories form a connected sequence. Language selection is required: English, Ukrainian, or both.</p></div></details>
-          <details><summary><span><span class="requirement-number">03</span> Projects & history</span><span class="details-plus" aria-hidden="true">+</span></summary><div class="details-body"><p>Project folders group briefs and generation runs. Save the exact input snapshot, asset references, selected formats, prompt/model version, timestamps, status, errors, and output files for every run.</p><p>Regeneration creates a new run; it never overwrites past results. Users can rename projects, reopen earlier runs, and delete their own projects with confirmation. Define whether deleting a project also deletes its files.</p><p>Each uploaded photo can appear at most once per social network within a run, across all variants and languages. Instagram posts and stories share one allocation pool. A photo may be reused on a different network. When photos run out, produce information-only visuals with all logos. Record photo assignments in the manifest and test the rule. A project folder is an application concept. It does not need to correspond to a Google Drive folder.</p></div></details>
-          <details><summary><span><span class="requirement-number">04</span> Delivery & downloads</span><span class="details-plus" aria-hidden="true">+</span></summary><div class="details-body"><p><strong>MVP:</strong> preview generated visuals and editable post texts in the browser. Each visual has feedback, regeneration and approval controls. Revisions use only the assigned original photo, all logos, the verified frame plan and feedback. A previous AI visual is never an input reference. Text edits are local. ZIP export requires every requested visual and post to be complete and individually approved; it contains ordered PNGs, a combined UTF-8 posts.txt, per-post text files and a manifest. Record versions and reset approval whenever content changes.</p><p><strong>Extension:</strong> connect Google Drive, choose a destination folder, and export there. Use user-consented OAuth, least-privilege scopes, and securely stored refresh tokens. Handle access revocation and upload failures.</p><p>A Drive folder link alone does not grant upload access. Automatic posting to social networks is outside this project’s MVP.</p></div></details>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Creative Automation student assignment: clear MVP and full-product requirements, workflow and acceptance criteria."
+    />
+    <meta name="theme-color" content="#00A6EB" />
+    <title>Creative Automation — Student Project</title>
+    <link rel="icon" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to assignment</a>
+    <header class="site-header">
+      <a href="#top" class="brand"
+        ><img src="assets/logo.svg" width="72" height="42" alt="NIX" /><span
+          >creative automation<small>STUDENT PROJECT</small></span
+        ></a
+      ><button
+        class="menu-toggle"
+        aria-controls="main-nav"
+        aria-expanded="false"
+        aria-label="Open navigation"
+      >
+        Menu
+      </button>
+      <nav id="main-nav" aria-label="Main navigation">
+        <a href="#mvp">MVP requirements</a
+        ><a href="#full-product">Full product</a
+        ><a href="#acceptance">Acceptance</a
+        ><a href="studio/" class="button small">Open Studio ↗</a>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero" id="top">
+        <div>
+          <p class="eyebrow">JAVA + JAVASCRIPT / PRODUCT ASSIGNMENT</p>
+          <h1>
+            One event.<br /><span>One coherent</span><br />content campaign.
+          </h1>
+          <p class="lead">
+            Build a workspace that turns an event brief, original logos and
+            photos into social visuals and captions. Let people review the
+            result, then export it.
+          </p>
+          <div class="hero-actions">
+            <a href="#mvp" class="button primary">Start with the MVP ↓</a
+            ><a href="docs/PRODUCT_REQUIREMENTS.md" class="text-link"
+              >Read the complete requirements ↗</a
+            >
+          </div>
         </div>
-      </div>
-      <div class="scope-boundaries"><div><span class="pill blue-pill">BUILD FIRST</span><p>One workspace · project folders · saved briefs · asynchronous generation · previews · history · ZIP export</p></div><div><span class="pill rose-pill">EXTEND LATER</span><p>Google Drive export · team roles · brand kits · approval workflows · scheduled publishing</p></div></div>
-    </section>
-
-    <section class="brief-section" id="playground" aria-labelledby="brief-title">
-      <div class="brief-explainer"><p class="eyebrow light">03 / TRY THE THINKING</p><h2 id="brief-title">What makes<br>a good brief?</h2><p>Try a small slice of the interface your team will build. Watch how a few choices become a structured generation request.</p><div class="demo-disclaimer"><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span><p><strong>This is an interactive example.</strong><br>No AI calls, uploads, or saved projects here. Your students will build the real workflow.</p></div><div class="example-note"><span>DESIGN QUESTION</span><p>What should happen if one image fails, but the other five are ready?</p></div></div>
-      <div class="brief-demo">
-        <div class="demo-top"><span class="status-dot"></span> BRIEF EXPLORER <span>LIVE EXAMPLE</span></div>
-        <form id="brief-form">
-          <div class="form-row"><div class="field"><label for="event-title">Event title</label><input id="event-title" name="eventTitle" value="Student Design Night" maxlength="80" required></div><div class="field date-field"><label for="event-date">Event date</label><input id="event-date" name="eventDate" type="date" value="2026-10-24" required></div></div>
-          <div class="field"><label for="event-description">What’s happening?</label><textarea id="event-description" name="description" rows="2" maxlength="600" required>A night of fresh ideas, creative workshops, and student projects. Join us and share what you are building.</textarea></div>
-          <fieldset class="channels-fieldset"><legend>Create content for <span>CHOOSE MORE THAN ONE</span></legend><div class="channel-options"><label><input type="checkbox" name="channel" value="Instagram post" checked><span>◎ <span>IG post</span></span></label><label><input type="checkbox" name="channel" value="Instagram story" checked><span>▯ <span>IG story</span></span></label><label><input type="checkbox" name="channel" value="Facebook post"><span>f <span>Facebook</span></span></label><label><input type="checkbox" name="channel" value="Google Chat"><span>▤ <span>Google Chat</span></span></label></div></fieldset>
-          <fieldset class="channels-fieldset"><legend>Post languages <span>REQUIRED / CHOOSE ONE OR BOTH</span></legend><div class="channel-options example-languages"><label><input type="checkbox" name="languages" value="en" checked><span>English</span></label><label><input type="checkbox" name="languages" value="uk"><span>Українська</span></label></div></fieldset>
-          <div class="form-row palette-row"><div class="field"><label for="brand-color">Brand palette <span class="optional">/ pick a color</span></label><div class="color-control"><input type="color" id="brand-color" name="brandColor" value="#00a6eb"><span id="color-value">#00A6EB</span><span class="fixed-swatch" aria-hidden="true"></span><span>#E60036</span></div></div><div class="field variant-field"><label for="variants">Variants per format</label><select id="variants" name="variants"><option value="1">1 variant</option><option value="2" selected>2 variants</option><option value="3">3 variants</option><option value="4">4 variants</option></select></div></div>
-          <button class="button dark-button" type="submit">Preview the request <span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button>
-          <p class="form-error" id="brief-error" role="alert" hidden>Select at least one format to preview your request.</p>
-        </form>
-        <div class="request-result" id="request-result" aria-live="polite" aria-atomic="true"><span class="result-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span><div><strong id="result-title">One brief. 4 outputs.</strong><p id="result-detail">2 formats × 2 variants × 1 language · Target: ZIP + project history</p><p id="result-context" hidden></p><p class="result-note">In the finished product, each run also keeps its original brief and assets.</p></div></div>
-        <details id="request-payload" class="request-payload" hidden><summary>View sample payload <span aria-hidden="true">+</span></summary><p class="payload-note">A simplified example. Your full API contract also needs a project, asset references, time zone, and visual direction.</p><pre id="payload-json"></pre></details>
-        <noscript><p>Enable JavaScript to explore the sample brief and checklist progress. All project requirements are available on this page.</p></noscript>
-      </div>
-    </section>
-
-    <section class="section blueprint-section" id="blueprint" aria-labelledby="blueprint-title">
-      <div class="section-heading"><div><p class="eyebrow">04 / UNDER THE HOOD</p><h2 id="blueprint-title">Simple interface.<br>Solid foundations.</h2></div><p>A Java backend does the heavy lifting.<br>A little JavaScript makes it feel effortless.</p></div>
-      <div class="architecture" aria-label="Browser talks to Java API, which uses a database, file storage, and AI provider."><article><span class="architecture-index">01 / PRESENT</span><h3>The browser</h3><p>HTML, CSS, JavaScript</p><ul><li>Brief forms & uploads</li><li>Format selection & previews</li><li>Job progress & history</li></ul><span class="architecture-tag">FETCH / JSON / MULTIPART</span></article><span class="architecture-arrow" aria-hidden="true">→</span><article class="backend-card"><span class="architecture-index">02 / ORCHESTRATE</span><h3>The Java API</h3><p>Spring Boot + validation</p><ul><li>Projects, briefs & permissions</li><li>Background generation jobs</li><li>Prompts, exports & retries</li></ul><span class="architecture-tag">YOUR SOURCE OF TRUTH</span></article><span class="architecture-arrow" aria-hidden="true">→</span><article><span class="architecture-index">03 / CONNECT</span><h3>Data & services</h3><p>Persistence + external APIs</p><ul><li>SQL database for metadata</li><li>File storage for assets & results</li><li>AI text & image generation</li></ul><span class="architecture-tag">DRIVE IS AN EXTENSION</span></article></div>
-      <div class="technical-grid">
-        <article class="technical-card"><span class="technical-icon" aria-hidden="true">{ }</span><h3>Define the contract first</h3><p>Agree on requests, responses, validation errors, and states before splitting the work. Suggested API:</p><div class="endpoint"><code>POST /api/projects</code><code>POST /api/projects/{id}/assets</code><code>POST /api/projects/{id}/runs</code><code>GET /api/runs/{id}</code><code>GET /api/projects/{id}/runs</code><code>GET /api/runs/{id}/download</code></div><p class="small-note">Creating a run returns <code>202 Accepted</code> + a run ID. The UI polls its status; avoid holding one request open for the entire generation.</p></article>
-        <article class="technical-card"><span class="technical-icon" aria-hidden="true">↻</span><h3>Treat generation as a job</h3><p>Persist state transitions. Track every output independently, so a failed story does not erase a successful post.</p><div class="state-flow"><span>QUEUED</span><i>→</i><span>RUNNING</span><i>→</i><span>COMPLETED</span></div><p>Also support <code>PARTIAL</code> and <code>FAILED</code>. Retry transient failures with bounded backoff; respect rate limits. Use an idempotency key to prevent duplicate jobs on double-click.</p><p class="small-note">Start with a bounded Java executor and persisted jobs. Define recovery after a server restart. A dedicated queue can come later.</p></article>
-        <article class="technical-card"><span class="technical-icon" aria-hidden="true">◇</span><h3>Keep brand details accurate</h3><p>Use a text API (for example, OpenAI) to return structured copy, then an image generation or editing API for visuals. A ChatGPT subscription is not an API integration.</p><p>Models may distort logos, text, dates, or colors. Use a common creative identity and clear source references. Let the image model compose the full visual organically; inspect logos, typography and facts before approval. Avoid appending another logo block to already branded model output.</p><p class="small-note">Choose a supported model after checking input formats, pricing, image sizes, and API access. Crop or render to your final channel dimensions.</p></article>
-        <article class="technical-card"><span class="technical-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6"/></svg></span><h3>Build trust into the workflow</h3><p>Keep shared owner API keys on the server, in secure environment settings. Never commit keys, bundle them in JavaScript, or expose them in logs. A bring-your-own-key browser mode may send each visitor’s key directly to the approved provider over HTTPS, keeping it only in page memory. Never persist it or fall back to a shared owner key.</p><p>Validate file signatures and sizes, sanitize filenames, limit requests, and check project ownership on every operation. Agree on consent, retention, and deletion for event photos before sending them to an AI provider.</p><p class="small-note">The free Pages MVP uses Google sign-in, a private owner-managed access list and separate local libraries. Its code remains public; client-side gating cannot protect a shared company key or erase local files. The optional corporate Java deployment adds a private shared library and server-side cost controls.</p></article>
-      </div>
-      <details class="data-model"><summary><span><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h18v18H3zM12 3v18M3 12h18"/></svg></span> A starting point for your data model</span><span class="details-plus" aria-hidden="true">+</span></summary><div class="model-grid"><div><strong>Project</strong><p>id · owner/workspace · name · createdAt</p></div><div><strong>Brief</strong><p>id · projectId · event details · palette · direction</p></div><div><strong>Asset</strong><p>id · projectId · type · storageKey · metadata</p></div><div><strong>GenerationRun</strong><p>id · brief snapshot · model/prompt version · status · timestamps</p></div><div><strong>Output</strong><p>id · runId · channel · variant · copy · file · status/error</p></div><div><strong>Export</strong><p>id · runId · destination · status · file/folder reference</p></div></div></details>
-      <div class="hosting-note"><strong>Where does it run?</strong><p>This brief is a static GitHub Pages site. The students’ full product needs a hosted backend, database, and file storage. The free working MVP runs in the browser on GitHub Pages, with Google sign-in through Firebase and local projects per account. Users enter an OpenAI key for the visit; event text and assigned image/logo references are sent directly to OpenAI for separate planning, image generation and post-writing stages. Results are reviewed and individually approved before ZIP export. The owner manages a private list of approved Google emails. A separate corporate Java deployment supports an encrypted shared server library. GitHub/GitLab Pages alone cannot execute the AI server.</p></div>
-    </section>
-
-    <section class="section roadmap-section" id="roadmap" aria-labelledby="roadmap-title">
-      <div class="section-heading"><div><p class="eyebrow">05 / THE BUILD PLAN</p><h2 id="roadmap-title">Small milestones.<br>A complete product.</h2></div><p>Work in vertical slices.<br>Demo something useful at every step.</p></div>
-      <div class="roadmap-tabs" role="tablist" aria-label="Project milestones"><button id="tab-discover" role="tab" aria-selected="true" aria-controls="panel-discover" tabindex="0"><span>01</span>Discover</button><button id="tab-design" role="tab" aria-selected="false" aria-controls="panel-design" tabindex="-1"><span>02</span>Design</button><button id="tab-build" role="tab" aria-selected="false" aria-controls="panel-build" tabindex="-1"><span>03</span>Build</button><button id="tab-connect" role="tab" aria-selected="false" aria-controls="panel-connect" tabindex="-1"><span>04</span>Connect</button><button id="tab-ship" role="tab" aria-selected="false" aria-controls="panel-ship" tabindex="-1"><span>05</span>Ship</button></div>
-      <div class="milestone-panel" id="panel-discover" role="tabpanel" aria-labelledby="tab-discover" tabindex="0"><div class="milestone-lead"><span class="milestone-label">MILESTONE 01 / BUSINESS ANALYSIS</span><h3>Understand the work<br>before automating it.</h3><p>Talk to someone who creates event content. Map the current process, the pain points, and what a successful result actually looks like.</p><span class="deliverable"><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span> Deliverable: a one-page product brief</span></div><div class="milestone-tasks"><h4>Questions to answer</h4><ul><li>Who uses the platform, and who approves the final content?</li><li>Where is time lost today? Measure the current process.</li><li>Which inputs are mandatory, and which can use defaults?</li><li>What counts as one output, one variant, and a successful run?</li><li>What is the generation budget and acceptable waiting time?</li></ul><div class="done-when"><strong>DONE WHEN</strong><p>Your team can explain the user, the problem, the MVP, and three measurable success criteria.</p></div></div></div>
-      <div class="milestone-panel" id="panel-design" role="tabpanel" aria-labelledby="tab-design" tabindex="0" hidden><div class="milestone-lead"><span class="milestone-label">MILESTONE 02 / PRODUCT & CONTRACTS</span><h3>Make the decisions<br>visible.</h3><p>Sketch the project list, brief editor, running job, results, and history. Include empty, invalid, loading, partial-success, and failure states.</p><span class="deliverable"><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span> Deliverable: wireframes + API + data model</span></div><div class="milestone-tasks"><h4>Agree as a team</h4><ul><li>Write user stories with observable acceptance criteria.</li><li>Define request/response examples and upload constraints.</li><li>Map projects, assets, briefs, runs, and outputs.</li><li>Define ownership, deletion, retry, and regeneration rules.</li><li>Pick image dimensions, safe text areas, and export filenames.</li></ul><div class="done-when"><strong>DONE WHEN</strong><p>Frontend and backend students can build against the same contract without guessing.</p></div></div></div>
-      <div class="milestone-panel" id="panel-build" role="tabpanel" aria-labelledby="tab-build" tabindex="0" hidden><div class="milestone-lead"><span class="milestone-label">MILESTONE 03 / FIRST VERTICAL SLICE</span><h3>Finish the journey<br>with a fake provider.</h3><p>Build one working flow through the interface, Java API, database, and file storage before paying for generation.</p><span class="deliverable"><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span> Deliverable: an end-to-end local demo</span></div><div class="milestone-tasks"><h4>Implement the essentials</h4><ul><li>Create a project and save a validated event brief.</li><li>Upload logos and photos; verify every logo is present and photo allocation never repeats within a network.</li><li>Submit a job and display asynchronous status updates.</li><li>Use a deterministic fake AI provider for sample outputs.</li><li>Preview, export a ZIP, and reopen the run from history.</li></ul><div class="done-when"><strong>DONE WHEN</strong><p>A restart preserves briefs and results; invalid inputs return helpful errors. No live AI key is required yet.</p></div></div></div>
-      <div class="milestone-panel" id="panel-connect" role="tabpanel" aria-labelledby="tab-connect" tabindex="0" hidden><div class="milestone-lead"><span class="milestone-label">MILESTONE 04 / AI INTEGRATION</span><h3>Connect the creative<br>engine responsibly.</h3><p>Replace the fake provider behind an interface. Keep orchestration, validation, and storage independent from a specific model.</p><span class="deliverable"><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span> Deliverable: a real multi-format content pack</span></div><div class="milestone-tasks"><h4>Test beyond the happy path</h4><ul><li>Run separate planner and copywriter prompts in parallel. Ask the planner for one flexible campaign identity shared across formats, with palette, mood and typography character rather than rigid layout rules. Inspect all logos and only the assigned photo in a separate per-frame vision plan before each image-edit request. Use those same original references, with light backgrounds, no invented people and no CTA, adapting the same campaign aesthetic to each channel.</li><li>Build a hook, complementary details and an informative closing frame, with no promotional CTA. Generate cohesive, varied full-canvas visuals with the supplied logos and concise factual text.</li><li>Keep successful previews/texts after errors; require explicit paid retries. Regenerate individual images with feedback and reset their approvals.</li><li>Set variant limits, timeouts, and a per-run budget.</li><li>Record prompt/model versions and safe error details.</li></ul><div class="done-when"><strong>DONE WHEN</strong><p>A real brief produces the requested formats, failures are recoverable, and visit keys are never saved.</p></div></div></div>
-      <div class="milestone-panel" id="panel-ship" role="tabpanel" aria-labelledby="tab-ship" tabindex="0" hidden><div class="milestone-lead"><span class="milestone-label">MILESTONE 05 / VALIDATE & DEMO</span><h3>Prove it works<br>for someone else.</h3><p>Ask a new user to complete the workflow without your help. Measure the result against the goals from discovery.</p><span class="deliverable"><span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v11h14m-5-5 5 5-5 5"/></svg></span> Deliverable: tested demo + honest retrospective</span></div><div class="milestone-tasks"><h4>Prepare for the handover</h4><ul><li>Run Java unit/integration tests and a browser smoke test.</li><li>Test ZIP contents, access checks, restart recovery, and retries.</li><li>Check keyboard navigation, mobile layout, and error clarity.</li><li>Document setup, configuration names, API contracts, and limits.</li><li>Demo a happy path and a failure path; compare time and cost.</li></ul><div class="done-when"><strong>DONE WHEN</strong><p>Another student can run the product from your README, and you can show evidence for each acceptance criterion.</p></div></div></div>
-      <noscript><style>.milestone-panel[hidden] { display: grid !important; }</style><p>All five milestones: discover the problem; design wireframes, API and data model; build a full workflow with a fake provider; integrate real AI with failure handling; test and demonstrate the product. Enable JavaScript for the detailed milestone tabs.</p></noscript>
-    </section>
-
-    <section class="section analysis-section" aria-labelledby="analysis-title"><div><p class="eyebrow">06 / THINK LIKE A PRODUCT TEAM</p><h2 id="analysis-title">Ask better questions.<br>Build a better tool.</h2><p class="analysis-intro">Business analysis turns “it generates posts” into a product with clear expectations and meaningful trade-offs.</p><blockquote>“As an event organizer, I want to generate a consistent pack for several channels, so I can spend less time preparing the same announcement.”</blockquote></div><div class="analysis-prompts"><article><span>01</span><div><h3>Make success measurable</h3><p>Compare time from brief to approved pack with the manual baseline. Track first-pass approval, brand accuracy, and cost per accepted output. Agree on target values with your user.</p></div></article><article><span>02</span><div><h3>Define the awkward cases</h3><p>No logo? Missing date? Unsupported image? A failed API? A revoked Drive connection? Decide which cases block a run, use a default, or allow partial delivery.</p></div></article><article><span>03</span><div><h3>Make cost visible</h3><p>Preview the output count before submission. Cap variants, explain regeneration cost, and confirm large requests. A retry must not quietly create duplicate charges.</p></div></article><article><span>04</span><div><h3>Keep people in control</h3><p>Generated content is a draft. Show the input, output, and version together. Allow review and a new run, and explain which data is sent to external services.</p></div></article></div></section>
-
-    <section class="section acceptance-section" aria-labelledby="acceptance-title"><p class="eyebrow">TURN STORIES INTO TESTS</p><h2 id="acceptance-title">What does “working” mean?</h2><div class="acceptance-grid"><article><span class="panel-kicker">01 / MULTIPLE FORMATS</span><h3>The count matches the request</h3><p><strong>Given</strong> a valid brief with 4 feed frames, 2 Story frames, and 2 languages, <strong>when</strong> generation completes, <strong>then</strong> the user sees 12 ordered visuals and 4 shared post captions with the correct format and language labels and can preview each one.</p></article><article><span class="panel-kicker">02 / DURABLE HISTORY</span><h3>A new run keeps the old one</h3><p><strong>Given</strong> a completed run, <strong>when</strong> the user changes the palette and regenerates, <strong>then</strong> both runs retain their own inputs and files, including after a server restart.</p></article><article><span class="panel-kicker">03 / PARTIAL SUCCESS</span><h3>A failure has a way forward</h3><p><strong>Given</strong> that 1 of 6 outputs fails, <strong>when</strong> the run finishes, <strong>then</strong> the user sees five successful previews and a clear failure. ZIP stays blocked until the failed image is recovered and every visual and post is approved.</p></article></div></section>
-
-    <section class="section ready-section" id="ready" aria-labelledby="ready-title"><div class="ready-heading"><div><p class="eyebrow">07 / DEFINITION OF DONE</p><h2 id="ready-title">Ready to show<br>what you built?</h2><p>Use this checklist for your final demo.<br>Be ready to show the evidence, not just the screen.</p></div><div class="progress-ring" id="progress-ring"><div><strong id="progress-number">0<span>/8</span></strong><span>CHECKS COMPLETE</span></div></div></div>
-      <div class="checklist" id="project-checklist"><label><input type="checkbox" value="brief"><span class="custom-check" aria-hidden="true"></span><span><strong>A complete, validated brief</strong><small>Uploads, date, palette, direction, formats, and variant count.</small></span></label><label><input type="checkbox" value="formats"><span class="custom-check" aria-hidden="true"></span><span><strong>Every selected format delivered</strong><small>Correct dimensions, all logos, unique photo use per network, and channel-specific copy in each chosen language.</small></span></label><label><input type="checkbox" value="history"><span class="custom-check" aria-hidden="true"></span><span><strong>Projects and history that persist</strong><small>Old runs remain accessible after refresh and server restart.</small></span></label><label><input type="checkbox" value="export"><span class="custom-check" aria-hidden="true"></span><span><strong>A content pack you can actually use</strong><small>A valid ZIP with images, matching captions, and a manifest.</small></span></label><label><input type="checkbox" value="failures"><span class="custom-check" aria-hidden="true"></span><span><strong>Honest status and recoverable failures</strong><small>Test a timeout, partial result, retry, and duplicate submission.</small></span></label><label><input type="checkbox" value="security"><span class="custom-check" aria-hidden="true"></span><span><strong>Safe handling of keys and user files</strong><small>Server-side keys, upload checks, and appropriate access controls.</small></span></label><label><input type="checkbox" value="tests"><span class="custom-check" aria-hidden="true"></span><span><strong>Tests with useful evidence</strong><small>Core Java logic, API integration, and an end-to-end browser flow.</small></span></label><label><input type="checkbox" value="handover"><span class="custom-check" aria-hidden="true"></span><span><strong>A product someone else can run</strong><small>Setup docs, known limits, user feedback, and a measured demo.</small></span></label></div><div class="checklist-footer"><span id="checklist-status" role="status">Progress stays in this browser. Your project data belongs in your app.</span><button id="reset-checklist" type="button">Reset checklist <span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a8 8 0 1 1 1 9M4 3v6h6"/></svg></span></button></div>
-    </section>
-    <section class="closing"><div><p class="eyebrow light">YOUR BRIEF. YOUR DECISIONS. YOUR BUILD.</p><h2>Make something<br>worth <span>sharing.</span></h2></div><a href="#roadmap" class="button primary">Start with discovery <span aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a><span class="closing-star" aria-hidden="true"><svg class="icon burst" viewBox="0 0 100 100" aria-hidden="true"><path d="m45 0 10 0 3 32L83 9l8 8-23 25 32 3v10l-32 3 23 25-8 8-25-23-3 32H45l-3-32-25 23-8-8 23-25L0 55V45l32-3L9 17l8-8 25 23Z"/></svg></span></section>
-  </main>
-  <footer class="site-footer"><a class="footer-brand" href="#top">creative<span>automation</span><span class="red-text">.</span></a><p>A student project in Java, JavaScript & creative thinking.</p><a href="#top">Back to top <span aria-hidden="true">↑</span></a></footer>
-</body>
+        <aside class="scope-card">
+          <span class="pill">THE PRODUCT IN ONE MINUTE</span>
+          <ol>
+            <li>
+              <b>01</b
+              ><span
+                >Describe the event<small
+                  >Facts, schedule and creative direction</small
+                ></span
+              >
+            </li>
+            <li>
+              <b>02</b
+              ><span
+                >Choose the content<small
+                  >Formats, languages and frame counts</small
+                ></span
+              >
+            </li>
+            <li>
+              <b>03</b
+              ><span
+                >Generate and refine<small
+                  >Original assets, coherent storytelling</small
+                ></span
+              >
+            </li>
+            <li>
+              <b>04</b
+              ><span
+                >Approve and export<small
+                  >Images + shared post text in a ZIP</small
+                ></span
+              >
+            </li>
+          </ol>
+          <p>
+            No automatic social publishing. People approve every image and
+            caption.
+          </p>
+        </aside>
+      </section>
+      <section class="context-strip" aria-label="Scope overview">
+        <div>
+          <strong>Primary users</strong>
+          <p>Event organizers and communications teams.</p>
+        </div>
+        <div>
+          <strong>MVP delivery</strong>
+          <p>
+            A Java backend, mandatory database, private projects and approved
+            ZIP packs.
+          </p>
+        </div>
+        <div>
+          <strong>Full-product delivery</strong>
+          <p>
+            A shared team library and prompt administration. Google Drive is
+            optional.
+          </p>
+        </div>
+      </section>
+      <section class="section" id="mvp">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / BUILD THIS FIRST</p>
+            <h2>A complete, useful MVP.</h2>
+          </div>
+          <p>
+            Build the backend in Java and persist product data in a database
+            from day one. Start with personal projects and ZIP delivery; team
+            collaboration comes later.
+          </p>
+        </div>
+        <div class="release-note">
+          <strong>Studio is a visual example only.</strong> It demonstrates a
+          possible interface and user journey. Its browser storage and direct AI
+          calls are not the student architecture. Your MVP requires a Java
+          backend, database and protected server file access. Google Drive is
+          optional.
+        </div>
+        <div class="requirement-grid">
+          <article class="requirement-card">
+            <h3>Access &amp; projects</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-01</span
+                ><strong>Authenticated personal workspace</strong>
+                <p>
+                  Authenticate users and enforce project/file permissions in the
+                  Java backend. Start with personal projects and owner-managed
+                  product access.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-02</span
+                ><strong>Mandatory database and durable history</strong>
+                <p>
+                  A database is mandatory. Persist ownership, briefs, assets,
+                  runs, captions, approvals and versions. Work must survive
+                  refresh, another device and backend restarts.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>The event &amp; assets</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-03</span
+                ><strong>Complete event brief</strong>
+                <p>
+                  Require a title, description and schedule. Support a single
+                  date, range, date list or written schedule, with optional
+                  location, time and link.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-04</span><strong>Brand assets</strong>
+                <p>
+                  Upload 1–8 logos and up to 20 optional photos. Validate image
+                  type and size on the server; allow removal and palette
+                  selection.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>The content request</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-05</span
+                ><strong>Formats, languages and quantities</strong>
+                <p>
+                  Select Instagram feed/Stories, Facebook and Google Chat
+                  independently. Choose English, Ukrainian or both, and 1–10
+                  frames per format/language, up to 24 total.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-06</span
+                ><strong>One story, one shared caption</strong>
+                <p>
+                  Each format/language is one ordered post or Story sequence
+                  with one shared caption. Show visual and caption counts before
+                  generation.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Visual identity &amp; sources</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-07</span
+                ><strong>Original assets and people</strong>
+                <p>
+                  Every visual uses all logos and at most one assigned photo.
+                  Never repeat a photo within a network/run or request invented
+                  people. Extra frames are information-only.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-08</span
+                ><strong>Coherent creative direction</strong>
+                <p>
+                  Use light backgrounds, brand colors and a consistent campaign
+                  identity. Adapt layouts naturally by channel. No automatic
+                  promotional call to action.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Generation &amp; approval</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-09</span
+                ><strong>Backend AI orchestration</strong>
+                <p>
+                  Java orchestrates versioned campaign, caption and frame
+                  prompts. Each frame planner and image request receives all
+                  logos and only that frame’s assigned photo.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-10</span
+                ><strong>Review before export</strong>
+                <p>
+                  Preview everything. Edit shared captions locally and request
+                  paid revisions per image. The server permits ZIP export only
+                  after every item is approved.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Delivery, costs &amp; privacy</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-11</span
+                ><strong>Useful ZIP delivery</strong>
+                <p>
+                  Deliver ordered PNGs, one text file per post/language,
+                  combined posts.txt and metadata. Exclude source uploads and
+                  credentials from the delivery ZIP.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-12</span
+                ><strong>Recoverable failures and visible costs</strong>
+                <p>
+                  Preserve successful results and paid planning responses after
+                  partial failures. Make retries explicit, show status and cost,
+                  and avoid blocking editorial length limits.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-13</span
+                ><strong>Provider keys and private data</strong>
+                <p>
+                  Keep service keys in protected backend configuration.
+                  Authorize project/file access and exclude credentials from
+                  frontend bundles, business data, logs and exports.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">MVP-14</span
+                ><strong>Practical post copy</strong>
+                <p>
+                  Adapt factual captions to each channel and language. Preserve
+                  full URLs. Suggested lengths guide writing; fresh trend claims
+                  require source-backed research.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Java backend &amp; API</h3>
+            <ul>
+              <li>
+                <span class="req-id">MVP-15</span
+                ><strong>A Java service with a clear API</strong>
+                <p>
+                  Build a Java backend with a documented API, server validation,
+                  database migrations and database integration tests. Studio is
+                  only a visual example.
+                </p>
+              </li>
+            </ul>
+          </article>
+        </div>
+        <div class="example-box">
+          <strong>A concrete request</strong>
+          <p>
+            4 Instagram feed frames + 2 Story frames × 2 languages =
+            <b>12 visuals and 4 shared captions.</b> Frames tell a connected
+            story; a caption belongs to the post, not to each frame.
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>
+              Supported output formats
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Format</th>
+                <th scope="col">PNG dimensions</th>
+                <th scope="col">Text</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Instagram post</td>
+                <td>1080 × 1080</td>
+                <td>One caption per carousel/language</td>
+              </tr>
+              <tr>
+                <td>Instagram Story</td>
+                <td>1080 × 1920</td>
+                <td>One accompanying message per sequence/language</td>
+              </tr>
+              <tr>
+                <td>Facebook</td>
+                <td>1200 × 630</td>
+                <td>One caption per ordered set/language</td>
+              </tr>
+              <tr>
+                <td>Google Chat</td>
+                <td>1200 × 675</td>
+                <td>One internal message per ordered set/language</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section full-section" id="full-product">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">02 / THE NEXT RELEASE</p>
+            <h2>From a personal tool<br />to a team product.</h2>
+          </div>
+          <p>
+            Extend the Java backend and database you already built. Add team
+            collaboration and administration. Google Drive is a separately
+            selectable extension, never a replacement for the database.
+          </p>
+        </div>
+        <div class="requirement-grid full-grid">
+          <article class="requirement-card">
+            <h3>Shared team workspace</h3>
+            <ul>
+              <li>
+                <span class="req-id">FULL-01</span
+                ><strong>Shared team library</strong>
+                <p>
+                  Extend the existing MVP database with project sharing and team
+                  membership, so colleagues use the same permitted library
+                  across devices.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-02</span
+                ><strong>Roles and project permissions</strong>
+                <p>
+                  Add owner, administrator, editor and viewer roles. Enforce a
+                  clear permission matrix for generation, editing, approval,
+                  export and administration.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-03</span
+                ><strong>A usable team library</strong>
+                <p>
+                  Provide searchable cards/lists, useful filters, tags,
+                  archive/restore and clear statuses. Keep each project’s brief,
+                  visuals, captions and history together.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Optional Google Drive extension</h3>
+            <ul>
+              <li>
+                <span class="req-id">FULL-04</span
+                ><strong
+                  >Google Drive connection and folder picker — optional</strong
+                >
+                <p>
+                  Optional: connect Google Drive and choose a writable
+                  destination folder per project/export. Show the selected
+                  folder and explain ownership.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-05</span
+                ><strong>Reliable Drive delivery — optional</strong>
+                <p>
+                  Optional: upload approved deliverables, save file IDs/links in
+                  the database and retry without duplicates. Keep ZIP available
+                  if Drive delivery fails.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-06</span
+                ><strong>Secure Drive credentials — optional</strong>
+                <p>
+                  Optional: protect OAuth callbacks and encrypted refresh
+                  tokens. Support disconnect/revocation and verify folder access
+                  before every delivery.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Administrator prompt tools</h3>
+            <ul>
+              <li>
+                <span class="req-id">FULL-07</span
+                ><strong>Administrator prompt editor</strong>
+                <p>
+                  Give administrators a prompt editor with variable checks,
+                  preview, explicit paid tests and publish/rollback. Keep access
+                  and source protections outside editable prompts.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-08</span
+                ><strong>Versioned prompt governance</strong>
+                <p>
+                  Record an immutable prompt version on each run. Audit changes;
+                  published edits affect new work without changing historical
+                  results.
+                </p>
+              </li>
+            </ul>
+          </article>
+          <article class="requirement-card">
+            <h3>Protected operations</h3>
+            <ul>
+              <li>
+                <span class="req-id">FULL-09</span
+                ><strong>Private managed generation</strong>
+                <p>
+                  Extend the Java service with organization-level credential
+                  management, role-based budgets, concurrency limits and cost
+                  reporting.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-10</span
+                ><strong>Durable jobs and collaboration</strong>
+                <p>
+                  Persist jobs, prevent duplicate submissions/exports and handle
+                  concurrent edits. Preserve earlier versions and reset approval
+                  when relevant content changes.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-11</span
+                ><strong>Private files and reliable operations</strong>
+                <p>
+                  Add retention policies, tested backups/restoration, protected
+                  file delivery, monitoring and audit records without secrets or
+                  confidential content in logs.
+                </p>
+              </li>
+              <li>
+                <span class="req-id">FULL-12</span
+                ><strong>Team onboarding and administration</strong>
+                <p>
+                  Provide team onboarding, access administration, usage
+                  visibility, ownership transfer and documented support and
+                  recovery procedures.
+                </p>
+              </li>
+            </ul>
+          </article>
+        </div>
+        <div class="example-box">
+          <strong
+            >Drive stores deliverables. The database organizes the
+            product.</strong
+          >
+          <p>
+            Keep project records, permissions, prompt versions, approval state
+            and export jobs in the database. Save file IDs and destination links
+            there. A Drive folder is not a replacement for a shared project
+            database.
+          </p>
+        </div>
+      </section>
+      <section class="section" id="workflow">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 / HOW THE PARTS WORK TOGETHER</p>
+            <h2>Plan. Generate. Review.</h2>
+          </div>
+          <p>
+            Separate responsibilities so text, planning and image failures can
+            be handled without losing the rest of the work.
+          </p>
+        </div>
+        <ol class="pipeline">
+          <li>
+            <span>1</span>
+            <h3>Event brief</h3>
+            <p>
+              Validate facts and counts. The Java backend allocates photos and
+              saves their assignments so a model cannot swap the original
+              sources.
+            </p>
+          </li>
+          <li>
+            <span>2</span>
+            <h3>Parallel preparation</h3>
+            <p>
+              Create the shared campaign outline and channel-specific captions
+              independently.
+            </p>
+          </li>
+          <li>
+            <span>3</span>
+            <h3>Per-frame planning</h3>
+            <p>
+              Inspect all logos and only the assigned photo. Plan that frame’s
+              contribution to the story.
+            </p>
+          </li>
+          <li>
+            <span>4</span>
+            <h3>Image generation</h3>
+            <p>
+              Send the frame plan and those same original references. Keep the
+              paid result for preview.
+            </p>
+          </li>
+          <li>
+            <span>5</span>
+            <h3>Human approval</h3>
+            <p>
+              Edit captions, revise individual images and approve every item.
+              Export after approval.
+            </p>
+          </li>
+        </ol>
+        <details class="technical-note">
+          <summary>
+            Technical direction for Java and JavaScript students
+          </summary>
+          <p>
+            Java owns permissions, database access, file access, AI requests,
+            generation status, approvals and export from the MVP. Spring Boot
+            and PostgreSQL are recommended. Provide a database schema,
+            migrations, documented API and database integration tests.
+            JavaScript provides the interface and previews. GitHub Pages cannot
+            run the backend or database. Use mocked AI responses, never paid
+            keys in CI.
+          </p>
+        </details>
+      </section>
+      <section class="section" id="acceptance">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">04 / DEFINITION OF DONE</p>
+            <h2>Show behavior,<br />not just screens.</h2>
+          </div>
+          <p>
+            Use these scenarios in the demo. The complete specification contains
+            numbered acceptance cases for both releases.
+          </p>
+        </div>
+        <div class="acceptance-grid">
+          <article>
+            <span>MVP / CONTENT</span>
+            <h3>The request matches the pack</h3>
+            <p>
+              Demonstrate independent counts, both post languages, correct
+              dimensions, ordered frames and one shared caption per post.
+            </p>
+          </article>
+          <article>
+            <span>MVP / ORIGINAL ASSETS</span>
+            <h3>Every source has a purpose</h3>
+            <p>
+              With 3 photos and 6 Instagram frames, use each photo once and make
+              the rest information-only. Every frame includes all logos. Review
+              people and logo fidelity.
+            </p>
+          </article>
+          <article>
+            <span>MVP / REVIEW & COST</span>
+            <h3>A revision affects one image</h3>
+            <p>
+              Revise one frame without rerunning the campaign. Edit text without
+              an API call. ZIP becomes available only after all content is
+              approved.
+            </p>
+          </article>
+          <article>
+            <span>MVP / DATABASE + RECOVERY</span>
+            <h3>One failure does not erase success</h3>
+            <p>
+              Restart the Java service and reopen the project on another device:
+              history remains. Simulate one failed image request; preserve
+              successful results and retry only deliberately.
+            </p>
+          </article>
+          <article>
+            <span>FULL PRODUCT / COLLABORATION</span>
+            <h3>A team can trust its library</h3>
+            <p>
+              Open the same project on another device. Verify role permissions,
+              protected file access, conflict handling, durable history and
+              backup restoration.
+            </p>
+          </article>
+          <article>
+            <span>FULL PRODUCT / PROMPTS + OPTIONAL DRIVE</span>
+            <h3>Drive and prompts are controlled</h3>
+            <p>
+              Publish and roll back a prompt as admin; prove an editor cannot do
+              it. If the Drive extension is chosen, select a folder and recover
+              from revoked access without regenerating content.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section class="section delivery-section" id="delivery">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">05 / IMPLEMENTATION MILESTONES</p>
+            <h2>Build in useful increments.</h2>
+          </div>
+        </div>
+        <ol class="milestones">
+          <li>
+            <strong>Understand the organizer</strong>
+            <p>
+              Agree on the workflow, MVP scope, acceptance examples and cost
+              expectations.
+            </p>
+          </li>
+          <li>
+            <strong>Deliver one vertical slice</strong>
+            <p>
+              Java service + database, one persisted project, one
+              format/language, preview, approval and ZIP. Develop with fake
+              assets and provider mocks.
+            </p>
+          </li>
+          <li>
+            <strong>Finish and verify the MVP</strong>
+            <p>
+              Add counts, languages, photo allocation, per-frame planning,
+              revisions, database-backed history and failure recovery. Verify
+              persistence after a backend restart.
+            </p>
+          </li>
+          <li>
+            <strong>Hand over, then expand</strong>
+            <p>
+              Document setup and limits. Measure time to an approved pack and
+              actual cost. Extend the existing database and backend with the
+              team library and prompt administration. Add Drive only if
+              selected.
+            </p>
+          </li>
+        </ol>
+        <div class="release-note">
+          <strong>Not in this assignment:</strong> automatic social publishing,
+          video generation, subscriptions, unattended bulk campaigns and
+          analytics dashboards, unless separately agreed.
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <a href="studio/">Open the visual Studio example ↗</a
+      ><a href="docs/PRODUCT_REQUIREMENTS.md"
+        >Complete product requirements ↗</a
+      ><span>NIX / CREATIVE AUTOMATION</span>
+    </footer>
+  </body>
 </html>

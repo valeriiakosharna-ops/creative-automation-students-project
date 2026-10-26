@@ -19,6 +19,7 @@ test("live research sends only public format/date context, bounds search cost an
     assert.equal(body.max_tool_calls, 1);
     assert.equal(body.store, false);
     assert.equal(body.tools[0].type, "web_search");
+    assert.equal(body.text, undefined);
     assert.ok(!options.body.includes("test-key"));
     return Response.json(searchResult());
   });

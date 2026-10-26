@@ -15,15 +15,6 @@
   </head>
   <body>
     <main id="pages-signin" class="pages-signin" hidden>
-      <label class="ui-language"
-        >Interface language<select
-          data-ui-language
-          aria-label="Interface language"
-        >
-          <option value="en">English</option>
-          <option value="uk">Українська</option>
-        </select></label
-      >
       <img src="./logo.svg" alt="NIX" width="100" height="56" />
       <p class="eyebrow">CREATIVE AUTOMATION / YOUR LOCAL STUDIO</p>
       <h1>Your ideas.<br />Your creative space.</h1>
@@ -37,7 +28,7 @@
       <button id="google-signout" class="button secondary" hidden>
         Sign out / change account
       </button>
-      <p id="signin-status" role="status">Preparing sign-in…</p>
+      <p id="signin-status" role="status">Getting Studio ready…</p>
       <p class="small-note">
         The application code is public. Google access checks protect the private
         access directory; they do not make GitHub Pages private or remotely
@@ -103,15 +94,6 @@
               ><strong id="current-project-name">Loading…</strong>
             </div>
             <div class="topbar-actions">
-              <label class="ui-language"
-                >Interface language<select
-                  data-ui-language
-                  aria-label="Interface language"
-                >
-                  <option value="en">English</option>
-                  <option value="uk">Українська</option>
-                </select></label
-              >
               <button id="sign-out" class="button secondary" hidden>
                 Sign out
               </button>
@@ -130,9 +112,12 @@
             <section id="editor-view">
               <div class="page-heading">
                 <div>
-                  <p class="eyebrow">LESS REPETITION. MORE CREATION.</p>
-                  <h1>One event.<br /><span>Every feed.</span></h1>
-                  <p>Your assets, your brand, a content pack ready to share.</p>
+                  <p class="eyebrow">YOUR NEXT CAMPAIGN</p>
+                  <h1>Create your<br /><span>content pack.</span></h1>
+                  <p>
+                    Add your event, choose your formats, then review every
+                    result.
+                  </p>
                 </div>
                 <div class="heading-actions">
                   <button id="example-button" class="button secondary">
@@ -145,10 +130,18 @@
                   </div>
                 </div>
               </div>
+              <nav class="workflow-steps" aria-label="Create a content pack">
+                <a href="#event-details"><span>1</span> Event details</a>
+                <a href="#brand-assets"><span>2</span> Brand &amp; photos</a>
+                <a href="#output-options"
+                  ><span>3</span> Formats &amp; languages</a
+                >
+                <a href="#pack-summary"><span>4</span> Review &amp; generate</a>
+              </nav>
               <form id="campaign-form">
                 <div class="editor-grid">
                   <div class="form-panels">
-                    <section class="panel">
+                    <section class="panel" id="event-details">
                       <div class="panel-heading">
                         <span class="step-number">01</span>
                         <div>
@@ -176,7 +169,7 @@
                           maxlength="2000"
                           rows="3"
                           required
-                          placeholder="Tell us about the event, who it is for, and why they should join."
+                          placeholder="Describe the event, its audience, and the information they need."
                         ></textarea>
                       </div>
                       <div class="schedule-block">
@@ -272,9 +265,11 @@
                           id="direction"
                           name="direction"
                           maxlength="300"
-                          placeholder="Confident, academic, bright. An invitation to build together."
+                          placeholder="Light, modern, editorial. Consistent colors and natural photo placement."
                         /><small
-                          >In Pages AI mode, OpenAI designs the full image with your logos, palette and shared campaign identity. Template mode stays local.</small
+                          >In Pages AI mode, OpenAI designs the full image with
+                          your logos, palette and shared campaign identity.
+                          Template mode stays local.</small
                         >
                       </div>
                       <div class="field">
@@ -282,11 +277,11 @@
                           >Language of the original brief</label
                         ><select id="sourceLanguage" name="sourceLanguage">
                           <option value="en">English</option>
-                          <option value="uk">Українська</option>
+                          <option value="uk">Ukrainian</option>
                         </select>
                       </div>
                     </section>
-                    <section class="panel">
+                    <section class="panel" id="brand-assets">
                       <div class="panel-heading">
                         <span class="step-number">02</span>
                         <div>
@@ -378,7 +373,7 @@
                         </div>
                       </fieldset>
                     </section>
-                    <section class="panel">
+                    <section class="panel" id="output-options">
                       <div class="panel-heading">
                         <span class="step-number">03</span>
                         <div>
@@ -390,110 +385,136 @@
                         </div>
                       </div>
                       <fieldset class="format-options">
-                        <legend>Where will it go? <span>*</span></legend>
-                        <div class="choice-grid">
-                          <label
-                            ><input
-                              type="checkbox"
-                              name="formats"
-                              value="instagram_post"
-                              checked
-                            /><span
-                              ><b>◎</b><strong>Instagram post</strong
-                              ><small>1080 × 1080</small></span
-                            ></label
-                          ><label
-                            ><input
-                              type="checkbox"
-                              name="formats"
-                              value="instagram_story"
-                            /><span
-                              ><b>▯</b><strong>Instagram story</strong
-                              ><small>1080 × 1920</small></span
-                            ></label
-                          ><label
-                            ><input
-                              type="checkbox"
-                              name="formats"
-                              value="facebook"
-                            /><span
-                              ><b>f</b><strong>Facebook</strong
-                              ><small>1200 × 630</small></span
-                            ></label
-                          ><label
-                            ><input
-                              type="checkbox"
-                              name="formats"
-                              value="google_chat"
-                            /><span
-                              ><b>G</b><strong>Google Chat</strong
-                              ><small>1200 × 675</small></span
-                            ></label
-                          >
-                        </div>
-                      </fieldset>
-                      <fieldset class="quantity-options">
-                        <legend>How many visuals for each format?</legend>
+                        <legend>
+                          Choose formats and frame counts <span>*</span>
+                        </legend>
                         <p class="input-help">
-                          Counts apply to each selected post language. Maximum
-                          24 visuals in one pack. Multiple visuals form one
-                          carousel with a shared caption, or a connected Story
-                          sequence.
+                          The count applies to each selected language. One
+                          caption covers all frames of a post. Up to 24 visuals
+                          per pack.
                         </p>
-                        <div class="quantity-grid">
-                          <div class="quantity-item">
-                            <label for="quantity-instagram_post"
-                              >Instagram post</label
-                            ><input
-                              id="quantity-instagram_post"
-                              name="quantity-instagram_post"
-                              type="number"
-                              min="1"
-                              max="10"
-                              step="1"
-                              value="1"
-                              inputmode="numeric"
-                            />
+                        <div class="format-picker">
+                          <div class="format-option quantity-item">
+                            <label class="format-choice"
+                              ><input
+                                type="checkbox"
+                                name="formats"
+                                value="instagram_post"
+                                checked
+                              />
+                              <span
+                                ><b aria-hidden="true">IG</b
+                                ><strong>Instagram post</strong
+                                ><small
+                                  >Square carousel · 1080 × 1080</small
+                                ></span
+                              >
+                            </label>
+                            <div class="frame-count">
+                              <label for="quantity-instagram_post"
+                                >Frames per language</label
+                              ><input
+                                id="quantity-instagram_post"
+                                name="quantity-instagram_post"
+                                type="number"
+                                min="1"
+                                max="10"
+                                step="1"
+                                value="1"
+                                inputmode="numeric"
+                              />
+                            </div>
                           </div>
-                          <div class="quantity-item">
-                            <label for="quantity-instagram_story"
-                              >Instagram story</label
-                            ><input
-                              id="quantity-instagram_story"
-                              name="quantity-instagram_story"
-                              type="number"
-                              min="1"
-                              max="10"
-                              step="1"
-                              value="1"
-                              inputmode="numeric"
-                            />
+                          <div class="format-option quantity-item">
+                            <label class="format-choice"
+                              ><input
+                                type="checkbox"
+                                name="formats"
+                                value="instagram_story"
+                              />
+                              <span
+                                ><b aria-hidden="true">IG</b
+                                ><strong>Instagram story</strong
+                                ><small
+                                  >Connected vertical series · 1080 ×
+                                  1920</small
+                                ></span
+                              >
+                            </label>
+                            <div class="frame-count">
+                              <label for="quantity-instagram_story"
+                                >Frames per language</label
+                              ><input
+                                id="quantity-instagram_story"
+                                name="quantity-instagram_story"
+                                type="number"
+                                min="1"
+                                max="10"
+                                step="1"
+                                value="1"
+                                inputmode="numeric"
+                              />
+                            </div>
                           </div>
-                          <div class="quantity-item">
-                            <label for="quantity-facebook">Facebook</label
-                            ><input
-                              id="quantity-facebook"
-                              name="quantity-facebook"
-                              type="number"
-                              min="1"
-                              max="10"
-                              step="1"
-                              value="1"
-                              inputmode="numeric"
-                            />
+                          <div class="format-option quantity-item">
+                            <label class="format-choice"
+                              ><input
+                                type="checkbox"
+                                name="formats"
+                                value="facebook"
+                              />
+                              <span
+                                ><b aria-hidden="true">f</b
+                                ><strong>Facebook</strong
+                                ><small
+                                  >Landscape post · 1200 × 630</small
+                                ></span
+                              >
+                            </label>
+                            <div class="frame-count">
+                              <label for="quantity-facebook"
+                                >Frames per language</label
+                              ><input
+                                id="quantity-facebook"
+                                name="quantity-facebook"
+                                type="number"
+                                min="1"
+                                max="10"
+                                step="1"
+                                value="1"
+                                inputmode="numeric"
+                              />
+                            </div>
                           </div>
-                          <div class="quantity-item">
-                            <label for="quantity-google_chat">Google Chat</label
-                            ><input
-                              id="quantity-google_chat"
-                              name="quantity-google_chat"
-                              type="number"
-                              min="1"
-                              max="10"
-                              step="1"
-                              value="1"
-                              inputmode="numeric"
-                            />
+                          <div class="format-option quantity-item">
+                            <label class="format-choice"
+                              ><input
+                                type="checkbox"
+                                name="formats"
+                                value="google_chat"
+                              />
+                              <span
+                                ><b aria-hidden="true">G</b
+                                ><strong>Google Chat</strong
+                                ><small
+                                  >Internal announcement · 1200 × 675</small
+                                ></span
+                              >
+                            </label>
+                            <div class="frame-count">
+                              <label for="quantity-google_chat"
+                                >Frames per language</label
+                              ><input
+                                id="quantity-google_chat"
+                                name="quantity-google_chat"
+                                type="number"
+                                min="1"
+                                max="10"
+                                step="1"
+                                value="1"
+                                inputmode="numeric"
+                              />
+                            </div>
                           </div>
                         </div>
                       </fieldset>
@@ -514,29 +535,29 @@
                               type="checkbox"
                               name="languages"
                               value="uk"
-                            /><span><b>UA</b> Українська</span></label
+                            /><span><b>UA</b> Ukrainian</span></label
                           >
                         </div>
                       </fieldset>
                       <div class="field-row">
-                        <div class="field">
+                        <div class="field bulk-count">
                           <label for="variants"
-                            >Set the same count for all formats</label
+                            >Quick count for all formats</label
                           ><select name="variants" id="variants">
-                            <option value="1">1 variant</option>
-                            <option value="2">2 variants</option>
-                            <option value="3">3 variants</option>
-                            <option value="4">4 variants</option>
-                            <option value="5">5 variants</option>
-                            <option value="6">6 variants</option>
-                            <option value="7">7 variants</option>
-                            <option value="8">8 variants</option>
-                            <option value="9">9 variants</option>
-                            <option value="10">10 variants</option>
+                            <option value="1">1 frame</option>
+                            <option value="2">2 frames</option>
+                            <option value="3">3 frames</option>
+                            <option value="4">4 frames</option>
+                            <option value="5">5 frames</option>
+                            <option value="6">6 frames</option>
+                            <option value="7">7 frames</option>
+                            <option value="8">8 frames</option>
+                            <option value="9">9 frames</option>
+                            <option value="10">10 frames</option>
                           </select>
                         </div>
                         <div class="field">
-                          <label for="generation-mode">Copy generation</label
+                          <label for="generation-mode">Generation mode</label
                           ><select name="mode" id="generation-mode">
                             <option value="template">
                               Template · no API key needed
@@ -546,6 +567,21 @@
                             </option>
                           </select>
                         </div>
+                      </div>
+                      <div class="field" id="live-research-field" hidden>
+                        <label
+                          ><input
+                            type="checkbox"
+                            id="live-research"
+                            name="liveResearch"
+                          />
+                          Research current writing trends · extra paid
+                          request</label
+                        >
+                        <small
+                          >Optional and off by default. Per-frame planning and
+                          image generation work without web search.</small
+                        >
                       </div>
                       <p class="mode-note" id="mode-note">
                         Template mode uses your supplied wording, with
@@ -580,7 +616,7 @@
                               id="titleUk"
                               name="titleUk"
                               maxlength="80"
-                              placeholder="Назва події українською"
+                              placeholder="Event title in Ukrainian"
                             /><label for="descriptionUk"
                               >Ukrainian description</label
                             ><textarea
@@ -604,7 +640,7 @@
                   <aside class="pack-panel">
                     <div class="pack-sticky">
                       <div class="pack-header">
-                        <span class="eyebrow">A PREVIEW OF WHAT’S NEXT</span
+                        <span class="eyebrow">TEMPLATE LAYOUT PREVIEW</span
                         ><span class="preview-dot"></span>
                       </div>
                       <div class="visual-preview" id="visual-preview">
@@ -626,16 +662,13 @@
                         Add a logo and event details to preview your first
                         visual.
                       </p>
-                      <a class="applied-guide" href="./style-guide/index.html">
-                        Creative inspiration →
-                      </a>
-                      <div class="pack-summary">
+                      <div class="pack-summary" id="pack-summary">
                         <h2>
                           Your content pack <span id="output-count">0</span>
                         </h2>
                         <dl>
                           <div>
-                            <dt>Formats</dt>
+                            <dt>Selected formats</dt>
                             <dd id="format-count">1</dd>
                           </div>
                           <div>
@@ -643,11 +676,11 @@
                             <dd id="language-count">Choose below</dd>
                           </div>
                           <div>
-                            <dt>With photos</dt>
+                            <dt>Photo-based frames</dt>
                             <dd id="photo-count">0</dd>
                           </div>
                           <div>
-                            <dt>Information-only</dt>
+                            <dt>Information-only frames</dt>
                             <dd id="info-count">0</dd>
                           </div>
                           <div>
@@ -655,6 +688,11 @@
                             <dd>ZIP archive</dd>
                           </div>
                         </dl>
+                        <p
+                          class="pack-total"
+                          id="pack-total"
+                          aria-live="polite"
+                        ></p>
                         <p>
                           Each format and language has one shared post caption.
                           Its ordered PNGs form a carousel or a Story sequence.
@@ -717,7 +755,7 @@
                   <select id="result-filter">
                     <option value="all">All outputs</option>
                     <option value="en">English</option>
-                    <option value="uk">Українська</option>
+                    <option value="uk">Ukrainian</option>
                   </select></label
                 >
                 <p>
@@ -740,6 +778,18 @@
               <div id="output-grid" class="output-grid"></div>
               <details class="run-details">
                 <summary>Original brief & generation details</summary>
+                <p>
+                  Paid text responses are saved locally before processing.
+                  Inspect or download them without calling AI again.
+                </p>
+                <button
+                  type="button"
+                  id="download-ai-responses"
+                  class="button secondary"
+                  hidden
+                >
+                  Download saved AI responses
+                </button>
                 <pre id="run-details-json"></pre>
               </details>
             </section>

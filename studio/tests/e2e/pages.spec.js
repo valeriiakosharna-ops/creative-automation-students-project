@@ -55,7 +55,7 @@ async function loadExample(page) {
 }
 async function mockOpenAI(
   page,
-  { key, failVisualOnce, holdCopyUntilImage = false, longPost = false } = {},
+  { key, failVisualOnce, holdCopyUntilImage = false, longPost = false, imperfectPlan = false, missingPost = false } = {},
 ) {
   const state = {
     text: [],
@@ -96,12 +96,12 @@ async function mockOpenAI(
         await route.fulfill({ json: { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({
           headline: input.frame.headline, subheading: input.frame.subheading, cta: "",
           photoSummary: input.photoAvailable ? "The original event photograph, with only its existing people." : "",
-          visualPlan: { layout: "An organic light composition", direction: "Light background, original references only, no added people, no CTA." },
+          visualPlan: imperfectPlan ? null : { layout: "An organic light composition", direction: "Light background, original references only, no added people, no CTA." },
         }) } }] } });
         return;
       }
       state.text.push({ stage, input });
-      const posts = input.posts.map((post) =>
+      let posts = input.posts.map((post) =>
         stage === "social_posts"
           ? {
               id: post.id,
@@ -133,6 +133,8 @@ async function mockOpenAI(
                 })),
             },
       );
+      if (missingPost && stage === "social_posts") posts = posts.slice(0, -1);
+      if (imperfectPlan && stage === "visual_storyboard") posts = posts.map((post, index) => ({ ...post, id: `provider-post-${index}`, visuals: post.visuals.map((visual, frameIndex) => ({ ...visual, id: `provider-frame-${frameIndex}`, visualPlan: { role: "free-form-role", layout: null, direction: visual.visualPlan.direction } })) }));
       const fulfill = async () => {
         if (stage === "visual_storyboard") state.plannerDone = true;
         else state.copyDone = true;
@@ -343,7 +345,7 @@ test("a Pages build refuses to open when runtime settings fail to load", async (
   );
 });
 
-test("bilingual review, distinct frame counts, parallel text/planning, original image references and paid feedback revisions", async ({
+test("English interface, bilingual post review, distinct frame counts, parallel text/planning, original image references and paid feedback revisions", async ({
   page,
 }, testInfo) => {
   const errors = [];
@@ -351,11 +353,8 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
   await pagesFixture(page);
   await login(page);
   await loadExample(page);
-  const language = page.locator(".topbar [data-ui-language]");
-  await language.selectOption("uk");
-  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
-  await expect(page.locator("#generate-button")).toContainText("Створити");
-  await language.selectOption("en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("[data-ui-language]")).toHaveCount(0);
   for (const input of await page
     .locator('[name="formats"], [name="languages"]')
     .all())
@@ -456,11 +455,9 @@ test("bilingual review, distinct frame counts, parallel text/planning, original 
   await expect(page.locator("#history-list button")).toHaveCount(3);
   await page.locator(".output-card").nth(1).locator(".approve-visual").click();
   await expect(page.locator("#download-zip")).toBeEnabled();
-  await language.selectOption("uk");
   await expect(page.locator(".post-copy-editor").first()).toHaveValue(
     "A shared, reviewed carousel caption.",
   );
-  await language.selectOption("en");
   const download = page.waitForEvent("download");
   await page.locator("#download-zip").click();
   const archive = await download,
@@ -723,4 +720,59 @@ test("AI output fills the canvas without borders, a second logo block or layout 
     [129, 208, 244, 255],
     [129, 208, 244, 255],
   ]);
+});
+
+test("nonstandard plan IDs and optional fields keep paid results, per-frame planning and source bindings", async ({ page }, testInfo) => {
+  await pagesFixture(page); await login(page); await loadExample(page);
+  await page.locator("#connect-key").click();
+  await page.locator("#openai-key").fill("test-preserved-response-key");
+  await page.locator("#save-connection").click();
+  const requests = await mockOpenAI(page, { imperfectPlan: true });
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
+  await expect(page.locator(".output-image")).toHaveCount(4);
+  expect(requests.framePlans).toHaveLength(4);
+  expect(requests.images).toHaveLength(4);
+  expect(requests.text).toHaveLength(2);
+  expect(requests.research).toHaveLength(0);
+  const details = JSON.parse(await page.locator("#run-details-json").textContent());
+  expect(details.aiResponses).toHaveLength(6);
+  expect(JSON.stringify(details.aiResponses)).not.toContain("test-preserved-response-key");
+  expect(details.outputs.map((output) => output.id)).toEqual(["instagram_post-en-1", "instagram_post-uk-1", "facebook-en-1", "facebook-uk-1"]);
+  await page.locator(".run-details summary").click();
+  const pending = page.waitForEvent("download");
+  await page.locator("#download-ai-responses").click();
+  const saved = await pending; const path = testInfo.outputPath("saved-ai-responses.json");
+  await saved.saveAs(path);
+  expect(JSON.parse(await readFile(path, "utf8"))).toHaveLength(6);
+  await approvePack(page);
+});
+
+test("a missing caption is editable without discarding available posts or repeating AI calls", async ({ page }) => {
+  await pagesFixture(page); await login(page); await loadExample(page);
+  await page.locator("#connect-key").click(); await page.locator("#openai-key").fill("test-partial-copy-key"); await page.locator("#save-connection").click();
+  const requests = await mockOpenAI(page, { missingPost: true });
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#run-mode-label")).toContainText("PARTIAL", { timeout: 45000 });
+  await expect(page.locator(".output-image")).toHaveCount(4);
+  await expect(page.locator(".post-copy-editor").first()).not.toHaveValue("");
+  await page.locator(".post-copy-editor").last().fill("A manually completed post with the original event facts.");
+  await page.locator(".approve-post").last().click();
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED");
+  await approvePack(page);
+  expect(requests.text).toHaveLength(2); expect(requests.framePlans).toHaveLength(4); expect(requests.images).toHaveLength(4);
+});
+
+test("an optional web-search HTTP 400 does not block frame planning, captions or images", async ({ page }) => {
+  await pagesFixture(page); await login(page); await loadExample(page);
+  await page.locator("#connect-key").click(); await page.locator("#openai-key").fill("test-optional-research-key"); await page.locator("#save-connection").click();
+  const requests = await mockOpenAI(page); let searches = 0;
+  await page.route("https://api.openai.com/v1/responses", async (route) => { searches++; await route.fulfill({ status: 400, json: { error: { code: "unsupported_parameter", param: "text.format", message: "PRIVATE provider details" } } }); });
+  await page.locator("#live-research").check();
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
+  await expect(page.locator(".research-note")).toContainText("unavailable");
+  await expect(page.locator(".output-image")).toHaveCount(4);
+  expect(searches).toBe(1); expect(requests.images).toHaveLength(4); expect(requests.framePlans).toHaveLength(4);
+  await expect(page.locator("#run-details-json")).not.toContainText("PRIVATE provider details");
 });

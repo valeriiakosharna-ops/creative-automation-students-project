@@ -64,7 +64,7 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
     .locator('[name="languages"], [name="formats"]')
     .all())
     await checkbox.check();
-  await page.locator("#variants").selectOption("2");
+  for (const input of await page.locator(".frame-count input:enabled").all()) await input.fill("2");
   await expect(page.locator("#output-count")).toHaveText("16");
   await expect(page.locator("#photo-count")).toHaveText("6");
   await generate(page);
@@ -159,7 +159,7 @@ test("real PNGs, all logos, multilingual per-channel copy, unique photo use, ZIP
     await cb.uncheck();
   await page.locator('[name="formats"][value="facebook"]').check();
   await page.locator('[name="languages"][value="uk"]').uncheck();
-  await page.locator("#variants").selectOption("1");
+  for (const input of await page.locator(".frame-count input:enabled").all()) await input.fill("1");
   await generate(page);
   await expect(page.locator("#history-list button")).toHaveCount(2);
   await page.locator("#history-list button").nth(1).click();
@@ -285,7 +285,7 @@ test("AI response is used for visuals/captions, cancellation and interrupted-run
   await page.locator("#generation-mode").selectOption("template");
   for (const cb of await page.locator('[name="formats"]').all())
     await cb.check();
-  await page.locator("#variants").selectOption("3");
+  for (const input of await page.locator(".frame-count input:enabled").all()) await input.fill("3");
   await page.locator("#generate-button").click();
   await expect(page.locator("#generation-progress")).toBeVisible();
   await page.locator("#cancel-generation").click();
@@ -373,7 +373,7 @@ test("hosted Studio needs only a visit key, ignores old backend settings, and ne
   let calls = 0;
   await page.route("**/api/copy", async (route) => {
     calls++;
-    expect(new URL(route.request().url()).origin).toBe("http://127.0.0.1:4173");
+    expect(new URL(route.request().url()).origin).toBe(new URL(page.url()).origin);
     expect(route.request().headers()["x-openai-key"]).toBe(key);
     expect(route.request().postData()).not.toContain(key);
     const request = route.request().postDataJSON();
