@@ -16,7 +16,7 @@ Public web research at generation time can refine writing advice. Its date and a
 
 ## Handoff
 
-Choose the desired style, palette, logos and photos in Studio. The planner stores one shared `campaignStyle` and narrative frames; the image model receives those suggestions and original references, without the old hard style policy. Each photo is assigned at most once per network across languages/Instagram formats. Extra frames are information-led. Preview, revise and approve every visual and caption before ZIP. New AI packs include `creative-direction.json`, sources in the manifest and the ordered content. Source files and visit keys are excluded.
+Choose the desired style, palette, logos and photos in Studio. The planner stores one shared `campaignStyle` and narrative frames; the image model receives those suggestions and original references, without the old hard style policy. Each photo is assigned at most once per network and language; English and Ukrainian versions may reuse the originals, while Instagram formats share a pool within each language. Extra frames are information-led. Preview, revise and approve every visual and caption before ZIP. New AI packs include `creative-direction.json`, sources in the manifest and the ordered content. Source files and visit keys are excluded.
 
 See [Studio quickstart](../studio/QUICKSTART.md) and [versioned prompts](../studio/src/prompts/README.md). Defaults use GPT Image 2.5 Flare at high quality; a local finalizer only resizes the whole image to the destination dimensions. It adds no white border, fixed layout or logos.
 

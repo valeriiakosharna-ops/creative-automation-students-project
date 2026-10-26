@@ -109,7 +109,7 @@ JSON field order may differ. `aiConfigured: true` means a nonempty key was loade
 5. Create the content pack. Inspect the visual, matching caption and applied style-guide version.
 6. Download the ZIP and check the PNG, text, `manifest.json` and `style-guide.json`.
 
-All logos appear on every visual. Photo reuse is limited to once per social network/run across languages and variants. Extra outputs are information-only. Text-only event data is sent to the AI provider; original logos/photos stay in your browser.
+All logos appear on every visual. Photo reuse is limited to once per social network/language/run. English and Ukrainian versions may each use the same original photo once. Extra outputs are information-only. Text-only event data is sent to the AI provider; original logos/photos stay in your browser.
 
 AI drafts and translations use the shared style policy. Visuals are composed locally from your original assets; the MVP does not synthesize new photos. Keep the final human review before publication.
 

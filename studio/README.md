@@ -27,9 +27,9 @@ The optional [corporate Java deployment](../DEPLOYMENT.md) remains available for
 
 In Pages AI mode every original logo is supplied as a reference and requested once in the model-designed composition. The app does not redraw, append or duplicate logos after generation. Check logo spelling, identity and completeness before approval: a generative model cannot guarantee pixel-exact reproduction. Offline Template mode still composites originals locally.
 
-A photo is used **at most once per social network per run**, across formats, variants and languages. Instagram post and story share one network pool. Photos can be used again on a different network or a new run. Allocation follows selected format order, then language order, then variant number. Photos are not repeated to fill the requested count: remaining outputs are information-only designs, still including all logos. Assignments are recorded in `manifest.json`.
+A photo is used **at most once per social network and language per run**, across formats and frames. English and Ukrainian versions each get their own pool of the original photos. Instagram post and story share a pool within each language. Photos can be used again on a different network or a new run. Allocation follows selected format order, then language order, then variant number. Photos are not repeated to fill the requested count: remaining outputs are information-only designs, still including all logos. Assignments are recorded in `manifest.json`.
 
-Example: 2 photos + Instagram post and story + 2 languages + 2 variants = 8 Instagram outputs. Exactly 2 have a photo and 6 are information-only. Selecting Facebook as well starts a separate photo pool for Facebook.
+Example: 2 photos + Instagram post and story + 2 languages + 2 variants = 8 Instagram outputs. Exactly 4 have a photo (2 per language) and 4 are information-only. Selecting Facebook as well starts a separate photo pool for Facebook.
 
 ### Copy modes
 
@@ -88,7 +88,7 @@ No live credentials/API spend is used in tests. Real Google sign-in and OpenAI a
 
 ### Light visuals, original references and informative endings
 
-The global outline creates a shared light campaign identity without pretending to see photos. `planner.js` allocates each uploaded photo at most once per network/run, including languages and Instagram formats; this binding is never model-controlled. Before EACH image request, `frame-planner.js` sends all original logos and exactly its assigned photo (or no photo) to a multimodal Chat Completions request. Planning previews are bounded to 1024 px for request size; original files go to image generation. Neither stage receives another frame's photo or a previous generated image. Returned content cannot replace source IDs, drop logos or alter approval state. The plan's photo/logo bindings are saved and checked before image generation.
+The global outline creates a shared light campaign identity without pretending to see photos. `planner.js` allocates each uploaded photo at most once per network/language/run, sharing the pool across Instagram formats within that language; this binding is never model-controlled. Before EACH image request, `frame-planner.js` sends all original logos and exactly its assigned photo (or no photo) to a multimodal Chat Completions request. Planning previews are bounded to 1024 px for request size; original files go to image generation. Neither stage receives another frame's photo or a previous generated image. Returned content cannot replace source IDs, drop logos or alter approval state. The plan's photo/logo bindings are saved and checked before image generation.
 
 All visual prompts prefer white, warm-white or pale brand-tint backgrounds. Dark colors are readable text/small accents. No fixed geometry is added. Photo frames must preserve only the existing people/scene from that original; information-only frames explicitly forbid people, faces, silhouettes, avatars, crowds and invented event scenes. These are model instructions and source restrictions, not a biometric identity verifier: inspect people and logos before approval.
 

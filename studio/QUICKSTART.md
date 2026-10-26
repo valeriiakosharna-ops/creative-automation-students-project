@@ -19,7 +19,7 @@ Four Instagram frames in two languages mean eight visuals and two captions. A ca
 ## What to check before approval
 
 - All uploaded logos appear correctly on every image.
-- A frame uses at most its assigned original photo. Each photo is used at most once per network/run, across languages; Instagram feed and Stories share that pool.
+- A frame uses at most its assigned original photo. Each photo is used at most once per network/language/run. English and Ukrainian versions may reuse it; Instagram feed and Stories share a pool within each language.
 - Frames without photos use information/abstract design and contain no invented people. Check that photo frames have no added or replaced people.
 - Designs use light backgrounds and a coherent campaign identity. Text is readable, factual and in the selected language, without an automatic promotional ending.
 

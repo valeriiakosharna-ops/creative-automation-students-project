@@ -1427,7 +1427,7 @@ $("#confirm-delete").addEventListener("click", async () => {
 for (const button of document.querySelectorAll(".close-dialog"))
   button.addEventListener("click", () => button.closest("dialog").close());
 function setSidebar(open) {
-  const mobile = window.matchMedia("(max-width:950px)").matches,
+  const mobile = window.matchMedia("(max-width:1200px)").matches,
     wasOpen = $("#sidebar").classList.contains("open");
   $("#sidebar").classList.toggle("open", open);
   $("#sidebar").inert = mobile && !open;
@@ -1442,7 +1442,7 @@ function setSidebar(open) {
   else if (mobile && wasOpen) $("#toggle-sidebar").focus();
 }
 window
-  .matchMedia("(max-width:950px)")
+  .matchMedia("(max-width:1200px)")
   .addEventListener("change", () => setSidebar(false));
 setSidebar(false);
 $("#toggle-sidebar").addEventListener("click", () =>

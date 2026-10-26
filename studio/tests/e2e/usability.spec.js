@@ -113,9 +113,17 @@ test("requirement demos explain counts, separate AI stages and Editor permission
   await page.goto("/brief/index.html");
   await page.locator("#count-demo summary").click();
   await expect(page.locator("#demo-count-summary")).toContainText(
-    "6 visuals · 2 shared captions · 2 photo frames · 4 information-only",
+    "6 visuals · 2 shared captions · 4 photo frames · 2 information-only",
   );
-  await expect(page.locator(".demo-frame.has-photo")).toHaveCount(2);
+  await expect(page.locator(".demo-frame.has-photo")).toHaveCount(4);
+  for (const group of await page.locator(".demo-language-group").all()) {
+    await expect(group.locator(".demo-frame.has-photo")).toHaveCount(2);
+    await expect(group.locator(".demo-frame span")).toHaveText([
+      "Photo 1",
+      "Photo 2",
+      "Information",
+    ]);
+  }
   await page.locator("#demo-languages").selectOption("1");
   await page.locator("#demo-frames").focus();
   await page.keyboard.press("Home");
