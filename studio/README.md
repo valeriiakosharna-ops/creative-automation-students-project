@@ -1,4 +1,4 @@
-# Creative Automation Studio — free Pages MVP
+# Creative Automation Studio — visual example
 
 A branded browser-based studio with Google sign-in, an owner-managed private Google access list, local per-account projects and ZIP exports. It runs on GitHub Pages with Firebase Spark for identity/access, within free quotas. No Render or local workstation tools are required; OpenAI API usage is billed separately.
 
@@ -102,4 +102,4 @@ Studio’s interface is English, independently of the required English/Ukrainian
 
 Paid Chat Completions text is recorded in the local run before parsing. Fenced or complete JSON is accepted even when the finish reason is nonstandard. Known IDs are matched first; a full ordered list with unknown IDs can be recovered positionally without changing local source IDs or approvals. Duplicate IDs are never assigned to a different requested item. Missing outline/style fields defer detail to the existing per-frame planner. A missing caption affects only that caption and remains manually editable. Raw responses are visible/downloadable in generation details; they are not added to approved ZIPs. HTTP errors expose only the endpoint, status and allowlisted codes/parameters, never raw provider messages. No automatic repair request is sent.
 
-The [numbered product requirements](../docs/PRODUCT_REQUIREMENTS.md) and [student brief](../index.html) require Java and database persistence in the student MVP, then add a team library and prompt administration in extended scope. Google Drive is optional. Studio is a visual example, not the required student backend architecture.
+The [student assignment](../docs/PRODUCT_REQUIREMENTS.md) and [student brief](../index.html) have one MVP scope: Java backend, database, shared library, roles, three AI request types, approvals and export. The full product adds UI editing of the three prompts by the Editor role and AI-based revisions of finished visuals/captions. Studio is a visual example; its existing architecture and feature mix do not define a separate student MVP.

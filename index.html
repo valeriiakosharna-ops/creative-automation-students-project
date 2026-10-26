@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta
       name="description"
-      content="Creative Automation student assignment: clear MVP and full-product requirements, workflow and acceptance criteria."
+      content="Creative Automation student assignment: one MVP, two full-product additions and concise implementation steps."
     />
     <meta name="theme-color" content="#00A6EB" />
-    <title>Creative Automation — Student Project</title>
+    <title>Creative Automation — Student Assignment</title>
     <link rel="icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
@@ -18,7 +18,7 @@
     <header class="site-header">
       <a href="#top" class="brand"
         ><img src="assets/logo.svg" width="72" height="42" alt="NIX" /><span
-          >creative automation<small>STUDENT PROJECT</small></span
+          >creative automation<small>STUDENT ASSIGNMENT</small></span
         ></a
       ><button
         class="menu-toggle"
@@ -29,673 +29,322 @@
         Menu
       </button>
       <nav id="main-nav" aria-label="Main navigation">
-        <a href="#mvp">MVP requirements</a
-        ><a href="#full-product">Full product</a
-        ><a href="#acceptance">Acceptance</a
-        ><a href="studio/" class="button small">Open Studio ↗</a>
+        <a href="#mvp">MVP</a><a href="#full-product">Full product</a
+        ><a href="#implementation">Implementation</a
+        ><a href="studio/" class="button">Open Studio</a>
       </nav>
     </header>
     <main id="main">
-      <section class="hero" id="top">
-        <div>
-          <p class="eyebrow">JAVA + JAVASCRIPT / PRODUCT ASSIGNMENT</p>
-          <h1>
-            One event.<br /><span>One coherent</span><br />content campaign.
-          </h1>
-          <p class="lead">
-            Build a workspace that turns an event brief, original logos and
-            photos into social visuals and captions. Let people review the
-            result, then export it.
-          </p>
-          <div class="hero-actions">
-            <a href="#mvp" class="button primary">Start with the MVP ↓</a
-            ><a href="docs/PRODUCT_REQUIREMENTS.md" class="text-link"
-              >Read the complete requirements ↗</a
-            >
-          </div>
-        </div>
-        <aside class="scope-card">
-          <span class="pill">THE PRODUCT IN ONE MINUTE</span>
-          <ol>
-            <li>
-              <b>01</b
-              ><span
-                >Describe the event<small
-                  >Facts, schedule and creative direction</small
-                ></span
-              >
-            </li>
-            <li>
-              <b>02</b
-              ><span
-                >Choose the content<small
-                  >Formats, languages and frame counts</small
-                ></span
-              >
-            </li>
-            <li>
-              <b>03</b
-              ><span
-                >Generate and refine<small
-                  >Original assets, coherent storytelling</small
-                ></span
-              >
-            </li>
-            <li>
-              <b>04</b
-              ><span
-                >Approve and export<small
-                  >Images + shared post text in a ZIP</small
-                ></span
-              >
-            </li>
-          </ol>
-          <p>
-            No automatic social publishing. People approve every image and
-            caption.
-          </p>
-        </aside>
-      </section>
-      <section class="context-strip" aria-label="Scope overview">
-        <div>
-          <strong>Primary users</strong>
-          <p>Event organizers and communications teams.</p>
-        </div>
-        <div>
-          <strong>MVP delivery</strong>
-          <p>
-            A Java backend, mandatory database, private projects and approved
-            ZIP packs.
-          </p>
-        </div>
-        <div>
-          <strong>Full-product delivery</strong>
-          <p>
-            A shared team library and prompt administration. Google Drive is
-            optional.
-          </p>
-        </div>
-      </section>
-      <section class="section" id="mvp">
+      <header class="brief-intro" id="top">
+        <p class="eyebrow">JAVA BACKEND + DATABASE</p>
+        <h1>Creative Automation</h1>
+        <p>
+          Build a Java-backed platform that turns an event brief and original
+          brand assets into approved social visuals and captions. Studio is a
+          visual reference only; its browser-based architecture is not the
+          student backend architecture.
+        </p>
+      </header>
+      <section id="mvp" aria-labelledby="mvp-title">
         <div class="section-heading">
-          <div>
-            <p class="eyebrow">01 / BUILD THIS FIRST</p>
-            <h2>A complete, useful MVP.</h2>
-          </div>
-          <p>
-            Build the backend in Java and persist product data in a database
-            from day one. Start with personal projects and ZIP delivery; team
-            collaboration comes later.
-          </p>
+          <span class="section-number">01</span>
+          <h2 id="mvp-title">MVP requirements</h2>
         </div>
-        <div class="release-note">
-          <strong>Studio is a visual example only.</strong> It demonstrates a
-          possible interface and user journey. Its browser storage and direct AI
-          calls are not the student architecture. Your MVP requires a Java
-          backend, database and protected server file access. Google Drive is
-          optional.
-        </div>
-        <div class="requirement-grid">
-          <article class="requirement-card">
-            <h3>Access &amp; projects</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-01</span
-                ><strong>Authenticated personal workspace</strong>
-                <p>
-                  Authenticate users and enforce project/file permissions in the
-                  Java backend. Start with personal projects and owner-managed
-                  product access.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-02</span
-                ><strong>Mandatory database and durable history</strong>
-                <p>
-                  A database is mandatory. Persist ownership, briefs, assets,
-                  runs, captions, approvals and versions. Work must survive
-                  refresh, another device and backend restarts.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>The event &amp; assets</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-03</span
-                ><strong>Complete event brief</strong>
-                <p>
-                  Require a title, description and schedule. Support a single
-                  date, range, date list or written schedule, with optional
-                  location, time and link.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-04</span><strong>Brand assets</strong>
-                <p>
-                  Upload 1–8 logos and up to 20 optional photos. Validate image
-                  type and size on the server; allow removal and palette
-                  selection.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>The content request</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-05</span
-                ><strong>Formats, languages and quantities</strong>
-                <p>
-                  Select Instagram feed/Stories, Facebook and Google Chat
-                  independently. Choose English, Ukrainian or both, and 1–10
-                  frames per format/language, up to 24 total.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-06</span
-                ><strong>One story, one shared caption</strong>
-                <p>
-                  Each format/language is one ordered post or Story sequence
-                  with one shared caption. Show visual and caption counts before
-                  generation.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Visual identity &amp; sources</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-07</span
-                ><strong>Original assets and people</strong>
-                <p>
-                  Every visual uses all logos and at most one assigned photo.
-                  Never repeat a photo within a network/run or request invented
-                  people. Extra frames are information-only.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-08</span
-                ><strong>Coherent creative direction</strong>
-                <p>
-                  Use light backgrounds, brand colors and a consistent campaign
-                  identity. Adapt layouts naturally by channel. No automatic
-                  promotional call to action.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Generation &amp; approval</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-09</span
-                ><strong>Backend AI orchestration</strong>
-                <p>
-                  Java orchestrates versioned campaign, caption and frame
-                  prompts. Each frame planner and image request receives all
-                  logos and only that frame’s assigned photo.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-10</span
-                ><strong>Review before export</strong>
-                <p>
-                  Preview everything. Edit shared captions without AI calls and request
-                  paid revisions per image. The server permits ZIP export only
-                  after every item is approved.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Delivery, costs &amp; privacy</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-11</span
-                ><strong>Useful ZIP delivery</strong>
-                <p>
-                  Deliver ordered PNGs, one text file per post/language,
-                  combined posts.txt and metadata. Exclude source uploads and
-                  credentials from the delivery ZIP.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-12</span
-                ><strong>Recoverable failures and visible costs</strong>
-                <p>
-                  Preserve successful results and paid planning responses after
-                  partial failures. Make retries explicit, show status and cost,
-                  and avoid blocking editorial length limits.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-13</span
-                ><strong>Provider keys and private data</strong>
-                <p>
-                  Keep service keys in protected backend configuration.
-                  Authorize project/file access and exclude credentials from
-                  frontend bundles, business data, logs and exports.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">MVP-14</span
-                ><strong>Practical post copy</strong>
-                <p>
-                  Adapt factual captions to each channel and language. Preserve
-                  full URLs. Suggested lengths guide writing; fresh trend claims
-                  require source-backed research.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Java backend &amp; API</h3>
-            <ul>
-              <li>
-                <span class="req-id">MVP-15</span
-                ><strong>A Java service with a clear API</strong>
-                <p>
-                  Build a Java backend with a documented API, server validation,
-                  database migrations and database integration tests. Studio is
-                  only a visual example.
-                </p>
-              </li>
-            </ul>
-          </article>
-        </div>
-        <div class="example-box">
-          <strong>A concrete request</strong>
-          <p>
-            4 Instagram feed frames + 2 Story frames × 2 languages =
-            <b>12 visuals and 4 shared captions.</b> Frames tell a connected
-            story; a caption belongs to the post, not to each frame.
-          </p>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <caption>
-              Supported output formats
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Format</th>
-                <th scope="col">PNG dimensions</th>
-                <th scope="col">Text</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Instagram post</td>
-                <td>1080 × 1080</td>
-                <td>One caption per carousel/language</td>
-              </tr>
-              <tr>
-                <td>Instagram Story</td>
-                <td>1080 × 1920</td>
-                <td>One accompanying message per sequence/language</td>
-              </tr>
-              <tr>
-                <td>Facebook</td>
-                <td>1200 × 630</td>
-                <td>One caption per ordered set/language</td>
-              </tr>
-              <tr>
-                <td>Google Chat</td>
-                <td>1200 × 675</td>
-                <td>One internal message per ordered set/language</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <section class="section full-section" id="full-product">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">02 / THE NEXT RELEASE</p>
-            <h2>From a personal tool<br />to a team product.</h2>
-          </div>
-          <p>
-            Extend the Java backend and database you already built. Add team
-            collaboration and administration. Google Drive is a separately
-            selectable extension, never a replacement for the database.
-          </p>
-        </div>
-        <div class="requirement-grid full-grid">
-          <article class="requirement-card">
-            <h3>Shared team workspace</h3>
-            <ul>
-              <li>
-                <span class="req-id">FULL-01</span
-                ><strong>Shared team library</strong>
-                <p>
-                  Extend the existing MVP database with project sharing and team
-                  membership, so colleagues use the same permitted library
-                  across devices.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-02</span
-                ><strong>Roles and project permissions</strong>
-                <p>
-                  Add owner, administrator, editor and viewer roles. Enforce a
-                  clear permission matrix for generation, editing, approval,
-                  export and administration.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-03</span
-                ><strong>A usable team library</strong>
-                <p>
-                  Provide searchable cards/lists, useful filters, tags,
-                  archive/restore and clear statuses. Keep each project’s brief,
-                  visuals, captions and history together.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Optional Google Drive extension</h3>
-            <ul>
-              <li>
-                <span class="req-id">FULL-04</span
-                ><strong
-                  >Google Drive connection and folder picker — optional</strong
+        <ul class="requirements">
+          <li>
+            <strong>Backend and storage</strong>
+            <p>
+              Build a Java backend with a database. Store users, projects,
+              briefs, files or file references, generation history, captions and
+              approvals on the server. Saved work must survive refresh and
+              service restarts.
+            </p>
+          </li>
+          <li>
+            <strong>Access and shared library</strong>
+            <p>
+              Provide sign-in, administrator-managed access and user roles. All
+              admitted colleagues can browse the shared project library,
+              search/filter projects and open their assets, results and history.
+              Enforce permissions in the backend.
+            </p>
+          </li>
+          <li>
+            <strong>Event brief</strong>
+            <p>
+              Collect the title, description, schedule, optional location/link,
+              visual direction and brand colors. Support one date, a range,
+              several dates or a written schedule. Allow uploading logos and
+              optional event photos.
+            </p>
+          </li>
+          <li>
+            <strong>Output selection</strong>
+            <p>
+              Support Instagram posts, Instagram Stories, Facebook and Google
+              Chat. Require English, Ukrainian or both. Set a separate frame
+              count for each format; show the total before generation. A
+              carousel or Story sequence has one shared caption per language.
+            </p>
+            <details class="mini-demo" id="count-demo">
+              <summary>Try it: frame counts and photo allocation</summary>
+              <p class="demo-note">
+                Instagram example. This demo makes no AI requests and saves
+                nothing.
+              </p>
+              <div class="demo-controls">
+                <label for="demo-frames"
+                  >Frames per language <output id="demo-frames-value">3</output
+                  ><input
+                    id="demo-frames"
+                    type="range"
+                    min="1"
+                    max="6"
+                    value="3"
+                /></label>
+                <label for="demo-languages"
+                  >Languages<select id="demo-languages">
+                    <option value="1">English</option>
+                    <option value="2" selected>English + Ukrainian</option>
+                  </select></label
                 >
-                <p>
-                  Optional: connect Google Drive and choose a writable
-                  destination folder per project/export. Show the selected
-                  folder and explain ownership.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-05</span
-                ><strong>Reliable Drive delivery — optional</strong>
-                <p>
-                  Optional: upload approved deliverables, save file IDs/links in
-                  the database and retry without duplicates. Keep ZIP available
-                  if Drive delivery fails.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-06</span
-                ><strong>Secure Drive credentials — optional</strong>
-                <p>
-                  Optional: protect OAuth callbacks and encrypted refresh
-                  tokens. Support disconnect/revocation and verify folder access
-                  before every delivery.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Administrator prompt tools</h3>
-            <ul>
-              <li>
-                <span class="req-id">FULL-07</span
-                ><strong>Administrator prompt editor</strong>
-                <p>
-                  Give administrators a prompt editor with variable checks,
-                  preview, explicit paid tests and publish/rollback. Keep access
-                  and source protections outside editable prompts.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-08</span
-                ><strong>Versioned prompt governance</strong>
-                <p>
-                  Record an immutable prompt version on each run. Audit changes;
-                  published edits affect new work without changing historical
-                  results.
-                </p>
-              </li>
-            </ul>
-          </article>
-          <article class="requirement-card">
-            <h3>Protected operations</h3>
-            <ul>
-              <li>
-                <span class="req-id">FULL-09</span
-                ><strong>Private managed generation</strong>
-                <p>
-                  Extend the Java service with organization-level credential
-                  management, role-based budgets, concurrency limits and cost
-                  reporting.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-10</span
-                ><strong>Durable jobs and collaboration</strong>
-                <p>
-                  Persist jobs, prevent duplicate submissions/exports and handle
-                  concurrent edits. Preserve earlier versions and reset approval
-                  when relevant content changes.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-11</span
-                ><strong>Private files and reliable operations</strong>
-                <p>
-                  Add retention policies, tested backups/restoration, protected
-                  file delivery, monitoring and audit records without secrets or
-                  confidential content in logs.
-                </p>
-              </li>
-              <li>
-                <span class="req-id">FULL-12</span
-                ><strong>Team onboarding and administration</strong>
-                <p>
-                  Provide team onboarding, access administration, usage
-                  visibility, ownership transfer and documented support and
-                  recovery procedures.
-                </p>
-              </li>
-            </ul>
-          </article>
-        </div>
-        <div class="example-box">
-          <strong
-            >Drive stores deliverables. The database organizes the
-            product.</strong
-          >
-          <p>
-            Keep project records, permissions, prompt versions, approval state
-            and export jobs in the database. Save file IDs and destination links
-            there. A Drive folder is not a replacement for a shared project
-            database.
-          </p>
-        </div>
+                <label for="demo-photos"
+                  >Uploaded photos <output id="demo-photos-value">2</output
+                  ><input
+                    id="demo-photos"
+                    type="range"
+                    min="0"
+                    max="6"
+                    value="2"
+                /></label>
+              </div>
+              <p id="demo-count-summary" class="demo-result" role="status"></p>
+              <div id="demo-frame-list"></div>
+              <p class="demo-note">
+                Each photo is used once across the network, including both
+                languages. Every frame includes all logos.
+              </p>
+            </details>
+          </li>
+          <li>
+            <strong>Three AI requests</strong>
+            <p>
+              Use exactly three prompt templates: a JSON visual plan, post text
+              generation and visual generation. Send them as separate API
+              requests. Planning and caption generation can run in parallel;
+              image generation uses the completed plan. Keep the templates in
+              backend files in the MVP.
+            </p>
+            <details class="mini-demo" id="pipeline-demo">
+              <summary>See it: three separate AI request types</summary>
+              <p class="demo-note">
+                A local timing simulation, not a real AI call.
+              </p>
+              <div class="demo-pipeline" aria-live="polite">
+                <div>
+                  <b>1. Visual plan</b
+                  ><span id="demo-plan-status">Ready to start</span>
+                </div>
+                <div>
+                  <b>2. Post text</b
+                  ><span id="demo-copy-status">Ready to start</span>
+                </div>
+                <div>
+                  <b>3. Visuals</b
+                  ><span id="demo-image-status">Waits for the plan</span>
+                </div>
+              </div>
+              <p class="demo-note">
+                Plan and text start together. Image generation starts after the
+                plan is ready.
+              </p>
+              <button type="button" id="demo-run" class="demo-button">
+                Run simulation
+              </button>
+              <pre id="demo-plan-output" hidden></pre>
+            </details>
+          </li>
+          <li>
+            <strong>Original assets and visual quality</strong>
+            <p>
+              Use every uploaded logo on every visual and at most one assigned
+              original photo per frame. Do not reuse a photo within one social
+              network/run, including languages; Instagram posts and Stories
+              share a pool. Extra frames are information-only. Use light
+              backgrounds and a coherent brand style; do not invent people or
+              add a promotional call to action.
+            </p>
+          </li>
+          <li>
+            <strong>Preview and approval</strong>
+            <p>
+              Show ordered visuals and one editable shared caption per
+              post/language. Allow manual caption edits without an AI request.
+              Require approval of every visual and caption before export.
+            </p>
+          </li>
+          <li>
+            <strong>Delivery</strong>
+            <p>
+              Download approved visuals and post text as a ZIP. Also support
+              saving the approved pack to a Google Drive folder selected by the
+              user, with permission checks and useful file links. Keep project
+              metadata in the database, not in Drive folder names.
+            </p>
+          </li>
+          <li>
+            <strong>History and failures</strong>
+            <p>
+              Preserve briefs, results and versions in the shared library. Show
+              generation progress and clear errors. Keep successful results
+              after a partial failure; retry only failed requests when
+              explicitly requested. Show paid request counts and avoid duplicate
+              submissions or hidden retries.
+            </p>
+          </li>
+          <li>
+            <strong>Security and delivery quality</strong>
+            <p>
+              Keep provider keys and Drive credentials protected on the backend;
+              exclude them from frontend code, logs and exports. Protect all
+              project files. Deliver documented APIs, database migrations, tests
+              with mocked AI responses and clear setup instructions. Use English
+              for the interface and documentation.
+            </p>
+          </li>
+        </ul>
       </section>
-      <section class="section" id="workflow">
+      <section id="full-product" aria-labelledby="full-title">
         <div class="section-heading">
-          <div>
-            <p class="eyebrow">03 / HOW THE PARTS WORK TOGETHER</p>
-            <h2>Plan. Generate. Review.</h2>
-          </div>
-          <p>
-            Separate responsibilities so text, planning and image failures can
-            be handled without losing the rest of the work.
-          </p>
+          <span class="section-number">02</span>
+          <h2 id="full-title">Full product requirements</h2>
         </div>
-        <ol class="pipeline">
+        <p class="section-description">
+          Everything in the MVP, plus these two capabilities.
+        </p>
+        <ul class="requirements full-requirements">
           <li>
-            <span>1</span>
-            <h3>Event brief</h3>
+            <strong>Edit the three prompts through the UI</strong>
             <p>
-              Validate facts and counts. The Java backend allocates photos and
-              saves their assignments so a model cannot swap the original
-              sources.
+              Users with the Editor role can update the visual-plan, post-text
+              and visual-generation prompt templates in the interface.
+              Administrators manage who has this permission. Save prompt
+              versions and record the version used by each generation; changes
+              apply to new requests.
+            </p>
+            <details class="mini-demo" id="prompt-demo">
+              <summary>Try it: Editor access to prompt settings</summary>
+              <p class="demo-note">
+                Full-product UI example. Changes affect only this demo, not
+                Studio or any API.
+              </p>
+              <div class="demo-controls prompt-controls">
+                <label for="demo-role"
+                  >Your role<select id="demo-role">
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                  </select></label
+                >
+                <label for="demo-prompt-type"
+                  >Prompt<select id="demo-prompt-type">
+                    <option value="plan">Visual plan</option>
+                    <option value="copy">Post text</option>
+                    <option value="image">Visual generation</option>
+                  </select></label
+                >
+              </div>
+              <label for="demo-prompt-text" class="demo-text-label"
+                >Prompt instructions</label
+              ><textarea id="demo-prompt-text" rows="3" disabled></textarea>
+              <button
+                type="button"
+                id="demo-save-prompt"
+                class="demo-button"
+                disabled
+              >
+                Apply demo change
+              </button>
+              <p id="demo-prompt-status" class="demo-result" role="status">
+                Viewer: read-only. Select Editor to change the prompt.
+              </p>
+            </details>
+          </li>
+          <li>
+            <strong>Revise finished content through AI</strong>
+            <p>
+              Let users enter change instructions for an individual generated
+              visual or post caption and send a new request to the appropriate
+              AI API. Preserve the previous version, update only the selected
+              result and require approval again. Make the extra cost visible.
+            </p>
+          </li>
+        </ul>
+      </section>
+      <section id="implementation" aria-labelledby="implementation-title">
+        <div class="section-heading">
+          <span class="section-number">03</span>
+          <h2 id="implementation-title">Implementation steps</h2>
+        </div>
+        <ol class="implementation-steps">
+          <li>
+            <strong>Set up Java and the database</strong>
+            <p>
+              Create the service, schema and migrations for users/roles,
+              projects, briefs, assets, runs, posts, visuals and approvals.
             </p>
           </li>
           <li>
-            <span>2</span>
-            <h3>Parallel preparation</h3>
+            <strong>Build access and the library</strong>
             <p>
-              Create the shared campaign outline and channel-specific captions
-              independently.
+              Implement authentication, permissions, project management,
+              uploads, search and saved history through the backend API.
             </p>
           </li>
           <li>
-            <span>3</span>
-            <h3>Per-frame planning</h3>
+            <strong>Build the event form</strong>
             <p>
-              Inspect all logos and only the assigned photo. Plan that frame’s
-              contribution to the story.
+              Connect the frontend to the API. Add schedules, logos/photos,
+              brand colors, formats, languages and frame counts.
             </p>
           </li>
           <li>
-            <span>4</span>
-            <h3>Image generation</h3>
+            <strong>Connect the three AI stages</strong>
             <p>
-              Send the frame plan and those same original references. Keep the
-              paid result for preview.
+              Create the three prompt templates. Generate the JSON plan and
+              captions, validate photo allocation, then generate each visual
+              from its plan, all logos and only its assigned photo.
             </p>
           </li>
           <li>
-            <span>5</span>
-            <h3>Human approval</h3>
+            <strong>Add review and delivery</strong>
             <p>
-              Edit captions, revise individual images and approve every item.
-              Export after approval.
+              Persist results, show previews, allow manual text edits and save
+              approvals. Export approved packs to ZIP or the selected Drive
+              folder.
+            </p>
+          </li>
+          <li>
+            <strong>Verify the MVP</strong>
+            <p>
+              Test database persistence, permissions, photo reuse, output
+              counts, approval enforcement, exports and partial failures.
+              Document how to run the backend, database and frontend.
+            </p>
+          </li>
+          <li>
+            <strong>Add the full-product features</strong>
+            <p>
+              Implement Editor access to the three prompt templates and AI-based
+              revisions of individual visuals/captions, keeping versions and
+              renewed approvals.
             </p>
           </li>
         </ol>
-        <details class="technical-note">
-          <summary>
-            Technical direction for Java and JavaScript students
-          </summary>
-          <p>
-            Java owns permissions, database access, file access, AI requests,
-            generation status, approvals and export from the MVP. Spring Boot
-            and PostgreSQL are recommended. Provide a database schema,
-            migrations, documented API and database integration tests.
-            JavaScript provides the interface and previews. GitHub Pages cannot
-            run the backend or database. Use mocked AI responses, never paid
-            keys in CI.
-          </p>
-        </details>
-      </section>
-      <section class="section" id="acceptance">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">04 / DEFINITION OF DONE</p>
-            <h2>Show behavior,<br />not just screens.</h2>
-          </div>
-          <p>
-            Use these scenarios in the demo. The complete specification contains
-            numbered acceptance cases for both releases.
-          </p>
-        </div>
-        <div class="acceptance-grid">
-          <article>
-            <span>MVP / CONTENT</span>
-            <h3>The request matches the pack</h3>
-            <p>
-              Demonstrate independent counts, both post languages, correct
-              dimensions, ordered frames and one shared caption per post.
-            </p>
-          </article>
-          <article>
-            <span>MVP / ORIGINAL ASSETS</span>
-            <h3>Every source has a purpose</h3>
-            <p>
-              With 3 photos and 6 Instagram frames, use each photo once and make
-              the rest information-only. Every frame includes all logos. Review
-              people and logo fidelity.
-            </p>
-          </article>
-          <article>
-            <span>MVP / REVIEW & COST</span>
-            <h3>A revision affects one image</h3>
-            <p>
-              Revise one frame without rerunning the campaign. Edit text without
-              an API call. ZIP becomes available only after all content is
-              approved.
-            </p>
-          </article>
-          <article>
-            <span>MVP / DATABASE + RECOVERY</span>
-            <h3>One failure does not erase success</h3>
-            <p>
-              Restart the Java service and reopen the project on another device:
-              history remains. Simulate one failed image request; preserve
-              successful results and retry only deliberately.
-            </p>
-          </article>
-          <article>
-            <span>FULL PRODUCT / COLLABORATION</span>
-            <h3>A team can trust its library</h3>
-            <p>
-              Open the same project on another device. Verify role permissions,
-              protected file access, conflict handling, durable history and
-              backup restoration.
-            </p>
-          </article>
-          <article>
-            <span>FULL PRODUCT / PROMPTS + OPTIONAL DRIVE</span>
-            <h3>Drive and prompts are controlled</h3>
-            <p>
-              Publish and roll back a prompt as admin; prove an editor cannot do
-              it. If the Drive extension is chosen, select a folder and recover
-              from revoked access without regenerating content.
-            </p>
-          </article>
-        </div>
-      </section>
-      <section class="section delivery-section" id="delivery">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">05 / IMPLEMENTATION MILESTONES</p>
-            <h2>Build in useful increments.</h2>
-          </div>
-        </div>
-        <ol class="milestones">
-          <li>
-            <strong>Understand the organizer</strong>
-            <p>
-              Agree on the workflow, MVP scope, acceptance examples and cost
-              expectations.
-            </p>
-          </li>
-          <li>
-            <strong>Deliver one vertical slice</strong>
-            <p>
-              Java service + database, one persisted project, one
-              format/language, preview, approval and ZIP. Develop with fake
-              assets and provider mocks.
-            </p>
-          </li>
-          <li>
-            <strong>Finish and verify the MVP</strong>
-            <p>
-              Add counts, languages, photo allocation, per-frame planning,
-              revisions, database-backed history and failure recovery. Verify
-              persistence after a backend restart.
-            </p>
-          </li>
-          <li>
-            <strong>Hand over, then expand</strong>
-            <p>
-              Document setup and limits. Measure time to an approved pack and
-              actual cost. Extend the existing database and backend with the
-              team library and prompt administration. Add Drive only if
-              selected.
-            </p>
-          </li>
-        </ol>
-        <div class="release-note">
-          <strong>Not in this assignment:</strong> automatic social publishing,
-          video generation, subscriptions, unattended bulk campaigns and
-          analytics dashboards, unless separately agreed.
-        </div>
       </section>
     </main>
     <footer class="site-footer">
-      <a href="studio/">Open the visual Studio example ↗</a
-      ><a href="docs/PRODUCT_REQUIREMENTS.md"
-        >Complete product requirements ↗</a
+      <a href="docs/PRODUCT_REQUIREMENTS.md">Assignment as text</a
+      ><a href="studio/">Studio visual example</a
       ><span>NIX / CREATIVE AUTOMATION</span>
     </footer>
   </body>

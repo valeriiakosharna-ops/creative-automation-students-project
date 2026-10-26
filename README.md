@@ -1,8 +1,8 @@
 # Creative Automation · Student Project
 
-A responsive, English-language project brief for students learning Java and JavaScript. It covers the product, user journey, MVP, architecture, implementation milestones, and acceptance criteria. The brief separates MVP and full-product scope and gives observable acceptance criteria. It does not call AI services or store uploads.
+A responsive, English-language project brief for students learning Java and JavaScript. It contains one MVP scope, the two full-product additions and short implementation steps. It does not call AI services or store uploads.
 
-## Free Pages MVP
+## Studio visual example
 
 [Studio](studio/README.md) now runs on GitHub Pages, with Google sign-in through Firebase's Spark plan and an owner-managed private list of approved Google emails. Corporate accounts and Render are not required. Start with [Free Pages setup](studio/PAGES_SETUP.md): enable Google in Firebase Console, publish the included Firestore rules, seed the owner privately and add two public Firebase repository variables.
 
@@ -10,7 +10,7 @@ Each Google account keeps separate projects, uploads and history in its browser.
 
 The owner can add/revoke exact Google account emails through **Team access**. Firebase rules protect the private access directory. Pages HTML/code/assets are public and client-side gating cannot prevent someone using a copied app; local files cannot be remotely erased. See [Security boundaries](SECURITY.md).
 
-The [product requirements](docs/PRODUCT_REQUIREMENTS.md) are the scope baseline for students: numbered MVP and full-product requirements, acceptance scenarios and delivery milestones. The student page summarizes the same requirements. The student MVP requires a Java backend and a database. The extended product adds a shared team library and administrator prompt publishing; Google Drive is an optional extension. Studio is a visual example and deliberately uses a different browser-based architecture.
+The [student assignment](docs/PRODUCT_REQUIREMENTS.md) and public brief define the same single scope. The MVP includes the Java backend, database, shared project library, access roles, three AI request types, review and export. The full product adds only UI editing of the three prompt templates by users with the Editor role, and AI-based revisions of finished images or captions. Studio is a visual example with a different implementation; its architecture does not define another student MVP.
 
 The interface and documentation are English. Generated posts may use English, Ukrainian or both. AI uses a shared light campaign direction and original references, not a rigid style-guide layout; the [inspiration guide](style-guide/README.md) remains optional. Every visual must use all original logos, with at most one assigned event photo. Photo allocation never repeats a photo within a network/run.
 The optional [corporate Java deployment](DEPLOYMENT.md) retains Google Workspace SSO, an encrypted shared server library and a company server-side key, requiring separate hosting. Its paid Render setup is not needed for the free Pages path.
@@ -46,7 +46,7 @@ The student brief uses no external fonts, analytics, CDN scripts or API credenti
 - `index.html`: English project brief and learning content.
 - `styles.css`: brand palette, responsive design, and print layout.
 - `script.js`: accessible mobile navigation.
-- `docs/PRODUCT_REQUIREMENTS.md`: numbered business requirements and acceptance scenarios.
+- `docs/PRODUCT_REQUIREMENTS.md`: the same MVP requirements, full-product additions and implementation steps.
 
 The student brief does not save form or project data. Studio stores user projects separately as described above.
 
