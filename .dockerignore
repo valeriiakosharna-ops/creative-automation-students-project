@@ -6,6 +6,8 @@
 !script.js
 !assets/
 !assets/**
+!docs/
+!docs/**
 !style-guide/
 !style-guide/**
 !studio/
