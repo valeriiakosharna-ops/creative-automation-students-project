@@ -58,7 +58,8 @@ export function validateBrief(b, logos) {
   }
   return errors;
 }
-// Share a photo cursor across all formats, variants and languages of one network.
+// Each language version gets its own photo pool within a network.
+// Instagram feed and Stories still share that pool within the same language.
 export function planOutputs(b, photos, logos) {
   const counters = {},
     outputs = [];
@@ -73,8 +74,9 @@ export function planOutputs(b, photos, logos) {
       continue;
     for (const language of b.languages)
       for (let variant = 1; variant <= quantityFor(b, format); variant++) {
-        const index = counters[spec.network] || 0;
-        counters[spec.network] = index + 1;
+        const pool = `${spec.network}:${language}`;
+        const index = counters[pool] || 0;
+        counters[pool] = index + 1;
         outputs.push({
           id: `${format}-${language}-${variant}`,
           postId: `${format}-${language}`,

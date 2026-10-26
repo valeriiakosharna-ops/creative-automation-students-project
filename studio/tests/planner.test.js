@@ -17,24 +17,76 @@ const brief = {
 };
 const photos = [{ id: "photo-one" }, { id: "photo-two" }],
   logos = [{ id: "logo-one" }, { id: "logo-two" }];
-test("photo allocation never repeats within a network, including languages and Instagram formats", () => {
+test("photos are unique within each network/language pool and reusable in translated versions", () => {
   const outputs = planOutputs(brief, photos, logos);
   assert.equal(outputs.length, 16);
-  for (const network of ["instagram", "facebook", "google_chat"]) {
-    const used = outputs
-      .filter((o) => o.network === network && o.photoId)
-      .map((o) => o.photoId);
-    assert.deepEqual(used, ["photo-one", "photo-two"]);
-    assert.equal(new Set(used).size, used.length);
-  }
-  assert.equal(outputs.filter((o) => !o.photoId).length, 10);
+  for (const network of ["instagram", "facebook", "google_chat"])
+    for (const language of ["en", "uk"]) {
+      const used = outputs
+        .filter(
+          (o) => o.network === network && o.language === language && o.photoId,
+        )
+        .map((o) => o.photoId);
+      assert.deepEqual(used, ["photo-one", "photo-two"]);
+      assert.equal(new Set(used).size, used.length);
+    }
+  assert.equal(outputs.filter((o) => !o.photoId).length, 4);
   for (const o of outputs)
     assert.deepEqual(o.logoIds, ["logo-one", "logo-two"]);
-  assert.equal(
-    outputs.find((o) => o.format === "instagram_story").photoId,
-    null,
+  assert.ok(
+    outputs
+      .filter((o) => o.format === "instagram_story")
+      .every((o) => o.photoId === null),
   );
 });
+
+test("two photos and three frames produce the same photo/photo/information sequence in both languages", () => {
+  const request = {
+    ...brief,
+    formats: ["instagram_post"],
+    quantities: { instagram_post: 3 },
+  };
+  const outputs = planOutputs(request, photos, logos);
+  for (const language of ["en", "uk"])
+    assert.deepEqual(
+      outputs.filter((o) => o.language === language).map((o) => o.photoId),
+      ["photo-one", "photo-two", null],
+    );
+  assert.equal(outputs.filter((o) => o.photoId).length, 4);
+  assert.equal(outputs.filter((o) => !o.photoId).length, 2);
+  const reversed = planOutputs(
+    { ...request, languages: ["uk", "en"] },
+    photos,
+    logos,
+  );
+  for (const output of outputs)
+    assert.equal(
+      reversed.find((item) => item.id === output.id).photoId,
+      output.photoId,
+      "language order cannot consume another version's photos",
+    );
+});
+
+test("Instagram formats share a pool within each language while other networks get their own pools", () => {
+  const request = {
+    ...brief,
+    formats: ["instagram_post", "instagram_story", "facebook"],
+    quantities: { instagram_post: 1, instagram_story: 2, facebook: 2 },
+  };
+  const outputs = planOutputs(request, photos, logos);
+  for (const language of ["en", "uk"]) {
+    const version = outputs.filter((o) => o.language === language);
+    assert.deepEqual(
+      version.filter((o) => o.network === "instagram").map((o) => o.photoId),
+      ["photo-one", "photo-two", null],
+    );
+    assert.deepEqual(
+      version.filter((o) => o.network === "facebook").map((o) => o.photoId),
+      ["photo-one", "photo-two"],
+    );
+  }
+});
+
 test("no photos is valid; every output becomes informational", () => {
   assert.ok(planOutputs(brief, [], logos).every((o) => o.photoId === null));
   assert.deepEqual(validateBrief(brief, logos), []);

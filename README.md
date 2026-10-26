@@ -12,7 +12,7 @@ The owner can add/revoke exact Google account emails through **Team access**. Fi
 
 The [student assignment](docs/PRODUCT_REQUIREMENTS.md) and public brief define the same single scope. The MVP includes the Java backend, database, shared project library, access roles, three AI request types, review and export. The full product adds only UI editing of the three prompt templates by users with the Editor role, and AI-based revisions of finished images or captions. Studio is a visual example with a different implementation; its architecture does not define another student MVP.
 
-The interface and documentation are English. Generated posts may use English, Ukrainian or both. AI uses a shared light campaign direction and original references, not a rigid style-guide layout; the [inspiration guide](style-guide/README.md) remains optional. Every visual must use all original logos, with at most one assigned event photo. Photo allocation never repeats a photo within a network/run.
+The interface and documentation are English. Generated posts may use English, Ukrainian or both. AI uses a shared light campaign direction and original references, not a rigid style-guide layout; the [inspiration guide](style-guide/README.md) remains optional. Every visual must use all original logos, with at most one assigned event photo. Photo allocation never repeats a photo within the same network/language/run. English and Ukrainian versions may reuse the same original photos.
 The optional [corporate Java deployment](DEPLOYMENT.md) retains Google Workspace SSO, an encrypted shared server library and a company server-side key, requiring separate hosting. Its paid Render setup is not needed for the free Pages path.
 
 ## Preview the student brief locally (optional)

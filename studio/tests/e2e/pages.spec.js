@@ -55,7 +55,14 @@ async function loadExample(page) {
 }
 async function mockOpenAI(
   page,
-  { key, failVisualOnce, holdCopyUntilImage = false, longPost = false, imperfectPlan = false, missingPost = false } = {},
+  {
+    key,
+    failVisualOnce,
+    holdCopyUntilImage = false,
+    longPost = false,
+    imperfectPlan = false,
+    missingPost = false,
+  } = {},
 ) {
   const state = {
     text: [],
@@ -85,19 +92,50 @@ async function mockOpenAI(
         stage = body.response_format.json_schema.name;
       if (key) expect(request.headers().authorization).toBe(`Bearer ${key}`);
       expect(body.messages[0].content).not.toContain("minimumTextContrast");
-      const userContent = body.messages.find((message) => message.role === "user").content;
-      const input = JSON.parse(Array.isArray(userContent) ? userContent.find((part) => part.type === "text").text : userContent);
+      const userContent = body.messages.find(
+        (message) => message.role === "user",
+      ).content;
+      const input = JSON.parse(
+        Array.isArray(userContent)
+          ? userContent.find((part) => part.type === "text").text
+          : userContent,
+      );
       if (stage === "visual_frame") {
         const refs = userContent.filter((part) => part.type === "image_url");
         expect(refs).toHaveLength(input.references.length);
-        expect(input.references.filter((ref) => ref.role.startsWith("ASSIGNED_EVENT_PHOTO")).length).toBeLessThanOrEqual(1);
+        expect(
+          input.references.filter((ref) =>
+            ref.role.startsWith("ASSIGNED_EVENT_PHOTO"),
+          ).length,
+        ).toBeLessThanOrEqual(1);
         expect(input.backgroundPreference).toBe("light");
         state.framePlans.push({ input, refs });
-        await route.fulfill({ json: { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({
-          headline: input.frame.headline, subheading: input.frame.subheading, cta: "",
-          photoSummary: input.photoAvailable ? "The original event photograph, with only its existing people." : "",
-          visualPlan: imperfectPlan ? null : { layout: "An organic light composition", direction: "Light background, original references only, no added people, no CTA." },
-        }) } }] } });
+        await route.fulfill({
+          json: {
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: JSON.stringify({
+                    headline: input.frame.headline,
+                    subheading: input.frame.subheading,
+                    cta: "",
+                    photoSummary: input.photoAvailable
+                      ? "The original event photograph, with only its existing people."
+                      : "",
+                    visualPlan: imperfectPlan
+                      ? null
+                      : {
+                          layout: "An organic light composition",
+                          direction:
+                            "Light background, original references only, no added people, no CTA.",
+                        },
+                  }),
+                },
+              },
+            ],
+          },
+        });
         return;
       }
       state.text.push({ stage, input });
@@ -134,7 +172,20 @@ async function mockOpenAI(
             },
       );
       if (missingPost && stage === "social_posts") posts = posts.slice(0, -1);
-      if (imperfectPlan && stage === "visual_storyboard") posts = posts.map((post, index) => ({ ...post, id: `provider-post-${index}`, visuals: post.visuals.map((visual, frameIndex) => ({ ...visual, id: `provider-frame-${frameIndex}`, visualPlan: { role: "free-form-role", layout: null, direction: visual.visualPlan.direction } })) }));
+      if (imperfectPlan && stage === "visual_storyboard")
+        posts = posts.map((post, index) => ({
+          ...post,
+          id: `provider-post-${index}`,
+          visuals: post.visuals.map((visual, frameIndex) => ({
+            ...visual,
+            id: `provider-frame-${frameIndex}`,
+            visualPlan: {
+              role: "free-form-role",
+              layout: null,
+              direction: visual.visualPlan.direction,
+            },
+          })),
+        }));
       const fulfill = async () => {
         if (stage === "visual_storyboard") state.plannerDone = true;
         else state.copyDone = true;
@@ -143,26 +194,74 @@ async function mockOpenAI(
             choices: [
               {
                 finish_reason: "stop",
-                message: { content: JSON.stringify({ campaignStyle: "Contemporary editorial; consistent cyan/red campaign with organic typography and photo treatment", posts }) },
+                message: {
+                  content: JSON.stringify({
+                    campaignStyle:
+                      "Contemporary editorial; consistent cyan/red campaign with organic typography and photo treatment",
+                    posts,
+                  }),
+                },
               },
             ],
           },
         });
       };
-      if (stage === "social_posts" && holdCopyUntilImage && !state.images.length) heldCopy = fulfill;
+      if (
+        stage === "social_posts" &&
+        holdCopyUntilImage &&
+        !state.images.length
+      )
+        heldCopy = fulfill;
       else await fulfill();
     },
   );
   await page.route("https://api.openai.com/v1/responses", async (route) => {
     const body = route.request().postDataJSON();
-    if (key) expect(route.request().headers().authorization).toBe(`Bearer ${key}`);
+    if (key)
+      expect(route.request().headers().authorization).toBe(`Bearer ${key}`);
     state.research.push(body);
-    expect(Object.keys(JSON.parse(body.input)).sort()).toEqual(["checkedOn", "formats"]);
+    expect(Object.keys(JSON.parse(body.input)).sort()).toEqual([
+      "checkedOn",
+      "formats",
+    ]);
     const source = "https://buffer.com/resources/social-media-captions/";
-    await route.fulfill({ json: { status: "completed", output: [
-      { type: "web_search_call", status: "completed", action: { type: "search", sources: [{ type: "url", url: source }] } },
-      { type: "message", content: [{ type: "output_text", text: JSON.stringify({ channels: JSON.parse(body.input).formats.map((format) => ({ format, summary: "Relevant opening, natural keywords, useful event details and one next step.", recommendedMin: 150, recommendedMax: 900, sourceUrls: [source] })) }), annotations: [{ type: "url_citation", url: source, title: "Public writing research" }] }] },
-    ] } });
+    await route.fulfill({
+      json: {
+        status: "completed",
+        output: [
+          {
+            type: "web_search_call",
+            status: "completed",
+            action: { type: "search", sources: [{ type: "url", url: source }] },
+          },
+          {
+            type: "message",
+            content: [
+              {
+                type: "output_text",
+                text: JSON.stringify({
+                  channels: JSON.parse(body.input).formats.map((format) => ({
+                    format,
+                    summary:
+                      "Relevant opening, natural keywords, useful event details and one next step.",
+                    recommendedMin: 150,
+                    recommendedMax: 900,
+                    sourceUrls: [source],
+                  })),
+                }),
+                annotations: [
+                  {
+                    type: "url_citation",
+                    url: source,
+                    title: "Public writing research",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
   });
   await page.route("https://api.openai.com/v1/images/edits", async (route) => {
     const req = route.request();
@@ -188,7 +287,9 @@ async function mockOpenAI(
     expect(form.get("model")).toBe("gpt-image-2.5-flare");
     expect(input.brandPolicy).toBeUndefined();
     expect(input.logoShelf).toBeUndefined();
-    expect(input.effectiveColors.map((color) => color.toUpperCase())).toContain("#00A6EB");
+    expect(input.effectiveColors.map((color) => color.toUpperCase())).toContain(
+      "#00A6EB",
+    );
     expect(input.campaignStyle).toContain("consistent cyan/red");
     expect(form.get("quality")).toBe("high");
     expect(form.get("input_fidelity")).toBeNull();
@@ -196,9 +297,13 @@ async function mockOpenAI(
     expect(input.callToAction).toBe(false);
     expect(input.frame.cta).toBe("");
     expect(input.backgroundPreference).toContain("light");
-    const framePlan = state.framePlans.find((plan) => plan.input.frame.id === input.frame.id);
+    const framePlan = state.framePlans.find(
+      (plan) => plan.input.frame.id === input.frame.id,
+    );
     expect(framePlan).toBeTruthy();
-    expect(framePlan.input.references.map((ref) => ref.role)).toEqual(input.references.map((ref) => ref.role));
+    expect(framePlan.input.references.map((ref) => ref.role)).toEqual(
+      input.references.map((ref) => ref.role),
+    );
     if (heldCopy) {
       expect(state.copyDone).toBe(false);
       const release = heldCopy;
@@ -345,7 +450,7 @@ test("a Pages build refuses to open when runtime settings fail to load", async (
   );
 });
 
-test("English interface, bilingual post review, distinct frame counts, parallel text/planning, original image references and paid feedback revisions", async ({
+test("English interface, distinct frame counts, parallel text/planning, original image references and paid feedback revisions", async ({
   page,
 }, testInfo) => {
   const errors = [];
@@ -372,7 +477,7 @@ test("English interface, bilingual post review, distinct frame counts, parallel 
   await expect(page.locator("#date")).toBeHidden();
   await page.locator("#date-mode").selectOption("text");
   await page.locator("#date-text").fill("Every Tuesday in November 2026");
-  // A single event photo may appear in only one Instagram frame, across feed and Stories.
+  // The original photo appears once per language; feed and Stories share each language pool.
   const photo = await page.evaluate(() => {
     const c = document.createElement("canvas");
     c.width = 48;
@@ -402,23 +507,31 @@ test("English interface, bilingual post review, distinct frame counts, parallel 
   await expect(page.locator(".output-card .output-copy")).toHaveCount(0);
   await expect(page.locator(".post-copy-editor")).toHaveCount(2);
   expect(requests.framePlans).toHaveLength(6);
-  expect(requests.framePlans.filter((plan) => plan.input.photoAvailable)).toHaveLength(1);
+  expect(
+    requests.framePlans.filter((plan) => plan.input.photoAvailable),
+  ).toHaveLength(1);
   await expect(page.locator("#download-zip")).toBeDisabled();
   expect(requests.text).toHaveLength(2);
   expect(requests.images).toHaveLength(6);
-  expect(new Set(requests.images.map((request) => request.input.campaignStyle)).size).toBe(1);
   expect(
-    requests.images.filter((request) =>
-      request.input.references.some((ref) =>
-        ref.role.startsWith("ASSIGNED_EVENT_PHOTO"),
-      ),
+    new Set(requests.images.map((request) => request.input.campaignStyle)).size,
+  ).toBe(1);
+  const photoRequests = requests.images.filter((request) =>
+    request.input.references.some((ref) =>
+      ref.role.startsWith("ASSIGNED_EVENT_PHOTO"),
     ),
-  ).toHaveLength(1);
-  // Vision planning runs concurrently: completion order is not frame order.
-  const photoRequest = requests.images.find((request) => request.input.references.some((ref) => ref.role.startsWith("ASSIGNED_EVENT_PHOTO")));
-  expect(photoRequest.input.frame.id).toBe("instagram_post-en-1");
-  expect(photoRequest.files).toHaveLength(2);
-  expect(requests.images.filter((request) => request !== photoRequest).every((request) => request.files.length === 1)).toBe(true);
+  );
+  expect(photoRequests.map((request) => request.input.frame.id).sort()).toEqual(
+    ["instagram_post-en-1"],
+  );
+  expect(photoRequests.every((request) => request.files.length === 2)).toBe(
+    true,
+  );
+  expect(
+    requests.images
+      .filter((request) => !photoRequests.includes(request))
+      .every((request) => request.files.length === 1),
+  ).toBe(true);
   expect(
     requests.images.every(
       (request) =>
@@ -449,7 +562,11 @@ test("English interface, bilingual post review, distinct frame counts, parallel 
   expect(revision.input.revisionInstructions).toBe(
     "Make the heading larger and use more cyan.",
   );
-  expect(revision.input.references.every((ref) => !ref.role.includes("PREVIOUS_VISUAL"))).toBe(true);
+  expect(
+    revision.input.references.every(
+      (ref) => !ref.role.includes("PREVIOUS_VISUAL"),
+    ),
+  ).toBe(true);
   expect(revision.files).toHaveLength(1);
   expect(requests.framePlans).toHaveLength(6);
   await expect(page.locator("#history-list button")).toHaveCount(3);
@@ -531,12 +648,22 @@ test("651-character captions never block images or approval, and editors have no
   await page.locator("#save-connection").click();
   const requests = await mockOpenAI(page, { longPost: true });
   await page.locator("#generate-button").click();
-  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", {
+    timeout: 45000,
+  });
   await expect(page.locator(".output-image")).toHaveCount(4);
-  await expect(page.locator(".post-copy-editor").first()).toHaveValue("x".repeat(651));
-  await expect(page.locator(".post-copy-editor").first()).not.toHaveAttribute("maxlength");
-  await expect(page.locator(".post-review-card .review-error").first()).toBeEmpty();
-  await expect(page.locator(".caption-count").first()).toContainText("651 characters");
+  await expect(page.locator(".post-copy-editor").first()).toHaveValue(
+    "x".repeat(651),
+  );
+  await expect(page.locator(".post-copy-editor").first()).not.toHaveAttribute(
+    "maxlength",
+  );
+  await expect(
+    page.locator(".post-review-card .review-error").first(),
+  ).toBeEmpty();
+  await expect(page.locator(".caption-count").first()).toContainText(
+    "651 characters",
+  );
   await approvePack(page);
   await page
     .locator(".post-copy-editor")
@@ -653,15 +780,13 @@ test("AI output fills the canvas without borders, a second logo block or layout 
         return c.toDataURL("image/png").split(",")[1];
       }, color),
     );
-  await page
-    .locator("#logo-upload")
-    .setInputFiles(
-      buffers.map((data, index) => ({
-        name: `original-logo-${index}.png`,
-        mimeType: "image/png",
-        buffer: Buffer.from(data, "base64"),
-      })),
-    );
+  await page.locator("#logo-upload").setInputFiles(
+    buffers.map((data, index) => ({
+      name: `original-logo-${index}.png`,
+      mimeType: "image/png",
+      buffer: Buffer.from(data, "base64"),
+    })),
+  );
   await expect(page.locator("#logo-list .asset-item")).toHaveCount(2);
   await page.locator('[name="formats"][value="facebook"]').uncheck();
   await page.locator('[name="languages"][value="uk"]').uncheck();
@@ -711,7 +836,10 @@ test("AI output fills the canvas without borders, a second logo block or layout 
     },
     {
       bytes: Array.from(files[output.imageFile]),
-      rects: [{x: 0, y: 0, width: 1, height: 1}, {x: 1078, y: 1078, width: 1, height: 1}],
+      rects: [
+        { x: 0, y: 0, width: 1, height: 1 },
+        { x: 1078, y: 1078, width: 1, height: 1 },
+      ],
     },
   );
   expect(pixels.width).toBe(1080);
@@ -722,57 +850,183 @@ test("AI output fills the canvas without borders, a second logo block or layout 
   ]);
 });
 
-test("nonstandard plan IDs and optional fields keep paid results, per-frame planning and source bindings", async ({ page }, testInfo) => {
-  await pagesFixture(page); await login(page); await loadExample(page);
+test("nonstandard plan IDs and optional fields keep paid results, per-frame planning and source bindings", async ({
+  page,
+}, testInfo) => {
+  await pagesFixture(page);
+  await login(page);
+  await loadExample(page);
   await page.locator("#connect-key").click();
   await page.locator("#openai-key").fill("test-preserved-response-key");
   await page.locator("#save-connection").click();
   const requests = await mockOpenAI(page, { imperfectPlan: true });
   await page.locator("#generate-button").click();
-  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", {
+    timeout: 45000,
+  });
   await expect(page.locator(".output-image")).toHaveCount(4);
   expect(requests.framePlans).toHaveLength(4);
   expect(requests.images).toHaveLength(4);
   expect(requests.text).toHaveLength(2);
   expect(requests.research).toHaveLength(0);
-  const details = JSON.parse(await page.locator("#run-details-json").textContent());
+  const details = JSON.parse(
+    await page.locator("#run-details-json").textContent(),
+  );
   expect(details.aiResponses).toHaveLength(6);
-  expect(JSON.stringify(details.aiResponses)).not.toContain("test-preserved-response-key");
-  expect(details.outputs.map((output) => output.id)).toEqual(["instagram_post-en-1", "instagram_post-uk-1", "facebook-en-1", "facebook-uk-1"]);
+  expect(JSON.stringify(details.aiResponses)).not.toContain(
+    "test-preserved-response-key",
+  );
+  expect(details.outputs.map((output) => output.id)).toEqual([
+    "instagram_post-en-1",
+    "instagram_post-uk-1",
+    "facebook-en-1",
+    "facebook-uk-1",
+  ]);
   await page.locator(".run-details summary").click();
   const pending = page.waitForEvent("download");
   await page.locator("#download-ai-responses").click();
-  const saved = await pending; const path = testInfo.outputPath("saved-ai-responses.json");
+  const saved = await pending;
+  const path = testInfo.outputPath("saved-ai-responses.json");
   await saved.saveAs(path);
   expect(JSON.parse(await readFile(path, "utf8"))).toHaveLength(6);
   await approvePack(page);
 });
 
-test("a missing caption is editable without discarding available posts or repeating AI calls", async ({ page }) => {
-  await pagesFixture(page); await login(page); await loadExample(page);
-  await page.locator("#connect-key").click(); await page.locator("#openai-key").fill("test-partial-copy-key"); await page.locator("#save-connection").click();
+test("a missing caption is editable without discarding available posts or repeating AI calls", async ({
+  page,
+}) => {
+  await pagesFixture(page);
+  await login(page);
+  await loadExample(page);
+  await page.locator("#connect-key").click();
+  await page.locator("#openai-key").fill("test-partial-copy-key");
+  await page.locator("#save-connection").click();
   const requests = await mockOpenAI(page, { missingPost: true });
   await page.locator("#generate-button").click();
-  await expect(page.locator("#run-mode-label")).toContainText("PARTIAL", { timeout: 45000 });
+  await expect(page.locator("#run-mode-label")).toContainText("PARTIAL", {
+    timeout: 45000,
+  });
   await expect(page.locator(".output-image")).toHaveCount(4);
   await expect(page.locator(".post-copy-editor").first()).not.toHaveValue("");
-  await page.locator(".post-copy-editor").last().fill("A manually completed post with the original event facts.");
+  await page
+    .locator(".post-copy-editor")
+    .last()
+    .fill("A manually completed post with the original event facts.");
   await page.locator(".approve-post").last().click();
   await expect(page.locator("#run-mode-label")).toContainText("COMPLETED");
   await approvePack(page);
-  expect(requests.text).toHaveLength(2); expect(requests.framePlans).toHaveLength(4); expect(requests.images).toHaveLength(4);
+  expect(requests.text).toHaveLength(2);
+  expect(requests.framePlans).toHaveLength(4);
+  expect(requests.images).toHaveLength(4);
 });
 
-test("an optional web-search HTTP 400 does not block frame planning, captions or images", async ({ page }) => {
-  await pagesFixture(page); await login(page); await loadExample(page);
-  await page.locator("#connect-key").click(); await page.locator("#openai-key").fill("test-optional-research-key"); await page.locator("#save-connection").click();
-  const requests = await mockOpenAI(page); let searches = 0;
-  await page.route("https://api.openai.com/v1/responses", async (route) => { searches++; await route.fulfill({ status: 400, json: { error: { code: "unsupported_parameter", param: "text.format", message: "PRIVATE provider details" } } }); });
+test("an optional web-search HTTP 400 does not block frame planning, captions or images", async ({
+  page,
+}) => {
+  await pagesFixture(page);
+  await login(page);
+  await loadExample(page);
+  await page.locator("#connect-key").click();
+  await page.locator("#openai-key").fill("test-optional-research-key");
+  await page.locator("#save-connection").click();
+  const requests = await mockOpenAI(page);
+  let searches = 0;
+  await page.route("https://api.openai.com/v1/responses", async (route) => {
+    searches++;
+    await route.fulfill({
+      status: 400,
+      json: {
+        error: {
+          code: "unsupported_parameter",
+          param: "text.format",
+          message: "PRIVATE provider details",
+        },
+      },
+    });
+  });
   await page.locator("#live-research").check();
   await page.locator("#generate-button").click();
-  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", {
+    timeout: 45000,
+  });
   await expect(page.locator(".research-note")).toContainText("unavailable");
   await expect(page.locator(".output-image")).toHaveCount(4);
-  expect(searches).toBe(1); expect(requests.images).toHaveLength(4); expect(requests.framePlans).toHaveLength(4);
-  await expect(page.locator("#run-details-json")).not.toContainText("PRIVATE provider details");
+  expect(searches).toBe(1);
+  expect(requests.images).toHaveLength(4);
+  expect(requests.framePlans).toHaveLength(4);
+  await expect(page.locator("#run-details-json")).not.toContainText(
+    "PRIVATE provider details",
+  );
+});
+
+test("signed-in editor layout keeps project actions together and the summary beside the form when space permits", async ({ page }) => {
+  await pagesFixture(page); await login(page); await loadExample(page);
+  const png = await page.evaluate(() => { const c = document.createElement("canvas"); c.width = c.height = 32; c.getContext("2d").fillRect(0, 0, 32, 32); return c.toDataURL("image/png").split(",")[1]; });
+  const longName = "very-long-event-asset-name-".repeat(7) + ".png";
+  const upload = { name: longName, mimeType: "image/png", buffer: Buffer.from(png, "base64") };
+  await page.locator("#logo-upload").setInputFiles(upload);
+  await page.locator("#photo-upload").setInputFiles(upload);
+  await expect(page.locator("#logo-list .asset-item")).toHaveCount(2);
+  await expect(page.locator("#photo-list .asset-item")).toHaveCount(1);
+  for (const width of [1440, 1280, 1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const panel = await page.locator("#brand-assets").boundingBox();
+    for (const child of await page.locator(".upload-grid > div, .upload-zone, .asset-item").all()) {
+      const bounds = await child.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(panel.x);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(panel.x + panel.width);
+    }
+    const form = await page.locator(".form-panels").boundingBox();
+    const summary = await page.locator(".pack-panel").boundingBox();
+    if (width > 1000) {
+      expect(Math.abs(form.y - summary.y)).toBeLessThan(2);
+      expect(summary.x).toBeGreaterThan(form.x + form.width);
+    }
+    if (width <= 1200) {
+      await page.locator("#toggle-sidebar").click();
+      await expect(page.locator("#sidebar-overlay")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#sidebar-overlay")).toBeHidden();
+    }
+    if (width === 390) {
+      const rename = await page.locator("#rename-project").boundingBox();
+      const remove = await page.locator("#delete-project").boundingBox();
+      expect(Math.abs(rename.y - remove.y)).toBeLessThan(2);
+    }
+  }
+});
+
+test("English and Ukrainian versions reuse both original photos once each, then use information-only frames", async ({ page }) => {
+  await pagesFixture(page); await login(page); await loadExample(page);
+  for (const input of await page.locator('[name="formats"]').all()) await input.uncheck();
+  await page.locator('[name="formats"][value="instagram_post"]').check();
+  for (const input of await page.locator('[name="languages"]').all()) await input.check();
+  await page.locator("#quantity-instagram_post").fill("3");
+  const uploads = [];
+  for (const color of ["#EF958C", "#81D0F4"]) {
+    const png = await page.evaluate((color) => { const c = document.createElement("canvas"); c.width = c.height = 32; const x = c.getContext("2d"); x.fillStyle = color; x.fillRect(0, 0, 32, 32); return c.toDataURL("image/png").split(",")[1]; }, color);
+    uploads.push({ name: `event-photo-${uploads.length + 1}.png`, mimeType: "image/png", buffer: Buffer.from(png, "base64") });
+  }
+  await page.locator("#photo-upload").setInputFiles(uploads);
+  await expect(page.locator("#photo-count")).toHaveText("4");
+  await expect(page.locator("#info-count")).toHaveText("2");
+  await page.locator("#connect-key").click(); await page.locator("#openai-key").fill("test-bilingual-photo-key"); await page.locator("#save-connection").click();
+  const requests = await mockOpenAI(page);
+  await page.locator("#generate-button").click();
+  await expect(page.locator("#run-mode-label")).toContainText("COMPLETED", { timeout: 45000 });
+  await expect(page.locator(".output-image")).toHaveCount(6);
+  await expect(page.locator(".post-copy-editor")).toHaveCount(2);
+  const details = JSON.parse(await page.locator("#run-details-json").textContent());
+  const en = details.outputs.filter((o) => o.language === "en").map((o) => o.photoId);
+  const uk = details.outputs.filter((o) => o.language === "uk").map((o) => o.photoId);
+  expect(en.slice(0, 2).every(Boolean)).toBe(true); expect(en[0]).not.toBe(en[1]); expect(en[2]).toBeNull(); expect(uk).toEqual(en);
+  expect(requests.framePlans.filter((plan) => plan.input.photoAvailable)).toHaveLength(4);
+  expect(requests.images.filter((image) => image.input.photoAvailable)).toHaveLength(4);
+  for (const position of [1, 2]) {
+    const enImage = requests.images.find((image) => image.input.frame.id === `instagram_post-en-${position}`);
+    const ukImage = requests.images.find((image) => image.input.frame.id === `instagram_post-uk-${position}`);
+    expect(enImage.files[0].bytes.equals(uploads[position - 1].buffer)).toBe(true);
+    expect(ukImage.files[0].bytes.equals(uploads[position - 1].buffer)).toBe(true);
+  }
 });

@@ -36,7 +36,8 @@ function updateCountDemo() {
   const frames = Number(framesControl.value);
   const languages = Number(languagesControl.value);
   const total = frames * languages;
-  const photoFrames = Math.min(Number(photosControl.value), total);
+  const photosPerLanguage = Math.min(Number(photosControl.value), frames);
+  const photoFrames = photosPerLanguage * languages;
   document.querySelector("#demo-frames-value").textContent = frames;
   document.querySelector("#demo-photos-value").textContent =
     photosControl.value;
@@ -52,14 +53,13 @@ function updateCountDemo() {
     const strip = document.createElement("div");
     strip.className = "demo-frame-strip";
     for (let frame = 0; frame < frames; frame++) {
-      const index = languageIndex * frames + frame;
       const tile = document.createElement("div");
-      tile.className = `demo-frame ${index < photoFrames ? "has-photo" : ""}`;
+      tile.className = `demo-frame ${frame < photosPerLanguage ? "has-photo" : ""}`;
       const position = document.createElement("strong");
       position.textContent = `Frame ${frame + 1}`;
       const source = document.createElement("span");
       source.textContent =
-        index < photoFrames ? `Photo ${index + 1}` : "Information";
+        frame < photosPerLanguage ? `Photo ${frame + 1}` : "Information";
       const logos = document.createElement("small");
       logos.textContent = "All logos";
       tile.append(position, source, logos);

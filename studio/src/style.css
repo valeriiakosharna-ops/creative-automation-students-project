@@ -3268,3 +3268,99 @@ textarea:focus {
     scroll-behavior: auto;
   }
 }
+
+/* Keep project actions and the editor summary aligned at intermediate widths. */
+.heading-actions {
+  padding-top: 0;
+}
+.project-tools {
+  max-width: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.project-tools button {
+  width: auto;
+}
+@media (min-width: 1001px) {
+  .editor-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: start;
+  }
+  .pack-panel {
+    min-width: 0;
+  }
+  .pack-sticky {
+    display: block;
+    position: sticky;
+    top: 24px;
+  }
+  .pack-summary {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .workflow-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+  .mobile-menu {
+    display: block;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+@media (max-width: 680px) {
+  .heading-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+  .heading-actions > .button {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .project-tools {
+    justify-content: flex-start;
+    margin-top: 0;
+  }
+}
+
+/* A long uploaded filename must never determine the upload column width. */
+.upload-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.upload-grid > div {
+  min-width: 0;
+}
+.upload-zone {
+  min-width: 0;
+  width: 100%;
+}
+.asset-list,
+.asset-item {
+  max-width: 100%;
+}
+.asset-name {
+  overflow: hidden;
+}
+@media (max-width: 680px) {
+  .upload-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
