@@ -8,6 +8,7 @@ RUN --mount=type=cache,target=/root/.npm --mount=type=secret,id=proxy_ca \
     npm ci --strict-ssl=true
 COPY index.html styles.css script.js /build/
 COPY assets /build/assets
+COPY docs /build/docs
 COPY style-guide /build/style-guide
 COPY studio/ ./
 RUN npm test && npm run build
