@@ -100,18 +100,25 @@ export async function generatePagesRun(
       run.status = "running";
       return onChange(run);
     }));
+  run.aiResponses = [];
+  const recordResponse = (frameId) => async (response) => {
+    run.aiResponses.push({ ...response, ...(frameId ? { frameId } : {}), receivedAt: new Date().toISOString() });
+    await publish();
+  };
   const copyTask = (async () => {
     try {
-      run.captionResearch = await researchCaptions(run.brief.formats, key, signal);
+      run.captionResearch = run.brief.liveResearch === true
+        ? await researchCaptions(run.brief.formats, key, signal)
+        : { status: "disabled", channels: [], sources: [] };
       await publish();
-      const posts = await browserPostCopy(run.brief, run.outputs, key, signal, run.captionResearch);
+      const posts = await browserPostCopy(run.brief, run.outputs, key, signal, run.captionResearch, recordResponse());
       for (const post of posts)
         Object.assign(
           run.posts.find((item) => item.id === post.id),
           post,
           { generatedCaption: post.caption },
         );
-      run.pipeline.copy.status = "completed";
+      run.pipeline.copy.status = posts.every((post) => post.status === "completed") ? "completed" : "partial";
     } catch (error) {
       run.pipeline.copy = {
         status: signal.aborted ? "cancelled" : "failed",
@@ -132,6 +139,7 @@ export async function generatePagesRun(
         run.outputs,
         key,
         signal,
+        recordResponse(),
       );
       run.pipeline.planner.status = "completed";
       for (const post of run.storyboard)
@@ -150,7 +158,7 @@ export async function generatePagesRun(
           try {
             Object.assign(output, await planVisualFrame(
               run.brief, output, run.storyboard.find((post) => post.id === output.postId),
-              run.assets, key, signal,
+              run.assets, key, signal, recordResponse(output.id),
             ));
             output.imageStatus = "running";
             await publish();

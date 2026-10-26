@@ -6,7 +6,7 @@ import {
   browserPostCopy,
 } from "../src/browser-copy.js";
 import { generateAIVisual } from "../src/ai-visual.js";
-import { openaiRequest } from "../src/openai.js";
+import { openaiRequest, structuredRequest } from "../src/openai.js";
 import { requestCopy } from "../src/copy.js";
 import { BRAND_POLICY } from "../src/brand.js";
 const brief = {
@@ -106,42 +106,62 @@ test("planner and copy are separate concurrent requests with shared campaign dir
   assert.deepEqual(result.outputs[0].visualPlan, visual.visualPlan);
 });
 
-test("unknown IDs, duplicate frames and malformed planners are rejected without synthetic replacements", async (t) => {
+test("imperfect optional fields and response IDs retain plans without overriding original sources", async (t) => {
   let payload;
   t.mock.method(globalThis, "fetch", async () => response(payload));
-  for (payload of [
-    null,
-    { posts: [null] },
+  for (payload of [null, { posts: [null] },
     { posts: [{ ...storyboard.posts[0], visuals: [null] }] },
-    {
-      posts: [
-        { ...storyboard.posts[0], visuals: [{ ...visual, id: "foreign" }] },
-      ],
-    },
-    {
-      posts: [
-        {
-          ...storyboard.posts[0],
-          visuals: [
-            {
-              ...visual,
-              visualPlan: { ...visual.visualPlan, layout: null },
-            },
-          ],
-        },
-      ],
-    },
-  ])
-    await assert.rejects(
-      browserStoryboard(brief, outputs, "test-key"),
-      /does not match this run/,
-    );
+    { posts: [{ ...storyboard.posts[0], visuals: [{ ...visual, id: "foreign", photoId: "foreign", approved: true }] }] },
+    { posts: [{ ...storyboard.posts[0], visuals: [{ ...visual, visualPlan: { layout: null } }] }] }]) {
+    const [post] = await browserStoryboard(brief, outputs, "test-key");
+    assert.equal(post.id, "google_chat-en");
+    assert.equal(post.visuals[0].id, outputs[0].id);
+    assert.equal(post.visuals[0].photoId, undefined);
+    assert.equal(post.visuals[0].approved, undefined);
+    assert.equal(post.visuals[0].cta, "");
+  }
   const second = { ...outputs[0], id: "google_chat-en-2", variant: 2 };
   payload = { posts: [{ ...storyboard.posts[0], visuals: [visual, visual] }] };
-  await assert.rejects(
-    browserStoryboard(brief, [...outputs, second], "test-key"),
-    /does not match/,
-  );
+  const [post] = await browserStoryboard(brief, [...outputs, second], "test-key");
+  assert.equal(post.visuals[0].headline, visual.headline);
+  assert.equal(post.visuals[1].headline, "", "a duplicated frame cannot replace a different frame");
+});
+
+test("a missing caption never discards another completed post", async (t) => {
+  const second = { ...outputs[0], id: "google_chat-uk-1", language: "uk", postId: "google_chat-uk" };
+  t.mock.method(globalThis, "fetch", async () => response(copy));
+  const posts = await browserPostCopy(brief, [...outputs, second], "test-key");
+  assert.equal(posts[0].caption, copy.posts[0].caption);
+  assert.equal(posts[0].status, "completed");
+  assert.equal(posts[1].status, "failed");
+  assert.match(posts[1].error, /Other results are kept/);
+});
+
+test("paid responses are recorded before parsing, including truncated and fenced JSON, with no saved key or retry", async (t) => {
+  let raw = "```json\n" + JSON.stringify(copy) + "\n```";
+  let calls = 0; const saved = [];
+  t.mock.method(globalThis, "fetch", async () => {
+    calls++;
+    return Response.json({ choices: [{ finish_reason: "length", message: { content: raw } }] });
+  });
+  const record = (data) => { saved.push(data); };
+  const posts = await browserPostCopy(brief, outputs, "test-key", undefined, undefined, record);
+  assert.equal(posts[0].caption, copy.posts[0].caption);
+  assert.equal(saved[0].finishReason, "length");
+  raw = '{"unfinished": "test-key';
+  const result = await structuredRequest("test", "prompt", {}, {}, "test-key", undefined, [], record);
+  assert.equal(result.rawText, raw);
+  assert.ok(!saved[1].text.includes("test-key"));
+  assert.equal(calls, 2);
+});
+
+test("HTTP diagnostics report only safe codes and parameter names", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => Response.json({ error: {
+    message: "PRIVATE event text test-key", code: "unsupported_parameter", param: "text.format",
+  } }, { status: 400 }));
+  await assert.rejects(openaiRequest("responses", {}, "test-key"), (error) =>
+    error.message.includes("HTTP 400") && error.message.includes("text.format") &&
+    !error.message.includes("PRIVATE") && !error.message.includes("test-key"));
 });
 
 test("provider response order cannot change carousel frame order", async (t) => {

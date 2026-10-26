@@ -108,6 +108,7 @@ function readBrief() {
     ]),
   );
   b.mode = data.get("mode");
+  if (runtime.pages) b.liveResearch = $("#live-research").checked;
   b.colors = [
     data.get("primaryColor"),
     data.get("accentColor"),
@@ -131,6 +132,7 @@ function fillBrief(b) {
     form.querySelectorAll(`[name="${type}"]`).forEach((input) => {
       input.checked = (b[type] || []).includes(input.value);
     });
+  $("#live-research").checked = b.liveResearch === true;
   $("#variants").value = String(b.variants || 1);
   for (const format of Object.keys(FORMATS))
     $("#quantity-" + format).value = String(quantityFor(b, format) || 1);
@@ -380,6 +382,8 @@ function updateSummary() {
       .classList.toggle("is-inactive", !b.formats.includes(format));
   }
   $("#output-count").textContent = outputs.length;
+  $("#pack-total").textContent = `${outputs.length} visuals · ${b.formats.length * b.languages.length} shared post captions`;
+
   $("#format-count").textContent = b.formats.length;
   $("#language-count").textContent = b.languages.length
     ? b.languages.map((l) => (l === "uk" ? "UA" : "EN")).join(" + ")
@@ -399,9 +403,10 @@ function updateSummary() {
       ? "AI plans a light, coherent campaign, checks each frame against its original logos and assigned photo, and writes shared posts without a CTA. Review every result before ZIP."
       : "AI creates channel-specific copy. This optional Java mode uses local template visuals."
     : "Template mode uses your supplied wording, with channel-specific structure. It does not translate descriptions. Add localized copy below, or connect AI for translation.";
+  $("#live-research-field").hidden = !runtime.pages || !ai;
   $("#ai-cost-note").hidden = !runtime.pages || !ai;
   $("#ai-cost-note").textContent =
-    `AI requests: 3 campaign text + ${outputs.length} reference plans + ${outputs.length} high-quality images. Public web research is included. A revision uses 1 image request; older packs may also need 1 reference plan.`;
+    `AI requests: ${b.liveResearch ? 3 : 2} campaign text + ${outputs.length} reference plans + ${outputs.length} high-quality images. Web research is optional and costs extra. A revision uses 1 image request; older packs may also need 1 reference plan. No automatic retries.`;
   if (runtime.pages)
     $(".privacy-note").textContent = ai
       ? "AI mode sends event text, assigned photos, all logos and revision instructions directly to OpenAI. Projects and results are saved locally; your key is never saved."
@@ -459,7 +464,7 @@ async function updatePreview() {
   $("#preview-label").textContent =
     runtime.pages && b.mode === "ai"
       ? "Reference preview only. AI-generated artwork appears after generation and must be reviewed."
-      : `Layout preview · ${FORMATS[first.format].label} · ${LANGUAGES[first.language]} · ${first.width} × ${first.height}. AI wording may differ.`;
+      : `Layout preview · ${FORMATS[first.format].label} · ${LANGUAGES[first.language]} · ${first.width} × ${first.height}. AI creates its own layout and wording.`;
 }
 $("#variants").addEventListener("change", () => {
   for (const format of Object.keys(FORMATS))
@@ -713,7 +718,7 @@ function renderPostReviews(run) {
     const info = element("div", "research-note");
     info.append(element("p", "input-help", run.captionResearch.status === "available"
       ? `Public writing guidance checked on ${run.captionResearch.checkedAt.slice(0, 10)}. Sources inform the copy; recommendations are not hard limits.`
-      : "Live writing research was unavailable. Baseline channel recommendations were used; no live trend claim is made."));
+      : run.captionResearch.status === "disabled" ? "Live web research is off. Channel recommendations were used without a paid search request." : "Live writing research was unavailable. Baseline channel recommendations were used; no live trend claim is made."));
     for (const source of run.captionResearch.sources) {
       const link = element("a", "research-source", source.title);
       link.href = source.url; link.target = "_blank"; link.rel = "noopener noreferrer";
@@ -847,7 +852,7 @@ function visualReviewControls(run, output) {
     output.image ? "Regenerate visual · paid" : "Generate visual · paid",
   );
   regenerate.type = "button";
-  regenerate.disabled = state.busy || !output.visualPlan;
+  regenerate.disabled = state.busy;
   regenerate.addEventListener("click", () =>
     regenerateVisual(run, output).catch(handleError),
   );
@@ -956,15 +961,18 @@ async function regenerateVisual(source, original) {
     await persistRun(run);
     if (!hasReferencePlan(output)) {
       Object.assign(output, await planVisualFrame(
-        run.brief, output, run.storyboard.find((post) => post.id === output.postId),
-        run.assets, requestApiKey, state.controller.signal,
+        run.brief, output, run.storyboard?.find((post) => post.id === output.postId),
+        run.assets, requestApiKey, state.controller.signal, async (response) => {
+          (run.aiResponses ||= []).push({ ...response, frameId: output.id, receivedAt: new Date().toISOString() });
+          await persistRun(run);
+        },
       ));
       await persistRun(run);
     }
     const rendered = await generateAIVisual(
       run.brief,
       output,
-      run.storyboard.find((post) => post.id === output.postId),
+      run.storyboard?.find((post) => post.id === output.postId),
       run.assets,
       requestApiKey,
       state.controller.signal,
@@ -1061,6 +1069,8 @@ function renderResults() {
       element("strong", "", FORMATS[output.format].label),
       element("span", "language-tag", output.language === "uk" ? "UA" : "EN"),
     );
+    const sequenceLength = run.outputs.filter((item) => item.postId === output.postId).length;
+    header.append(element("small", "frame-position", `Frame ${output.variant} of ${sequenceLength}`));
     card.append(header);
     if (output.image) {
       const url = URL.createObjectURL(output.image);
@@ -1100,7 +1110,7 @@ function renderResults() {
         "div",
         `output-pending ${output.status === "failed" ? "failed" : ""}`,
         output.status === "pending"
-          ? "Waiting for its moment…"
+          ? output.imageStatus === "planning" ? "Planning this frame…" : output.imageStatus === "running" ? "Creating this visual…" : "Waiting to start…"
           : output.error || output.status,
       );
       card.append(placeholder);
@@ -1118,6 +1128,7 @@ function renderResults() {
     if (run.reviewRequired) card.append(visualReviewControls(run, output));
     grid.append(card);
   }
+  $("#download-ai-responses").hidden = !run.aiResponses?.length;
   $("#run-details-json").textContent = JSON.stringify(
     {
       id: run.id,
@@ -1127,6 +1138,8 @@ function renderResults() {
       imageModel: run.imageModel || null,
       pipeline: run.pipeline || null,
       captionResearch: run.captionResearch || null,
+      aiResponses: run.aiResponses || [],
+      storyboard: run.storyboard || null,
       posts: run.posts || null,
       promptVersion: run.promptVersion,
       styleGuideVersion: run.styleGuideVersion || null,
@@ -1140,6 +1153,10 @@ function renderResults() {
     2,
   );
 }
+$("#download-ai-responses").addEventListener("click", () => {
+  if (!state.run?.aiResponses?.length) return;
+  download(new Blob([JSON.stringify(state.run.aiResponses, null, 2)], { type: "application/json" }), "saved-ai-responses.json");
+});
 $("#result-filter").addEventListener("change", renderResults);
 $("#back-to-editor").addEventListener("click", () => {
   if (!state.busy) showEditor();

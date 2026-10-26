@@ -35,12 +35,18 @@ export async function openaiRequest(
       body: multipart ? body : JSON.stringify(body),
       signal: controller.signal,
     });
-    if (!response.ok)
-      throw Error(
-        response.status === 429
-          ? "OpenAI rate or billing limit reached. Check API billing before retrying; no automatic retry was made."
-          : `OpenAI rejected the request (HTTP ${response.status}). Check your key, model access, organization verification and API billing.`,
-      );
+    if (!response.ok) {
+      let details;
+      try { details = (await response.json())?.error; } catch {}
+      // Provider messages can echo confidential input. Report only known diagnostics.
+      const codes = ["invalid_api_key", "invalid_request_error", "model_not_found", "unsupported_parameter", "unsupported_value", "insufficient_quota", "rate_limit_exceeded", "content_policy_violation"];
+      const params = ["model", "tools", "tools[0]", "tool_choice", "max_tool_calls", "text.format", "response_format", "size", "quality", "image", "image[]", "prompt"];
+      const code = codes.includes(details?.code) ? details.code : codes.includes(details?.type) ? details.type : "";
+      const param = params.includes(details?.param) ? details.param : "";
+      throw Error(response.status === 429
+        ? "OpenAI rate or billing limit reached. Check API billing before retrying; no automatic retry was made."
+        : `OpenAI rejected ${path} (HTTP ${response.status})${code ? `; code: ${code}` : ""}${param ? `; parameter: ${param}` : ""}. Check your key, model access, organization verification and API billing. No automatic retry was made.`);
+    }
     try {
       return await response.json();
     } catch {
@@ -72,6 +78,7 @@ export async function structuredRequest(
   apiKey,
   signal,
   images = [],
+  onResponse,
 ) {
   const data = await openaiRequest(
     "chat/completions",
@@ -94,18 +101,15 @@ export async function structuredRequest(
     signal,
   );
   const choice = data?.choices?.[0];
-  if (
-    choice?.finish_reason !== "stop" ||
-    typeof choice.message?.content !== "string"
-  )
-    throw Error(
-      "OpenAI returned incomplete content. No template text was substituted.",
-    );
-  try {
-    return JSON.parse(choice.message.content);
-  } catch {
-    throw Error(
-      "OpenAI returned invalid content. No template text was substituted.",
-    );
-  }
+  const raw = typeof choice?.message?.content === "string" ? choice.message.content : "";
+  // Save paid text before parsing, including truncated or unexpected responses.
+  await onResponse?.({ stage, model: MODELS.text, finishReason: choice?.finish_reason || "unknown",
+    text: raw.replaceAll(apiKey, "[redacted]").slice(0, 100000) });
+  if (!raw.trim()) throw Error("OpenAI returned no text for this stage. Other results are kept. No automatic retry was made.");
+  return parseAIText(raw);
+}
+export function parseAIText(raw) {
+  const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try { return JSON.parse(text); }
+  catch { return { rawText: raw }; }
 }

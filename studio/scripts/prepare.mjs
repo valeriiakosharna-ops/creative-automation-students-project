@@ -11,6 +11,7 @@ await writeFile(
 );
 for (const file of ["styles.css", "script.js"])
   await copyFile(new URL(file, source), new URL(file, target));
+await cp(new URL("docs/", source), new URL("docs/", target), { recursive: true });
 await cp(new URL("assets/", source), new URL("assets/", target), {
   recursive: true,
 });

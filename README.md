@@ -1,6 +1,6 @@
 # Creative Automation · Student Project
 
-A responsive, English-language project brief for students learning Java and JavaScript. It covers the product, user journey, MVP, architecture, implementation milestones, and acceptance criteria. The interactive brief explorer is an educational example; it does not call AI services or store uploads.
+A responsive, English-language project brief for students learning Java and JavaScript. It covers the product, user journey, MVP, architecture, implementation milestones, and acceptance criteria. The brief separates MVP and full-product scope and gives observable acceptance criteria. It does not call AI services or store uploads.
 
 ## Free Pages MVP
 
@@ -10,8 +10,9 @@ Each Google account keeps separate projects, uploads and history in its browser.
 
 The owner can add/revoke exact Google account emails through **Team access**. Firebase rules protect the private access directory. Pages HTML/code/assets are public and client-side gating cannot prevent someone using a copied app; local files cannot be remotely erased. See [Security boundaries](SECURITY.md).
 
-The [social style guide](style-guide/README.md) and shared [generation policy](studio/brand-policy.json) control original-logo composition and English/Ukrainian copy. Every logo appears on every visual; photo use is limited to once per network/run and extra visuals are information-only.
+The [product requirements](docs/PRODUCT_REQUIREMENTS.md) are the scope baseline for students: numbered MVP and full-product requirements, acceptance scenarios and delivery milestones. The student page summarizes the same requirements. The student MVP requires a Java backend and a database. The extended product adds a shared team library and administrator prompt publishing; Google Drive is an optional extension. Studio is a visual example and deliberately uses a different browser-based architecture.
 
+The interface and documentation are English. Generated posts may use English, Ukrainian or both. AI uses a shared light campaign direction and original references, not a rigid style-guide layout; the [inspiration guide](style-guide/README.md) remains optional. Every visual must use all original logos, with at most one assigned event photo. Photo allocation never repeats a photo within a network/run.
 The optional [corporate Java deployment](DEPLOYMENT.md) retains Google Workspace SSO, an encrypted shared server library and a company server-side key, requiring separate hosting. Its paid Render setup is not needed for the free Pages path.
 
 ## Preview the student brief locally (optional)
@@ -38,19 +39,20 @@ This brief is static. Pages includes the browser-only Studio app. Missing Fireba
 - Replace `assets/favicon.svg` with the favicon, keeping the filename, or update the icon link in `index.html` for another format.
 - All eight corporate colors are CSS custom properties at the start of `styles.css`.
 
-No external fonts, analytics, CDN scripts, API credentials, or runtime packages are used.
+The student brief uses no external fonts, analytics, CDN scripts or API credentials. Studio has its own bundled dependencies.
 
 ## Editing and validation
 
 - `index.html`: English project brief and learning content.
 - `styles.css`: brand palette, responsive design, and print layout.
-- `script.js`: sample brief, mobile navigation, milestone tabs, and checklist.
+- `script.js`: accessible mobile navigation.
+- `docs/PRODUCT_REQUIREMENTS.md`: numbered business requirements and acceptance scenarios.
 
-The example brief lives only in memory. The self-assessment checklist is stored in this browser's local storage. **Reset checklist** clears it. No form data leaves the page.
+The student brief does not save form or project data. Studio stores user projects separately as described above.
 
 ```sh
 node --check script.js
 python3 scripts/check_site.py
 ```
 
-The checker verifies HTML parsing, internal navigation, linked local assets, form labels, and unique IDs. Also verify mobile navigation, milestone tabs, brief validation, checklist persistence/reset, and small-screen overflow in a browser.
+The checker verifies HTML parsing, internal navigation, linked local assets, form labels, and unique IDs. Also verify navigation, local requirement links and small-screen overflow in a browser.

@@ -1,6 +1,6 @@
 import { BRAND_POLICY } from "./brand.js";
 export const FORMATS = BRAND_POLICY.formats;
-export const LANGUAGES = { en: "English", uk: "Українська" };
+export const LANGUAGES = { en: "English", uk: "Ukrainian" };
 export const quantityFor = (brief, format) =>
   brief.quantities?.[format] ?? brief.variants;
 export function validateBrief(b, logos) {

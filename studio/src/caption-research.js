@@ -1,5 +1,5 @@
 import { BRAND_POLICY } from "./brand.js";
-import { openaiRequest } from "./openai.js";
+import { openaiRequest, parseAIText } from "./openai.js";
 import { MODELS } from "./prompts/channel-styles.js";
 import prompt, { version } from "./prompts/caption-research.js";
 export const RESEARCH_PROMPT_VERSION = version;
@@ -8,20 +8,6 @@ const domains = [
   "creators.instagram.com", "facebook.com", "developers.google.com",
   "buffer.com", "hootsuite.com", "sproutsocial.com", "later.com",
 ];
-const string = { type: "string" };
-const schema = {
-  type: "object", additionalProperties: false, required: ["channels"],
-  properties: { channels: { type: "array", items: {
-    type: "object", additionalProperties: false,
-    required: ["format", "summary", "recommendedMin", "recommendedMax", "sourceUrls"],
-    properties: {
-      format: { type: "string", enum: Object.keys(BRAND_POLICY.formats) },
-      summary: string,
-      recommendedMin: { type: "integer" }, recommendedMax: { type: "integer" },
-      sourceUrls: { type: "array", items: string },
-    },
-  } } },
-};
 export function publicSource(value) {
   try {
     const url = new URL(value);
@@ -45,7 +31,6 @@ export async function researchCaptions(formats, apiKey, signal) {
       tools: [{ type: "web_search", search_context_size: "low", filters: { allowed_domains: domains } }],
       tool_choice: "required", max_tool_calls: 1,
       include: ["web_search_call.action.sources"],
-      text: { format: { type: "json_schema", name: "caption_recommendations", strict: true, schema } },
       max_output_tokens: 2500,
     }, apiKey, signal, 45000);
     if (data.status !== "completed" || !Array.isArray(data.output) ||
@@ -63,7 +48,7 @@ export async function researchCaptions(formats, apiKey, signal) {
           if (url) evidence.set(url, { url, title: String(citation.title || new URL(url).hostname).slice(0, 200) });
         }
     }
-    const content = JSON.parse(data.output.filter((item) => item.type === "message")
+    const content = parseAIText(data.output.filter((item) => item.type === "message")
       .flatMap((item) => item.content || []).filter((part) => part.type === "output_text")
       .map((part) => part.text).join(""));
     if (!Array.isArray(content.channels)) return fallback;
@@ -84,6 +69,6 @@ export async function researchCaptions(formats, apiKey, signal) {
   } catch (error) {
     if (signal?.aborted) throw error;
     // Research is optional evidence. Failure never discards post copy or visuals.
-    return fallback;
+    return { ...fallback, error: error.message };
   }
 }
